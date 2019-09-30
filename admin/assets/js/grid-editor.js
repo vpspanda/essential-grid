@@ -1,3 +1,9 @@
+/************************************************************************************
+ * jquery.themepunch.essential.js - jQuery Plugin for esg Portfolio Slider
+ * @version: 2.2.5 (12.07.2018)
+ * @requires jQuery v1.7 or later
+ * @author ThemePunch
+************************************************************************************/
 
 var GridEditorEssentials = new function(){
 	var t = this;
@@ -14,7 +20,6 @@ var GridEditorEssentials = new function(){
 	var arr_init_font_types = [];
 	var arr_meta_keys = [];
 
-
 	t.initDraggable = function() {
 		jQuery( ".eg-draggable" ).draggable({
 			handle:".dragme"});
@@ -27,8 +32,24 @@ var GridEditorEssentials = new function(){
 		
 		init_layers = jQuery.parseJSON(json_layers);
 
-		for(var key in init_layers)
+		for(var key in init_layers) {
+			
+			// 2.2.6
+			// line break detected
+			if(typeof init_layers[key] === 'string') continue;
+			
 			if(typeof init_layers[key]['settings'] == 'undefined') init_layers[key]['settings'] = {};
+			
+			// 2.2.6
+			var settings = init_layers[key]['settings'];
+			if(!settings.hasOwnProperty('min-height')) init_layers[key]['settings']['min-height'] = 0;
+			if(!settings.hasOwnProperty('max-height')) init_layers[key]['settings']['max-height'] = 'none';
+			if(!settings.hasOwnProperty('duration')) init_layers[key]['settings']['duration'] = 'default';
+			if(!settings.hasOwnProperty('letter-spacing')) init_layers[key]['settings']['letter-spacing'] = 'normal';
+			if(!settings.hasOwnProperty('letter-spacing-hover')) init_layers[key]['settings']['letter-spacing-hover'] = 'normal';
+			
+		}
+		
 	}
 
 	/**
@@ -67,8 +88,8 @@ var GridEditorEssentials = new function(){
 	 * set init meta keys
 	 */
 	t.setInitMetaKeysJson = function(json_meta){
-		
 		arr_meta_keys = jQuery.parseJSON(json_meta);
+		// console.log(arr_meta_keys);
 	}
 
 	/**
@@ -184,8 +205,16 @@ var GridEditorEssentials = new function(){
 		for(var handle in all_attributes){
 			switch(all_attributes[handle]['type']){
 				case 'colorpicker':
-					jQuery('#element-'+handle).closest('.wp-picker-container').find('a').first().css('backgroundColor', all_attributes[handle]['values']['default']);
-					jQuery('input[name="element-'+handle+'"]').val(all_attributes[handle]['values']['default']);
+					
+					/* 2.1.6 */
+					if(typeof RevColor === 'undefined') {
+						jQuery('#element-'+handle).closest('.wp-picker-container').find('a').first().css('background-color', all_attributes[handle]['values']['default']);
+						jQuery('input[name="element-'+handle+'"]').val(all_attributes[handle]['values']['default']);	
+					}
+					else {
+						jQuery('input[name="element-'+handle+'"]').val(all_attributes[handle]['values']['default']).tpColorPicker();
+					}
+					
 				break;
 				case 'select':
 					jQuery('select[name="element-'+handle+'"] option[value="'+all_attributes[handle]['values']['default']+'"]').attr("selected","selected");
@@ -200,6 +229,8 @@ var GridEditorEssentials = new function(){
 						jQuery('input[name="element-source-text-style-disable"]').attr('checked', false);
 						jQuery('textarea[name="element-source-text"]').val('');
 						jQuery('input[name="element-source-meta"]').val('');
+
+						jQuery('select[name="element-source-taxonomy"] option[value="post_tag"]').attr("selected","selected");
 
 						jQuery('select[name="element-source-event"]').hide().siblings('.select_fake').hide();
 						jQuery('select[name="element-source-woocommerce"]').hide().siblings('.select_fake').hide();
@@ -251,15 +282,22 @@ var GridEditorEssentials = new function(){
 		if(id !== undefined){
 			if(typeof layers[id] === 'object' && layers[id]['handle'] !== 'undefined'){
 				var ie_settings = layers[id]['settings'];//init_elements[layers[id]['handle']]['settings'];
-				
 				for(var handle in all_attributes){
 					if(typeof ie_settings[handle] === 'undefined') continue;
 
 					switch(all_attributes[handle]['type']){
 						case 'colorpicker':
 							if(handle == 'bg-alpha') continue;
-							jQuery('#element-'+handle).closest('.wp-picker-container').find('a').first().css('backgroundColor', ie_settings[handle]);
-							jQuery('input[name="element-'+handle+'"]').val(ie_settings[handle]);
+							
+							/* 2.1.6 */
+							if(typeof RevColor === 'undefined') {
+								jQuery('#element-'+handle).closest('.wp-picker-container').find('a').first().css('background-color', ie_settings[handle]);
+								jQuery('input[name="element-'+handle+'"]').val(ie_settings[handle]);
+							}
+							else {
+								jQuery('input[name="element-'+handle+'"]').val(ie_settings[handle]).tpColorPicker();
+							}
+							
 						break;
 						case 'select':
 							jQuery('select[name="element-'+handle+'"] option[value="'+ie_settings[handle]+'"]').attr("selected","selected");
@@ -272,7 +310,7 @@ var GridEditorEssentials = new function(){
 									if(typeof ie_settings['source-post'] !== 'undefined'){
 										jQuery('select[name="element-source-post"] option[value="'+ie_settings['source-post']+'"]').attr("selected","selected");
 
-										if(ie_settings['source-post'] == 'cat_list' || ie_settings['source-post'] == 'tag_list'){
+										if(ie_settings['source-post'] == 'cat_list' || ie_settings['source-post'] == 'tag_list' || ie_settings['source-post'] == 'taxonomy'){
 											jQuery('.esg-cat-tag-settings').show();
 											jQuery('#eg-source-limit-wrap').hide();
 											jQuery('#eg-source-functonality-wrap').show().find('.select_fake').show();
@@ -312,7 +350,27 @@ var GridEditorEssentials = new function(){
 								if(typeof ie_settings['link-type-url'] !== 'undefined') jQuery('input[name="element-url-link"]').val(ie_settings['link-type-url']);
 								if(typeof ie_settings['link-type-meta'] !== 'undefined') jQuery('input[name="element-meta-link"]').val(ie_settings['link-type-meta']);
 								if(typeof ie_settings['link-type-javascript'] !== 'undefined') jQuery('input[name="element-javascript-link"]').val(ie_settings['link-type-javascript']);
-								if(typeof ie_settings['link-type-sharefacebook'] !== 'undefined') jQuery('select[name="element-facebook-sharing-link"]').val(ie_settings['link-type-sharefacebook']);
+								if(typeof ie_settings['link-type-sharefacebook'] !== 'undefined') {
+									jQuery('select[name="element-facebook-sharing-link"]').val(ie_settings['link-type-sharefacebook']);
+									jQuery('input[name="element-facebook-link-url"]').val(ie_settings['element-facebook-link-url']);
+									//if(ie_settings['link-type-sharefacebook']=="custom") jQuery(".eg-element-facebook_link_custom").show();
+									//else  jQuery(".eg-element-facebook_link_custom").hide();
+								}
+								if(typeof ie_settings['link-type-sharegplus'] !== 'undefined') {
+									jQuery('select[name="element-gplus-sharing-link"]').val(ie_settings['link-type-sharegplus']);
+									jQuery('input[name="element-gplus-link-url"]').val(ie_settings['element-gplus-link-url']);
+								}
+								if(typeof ie_settings['link-type-sharepinterest'] !== 'undefined') {
+									jQuery('select[name="element-pinterest-sharing-link"]').val(ie_settings['link-type-sharepinterest']);
+									jQuery('input[name="element-pinterest-link-url"]').val(ie_settings['element-pinterest-link-url']);
+									jQuery('textarea[name="element-pinterest-description"]').val(ie_settings['link-type-sharepinterest-description']);
+								}
+								if(typeof ie_settings['link-type-sharetwitter'] !== 'undefined') {
+									jQuery('select[name="element-twitter-sharing-link"]').val(ie_settings['link-type-sharetwitter']);
+									jQuery('input[name="element-twitter-link-url"]').val(ie_settings['element-twitter-link-url']);
+									jQuery('input[name="element-twitter-text-before"]').val(ie_settings['link-type-sharetwitter-text-before']);
+									jQuery('input[name="element-twitter-text-after"]').val(ie_settings['link-type-sharetwitter-text-after']);
+								}
 							}else if(handle == 'text-align' || handle == 'float'){ //set to default depending on display setting
 								if(jQuery('input[name="element-display"]').val() == 'block'){
 									if(handle == 'float') jQuery('select[name="element-'+handle+'"] option[value="none"]').attr("selected","selected");
@@ -377,9 +435,29 @@ var GridEditorEssentials = new function(){
 					}
 				}
 			}
-
 		}
+
+
+		// Social Sharing
+		jQuery('select[name="element-facebook-sharing-link"]').change(function(){
+			if(jQuery('select[name="element-facebook-sharing-link"]').val()=="custom") jQuery(".eg-element-facebook_link_custom").show();
+			else jQuery(".eg-element-facebook_link_custom").hide();
+		});
+		jQuery('select[name="element-gplus-sharing-link"]').change(function(){
+			if(jQuery('select[name="element-gplus-sharing-link"]').val()=="custom") jQuery(".eg-element-gplus_link_custom").show();
+			else jQuery(".eg-element-gplus_link_custom").hide();
+		});
+		jQuery('select[name="element-pinterest-sharing-link"]').change(function(){
+			if(jQuery('select[name="element-pinterest-sharing-link"]').val()=="custom") jQuery(".eg-element-pinterest_link_custom").show();
+			else jQuery(".eg-element-pinterest_link_custom").hide();
+		});
+		jQuery('select[name="element-twitter-sharing-link"]').change(function(){
+			if(jQuery('select[name="element-twitter-sharing-link"]').val()=="custom") jQuery(".eg-element-twitter_link_custom").show();
+			else jQuery(".eg-element-twitter_link_custom").hide();
+		});
+
 	}
+
 
 
 	/**
@@ -471,6 +549,7 @@ var GridEditorEssentials = new function(){
 								break;
 								case 'post':
 								default:
+									layers[key]['settings']['source-taxonomy'] = jQuery('select[name="element-source-taxonomy"] option:selected').val();
 									layers[key]['settings']['source-post'] = jQuery('select[name="element-source-post"] option:selected').val();
 									if(layers[key]['settings']['source-post'] == 'meta')
 										layers[key]['settings']['source-meta'] = jQuery('input[name="element-source-meta"]').val();
@@ -482,6 +561,9 @@ var GridEditorEssentials = new function(){
 							delete(layers[key]['settings']['link-type-meta']);
 							delete(layers[key]['settings']['link-type-javascript']);
 							delete(layers[key]['settings']['link-type-sharefacebook']);
+							delete(layers[key]['settings']['link-type-sharegplus']);
+							delete(layers[key]['settings']['link-type-sharepinterest']);
+							delete(layers[key]['settings']['link-type-sharetwitter']);
 
 							switch(layers[key]['settings'][handle]){
 								case 'post'://do nothing
@@ -496,8 +578,25 @@ var GridEditorEssentials = new function(){
 								break;
 								case 'javascript':
 									layers[key]['settings']['link-type-javascript'] = jQuery('input[name="element-javascript-link"]').val();
+									break;
 								case 'sharefacebook':
 									layers[key]['settings']['link-type-sharefacebook'] = jQuery('select[name="element-facebook-sharing-link"]').val();
+									layers[key]['settings']['link-type-sharefacebook-custom-url'] = jQuery('input[name="element-facebook-link-url"]').val();
+								break;
+								case 'sharegplus':
+									layers[key]['settings']['link-type-sharegplus'] = jQuery('select[name="element-gplus-sharing-link"]').val();
+									layers[key]['settings']['link-type-sharegplus-custom-url'] = jQuery('input[name="element-gplus-link-url"]').val();
+								break;
+								case 'sharepinterest':
+									layers[key]['settings']['link-type-sharepinterest'] = jQuery('select[name="element-pinterest-sharing-link"]').val();
+									layers[key]['settings']['link-type-sharepinterest-custom-url'] = jQuery('input[name="element-pinterest-link-url"]').val();
+									layers[key]['settings']['link-type-sharepinterest-description'] = jQuery('textarea[name="element-pinterest-description"]').val();
+								break;
+								case 'sharetwitter':
+									layers[key]['settings']['link-type-sharetwitter'] = jQuery('select[name="element-twitter-sharing-link"]').val();
+									layers[key]['settings']['link-type-sharetwitter-custom-url'] = jQuery('input[name="element-twitter-link-url"]').val();
+									layers[key]['settings']['link-type-sharetwitter-text-before'] = jQuery('input[name="element-twitter-text-before"]').val();
+									layers[key]['settings']['link-type-sharetwitter-text-after'] = jQuery('input[name="element-twitter-text-after"]').val();
 								break;
 							}
 
@@ -557,11 +656,12 @@ var GridEditorEssentials = new function(){
 							save_needed = true;
 						}
 					}
-
-					if(handle == 'transition-type'){
-						t.set_transition_type_visibility(layers[key]['settings'][handle]);
+					
+					/* 2.1.6 */
+					if(handle == 'transition'){
+						// t.set_transition_type_visibility(layers[key]['settings'][handle]);
+						t.check_no_transition(layers[key]['settings'][handle]);
 					}
-
 
 				}
 
@@ -584,7 +684,7 @@ var GridEditorEssentials = new function(){
 
 			if(layers[key].id == layer_id){
 				for(var handle in all_attributes){
-
+					
 					if(typeof(layers[key]['settings']) == 'undefined') continue;
 					if(typeof(layers[key]['settings'][handle]) == 'undefined') continue;
 
@@ -595,9 +695,17 @@ var GridEditorEssentials = new function(){
 							jQuery('input[name="element-'+handle+'"]').attr('checked', false);
 						}
 					}else if(all_attributes[handle]['type'] == 'colorpicker'){
-						jQuery('input[name="element-'+handle+'"]').val(layers[key]['settings'][handle]);
-
-						jQuery('#element-'+handle).closest('.wp-picker-container').find('a').first().css('backgroundColor', jQuery('input[name="element-'+handle+'"]').val());
+						
+						/* 2.1.6 */
+						if(typeof RevColor === 'undefined') {
+							jQuery('input[name="element-'+handle+'"]').val(layers[key]['settings'][handle]);
+							jQuery('#element-'+handle).closest('.wp-picker-container').find('a').first().css('background-color', jQuery('input[name="element-'+handle+'"]').val());
+						}
+						else {
+							jQuery('input[name="element-'+handle+'"]').val(layers[key]['settings'][handle]).tpColorPicker();
+						}
+						
+						
 					}else if(all_attributes[handle]['type'] == 'slider' || all_attributes[handle]['type'] == 'text-slider'){
 						jQuery('input[name="element-'+handle+'"]').val(layers[key]['settings'][handle]);
 						jQuery('#element-'+handle).slider({value:jQuery('input[name="element-'+handle+'"]').val()});
@@ -639,6 +747,8 @@ var GridEditorEssentials = new function(){
 								default:
 									jQuery('#eg-source-limit-wrap').show();
 									jQuery('select[name="element-source-post"]').show().siblings('.select_fake').show();
+									if('source-taxonomy' in layers[key]['settings'])
+										jQuery('select[name="element-source-taxonomy"] option[value="'+layers[key]['settings']['source-taxonomy']+'"]').attr("selected","selected");
 									jQuery('select[name="element-source-post"] option[value="'+layers[key]['settings']['source-post']+'"]').attr("selected","selected");
 									if(layers[key]['settings']['source-post'] == 'meta')
 										jQuery('input[name="element-source-meta"]').val(layers[key]['settings']['source-meta']);
@@ -652,6 +762,9 @@ var GridEditorEssentials = new function(){
 							jQuery('#eg-element-post-javascript-wrap').hide();
 							jQuery('#eg-element-link-details-wrap').show();
 							jQuery('#eg-element-facebook-wrap').hide();
+							jQuery('#eg-element-gplus-wrap').hide();
+							jQuery('#eg-element-pinterest-wrap').hide();
+							jQuery('#eg-element-twitter-wrap').hide();
 
 							switch(layers[key]['settings'][handle]){
 								case 'post':
@@ -674,6 +787,36 @@ var GridEditorEssentials = new function(){
 									jQuery('#eg-element-link-details-wrap').hide();
 									jQuery('#eg-element-facebook-wrap').show();
 									jQuery('select[name="element-facebook-sharing-link"]').val(layers[key]['settings']['link-type-sharefacebook']);
+									jQuery('input[name="element-facebook-link-url"]').val(layers[key]['settings']['link-type-sharefacebook-custom-url']);
+									if(jQuery('select[name="element-facebook-sharing-link"]').val()=="custom") jQuery(".eg-element-facebook_link_custom").show();
+									else  jQuery(".eg-element-facebook_link_custom").hide();
+								break;
+								case 'sharegplus':
+									jQuery('#eg-element-link-details-wrap').hide();
+									jQuery('#eg-element-gplus-wrap').show();
+									jQuery('select[name="element-gplus-sharing-link"]').val(layers[key]['settings']['link-type-sharegplus']);
+									jQuery('input[name="element-gplus-link-url"]').val(layers[key]['settings']['link-type-sharegplus-custom-url']);
+									if(jQuery('select[name="element-gplus-sharing-link"]').val()=="custom") jQuery(".eg-element-gplus_link_custom").show();
+									else  jQuery(".eg-element-gplus_link_custom").hide();
+								break;
+								case 'sharepinterest':
+									jQuery('#eg-element-link-details-wrap').hide();
+									jQuery('#eg-element-pinterest-wrap').show();
+									jQuery('select[name="element-pinterest-sharing-link"]').val(layers[key]['settings']['link-type-sharepinterest']);
+									jQuery('input[name="element-pinterest-link-url"]').val(layers[key]['settings']['link-type-sharepinterest-custom-url']);
+									jQuery('textarea[name="element-pinterest-description"]').val(layers[key]['settings']['link-type-sharepinterest-description']);
+									if(jQuery('select[name="element-pinterest-sharing-link"]').val()=="custom") jQuery(".eg-element-pinterest_link_custom").show();
+									else  jQuery(".eg-element-pinterest_link_custom").hide();
+								break;
+								case 'sharetwitter':
+									jQuery('#eg-element-link-details-wrap').hide();
+									jQuery('#eg-element-twitter-wrap').show();
+									jQuery('select[name="element-twitter-sharing-link"]').val(layers[key]['settings']['link-type-sharetwitter']);
+									jQuery('input[name="element-twitter-link-url"]').val(layers[key]['settings']['link-type-sharetwitter-custom-url']);
+									jQuery('input[name="element-twitter-text-before"]').val(layers[key]['settings']['link-type-sharetwitter-text-before']);
+									jQuery('input[name="element-twitter-text-after"]').val(layers[key]['settings']['link-type-sharetwitter-text-after']);
+									if(jQuery('select[name="element-twitter-sharing-link"]').val()=="custom") jQuery(".eg-element-twitter_link_custom").show();
+									else  jQuery(".eg-element-twitter_link_custom").hide();
 								break;
 							}
 						}else if(handle == 'display'){
@@ -728,9 +871,9 @@ var GridEditorEssentials = new function(){
 	t.set_setting_styles = function(){
 		
 		if(selected_layer == null) return(false);
-
+		
 		var layer_id = selected_layer.data('id');
-
+		
 		for(var key in layers){
 		   if(layers[key].id == layer_id){
 				
@@ -834,11 +977,13 @@ var GridEditorEssentials = new function(){
 							//get box shadow color
 							var shadow_color = (style_type == 'idle') ? settings['shadow-color'] : settings['shadow-color-hover'];
 
+							/* 2.1.6 */
+							/*
 							//get box shadow transaprency
 							var shadow_transparency = (style_type == 'idle') ? settings['shadow-alpha'] : settings['shadow-alpha-hover'];
-
 							shadow_color = AdminEssentials.hex_to_rgba(shadow_color, shadow_transparency, true);
-
+							*/
+							
 							multi_string += ' '+shadow_color;
 
 							if(style_type == 'idle'){
@@ -864,14 +1009,21 @@ var GridEditorEssentials = new function(){
 						}
 					}else{
 						if(set_handle == 'background-color'){
+							
+							/* 2.1.6 */
+							/*
 							//get bg color transaprency
 							var bg_color_transparency = (style_type == 'idle') ? settings['bg-alpha'] : settings['bg-alpha-hover'];
 							var bg_color_rgba = AdminEssentials.hex_to_rgba(settings[handle], bg_color_transparency, true); // we only need rgba in backend
-
+							*/
+							
+							var bg_color_rgba = settings[handle];
+							if(typeof RevColor !== 'undefined') bg_color_rgba = RevColor.get(bg_color_rgba);
+							
 							if(style_type == 'idle'){
-								idle.push(set_handle+': '+bg_color_rgba+do_important+';');
+								idle.push('background: '+bg_color_rgba+do_important+';');
 							}else{
-								hover.push(set_handle+': '+bg_color_rgba+do_important+';');
+								hover.push('background: '+bg_color_rgba+do_important+';');
 							}
 						}else{
 							if(set_handle == 'border'){
@@ -1014,6 +1166,12 @@ var GridEditorEssentials = new function(){
 
 						if(delay > 0) delay = delay / 100;
 						selected_layer.data('delay', delay);
+					}
+					else if(handle == 'duration') {
+							
+						var duration = layers[key]['settings'][handle];
+						selected_layer.data('duration', duration);	
+							
 					}else if(handle == 'transition'){
 						var classes = selected_layer.attr('class');
 						var class_arr = classes.split(' ');
@@ -1211,9 +1369,10 @@ var GridEditorEssentials = new function(){
 	 * select layer by id
 	 */
 	t.select_layer = function(id){
+		
 		//remove highlight from all elements
 		jQuery('#eg-dz-hover-wrap .skin-dz-elements').removeClass('selected');
-
+		
 		jQuery('.skin-dz-elements').each(function(index) {
 			var jt = jQuery(this);
 			if (jt!=undefined && jt.data('id')!=undefined){
@@ -1224,6 +1383,13 @@ var GridEditorEssentials = new function(){
 			}
 
 		});
+		
+		/* 2.1.6 - hide these options for masonry content */
+		var alwaysVisible = document.getElementById('always-visible-options');
+		if(alwaysVisible) {
+			var display = !selected_layer.closest('#skin-dz-m-wrap').length ? 'block' : 'none';
+			alwaysVisible.style.display = display;
+		}
 
 		selected_layer.addClass('selected');
 
@@ -1512,6 +1678,7 @@ var GridEditorEssentials = new function(){
 
 
 	t.selet_first_layer = function(){
+		
 		var is_selected = false;
 
 		for(var key in layers){
@@ -1545,26 +1712,42 @@ var GridEditorEssentials = new function(){
 		c.data('delay', null);
 		tl.data('delay', null);
 		br.data('delay', null);
+		
+		c.removeAttr('data-duration');
+		tl.removeAttr('data-duration');
+		br.removeAttr('data-duration');
+		c.data('duration', null);
+		tl.data('duration', null);
+		br.data('duration', null);
 
 		jQuery('#skin-dz-wrapper').removeClass().addClass('esg-'+jQuery('select[name="cover-group-animation"] option:selected').val());
 		jQuery('#skin-dz-media-bg').removeClass().addClass('esg-'+jQuery('select[name="media-animation"] option:selected').val());
 
 		jQuery('#skin-dz-wrapper').attr('data-delay', parseInt(jQuery('input[name="cover-group-animation-delay"]').val()) / 100);
+		jQuery('#skin-dz-wrapper').attr('data-duration', jQuery('input[name="cover-group-animation-duration"]').val());
+		
 		jQuery('#skin-dz-media-bg').attr('data-delay', parseInt(jQuery('input[name="media-animation-delay"]').val()) / 100);
+		jQuery('#skin-dz-media-bg').attr('data-duration', jQuery('input[name="media-animation-duration"]').val());
 
 		jQuery('#skin-dz-wrapper').data('delay', parseInt(jQuery('input[name="cover-group-animation-delay"]').val()) / 100);
 		jQuery('#skin-dz-media-bg').data('delay', parseInt(jQuery('input[name="media-animation-delay"]').val()) / 100);
+		
+		jQuery('#skin-dz-wrapper').data('duration', jQuery('input[name="cover-group-animation-duration"]').val());
+		jQuery('#skin-dz-media-bg').data('duration', jQuery('input[name="media-animation-duration"]').val());
 
 		if(jQuery('select[name="cover-type"] option:selected').val() == 'full'){
 			c.addClass('esg-'+jQuery('select[name="cover-animation-center"] option:selected').val()+jQuery('select[name="cover-animation-center-type"] option:selected').val());
 
 			c.attr('data-delay', parseInt(jQuery('input[name="cover-animation-delay-center"]').val()) / 100);
 			c.data('delay', parseInt(jQuery('input[name="cover-animation-delay-center"]').val()) / 100);
+			
+			c.attr('data-duration', jQuery('input[name="cover-animation-duration-center"]').val());
+			c.data('duration', jQuery('input[name="cover-animation-duration-center"]').val());
+			
 		}else{
 			tl.addClass('esg-'+jQuery('select[name="cover-animation-top"] option:selected').val()+jQuery('select[name="cover-animation-top-type"] option:selected').val());
 			c.addClass('esg-'+jQuery('select[name="cover-animation-center"] option:selected').val()+jQuery('select[name="cover-animation-center-type"] option:selected').val());
 			br.addClass('esg-'+jQuery('select[name="cover-animation-bottom"] option:selected').val()+jQuery('select[name="cover-animation-bottom-type"] option:selected').val());
-
 
 			tl.attr('data-delay', parseInt(jQuery('input[name="cover-animation-delay-top"]').val()) / 100);
 			c.attr('data-delay', parseInt(jQuery('input[name="cover-animation-delay-center"]').val()) / 100);
@@ -1573,6 +1756,14 @@ var GridEditorEssentials = new function(){
 			tl.data('delay', parseInt(jQuery('input[name="cover-animation-delay-top"]').val()) / 100);
 			c.data('delay', parseInt(jQuery('input[name="cover-animation-delay-center"]').val()) / 100);
 			br.data('delay', parseInt(jQuery('input[name="cover-animation-delay-bottom"]').val()) / 100);
+			
+			tl.attr('data-duration', jQuery('input[name="cover-animation-duration-top"]').val());
+			c.attr('data-duration', jQuery('input[name="cover-animation-duration-center"]').val());
+			br.attr('data-duration', jQuery('input[name="cover-animation-duration-bottom"]').val());
+
+			tl.data('duration', jQuery('input[name="cover-animation-duration-top"]').val());
+			c.data('duration', jQuery('input[name="cover-animation-duration-center"]').val());
+			br.data('duration', jQuery('input[name="cover-animation-duration-bottom"]').val());
 		}
 	}
 
@@ -1770,12 +1961,15 @@ var GridEditorEssentials = new function(){
 
 										layers[key]['settings'][handle+'-unit'] = new_settings[handle+'-unit'];
 									}
-
+									
+									/* 2.1.6 */
+									/*
 									if(handle == 'background-color' && typeof new_settings['bg-alpha'] != 'undefined'){
 										layers[key]['settings']['bg-alpha'] = new_settings['bg-alpha'];
 									}else if(handle == 'background-color' && typeof new_settings['shadow-alpha'] != 'undefined'){
 										layers[key]['settings']['shadow-alpha'] = new_settings['shadow-alpha'];
 									}
+									*/
 								}
 							}
 
@@ -1828,12 +2022,14 @@ var GridEditorEssentials = new function(){
 	 */
 	t.change_bg_color = function(){
 
-		var bg_color = jQuery('#container-background-color').val();
+		var bgColor = jQuery('#container-background-color');
+		var full_color = bgColor.attr('data-color') || bgColor.val();
 		var bg_size = jQuery('select[name="cover-background-size"] option:selected').val();
 		var bg_repeat = jQuery('select[name="cover-background-repeat"] option:selected').val();
-		var transparency = jQuery('input[name="element-container-background-color-opacity"]').val();
-
-		var full_color = AdminEssentials.hex_to_rgba(bg_color, transparency, true);
+		
+		/* 2.1.6 colorpicker conversion */
+		// var transparency = jQuery('input[name="element-container-background-color-opacity"]').val();
+		// var full_color = AdminEssentials.hex_to_rgba(bg_color, transparency, true);
 
 		var background_image = (jQuery('input[name="cover-background-image"]').val() != '0') ? jQuery('input[name="cover-background-image-url"]').val() : '';
 
@@ -1847,7 +2043,7 @@ var GridEditorEssentials = new function(){
 		if(full_color == null) full_color = 'transparent';
 
 		if(jQuery('select[name="cover-type"] option:selected').val() == 'full'){
-			jQuery('.esg-cc .eg-element-cover').css('background-color', full_color);
+			jQuery('.esg-cc .eg-element-cover').css('background', full_color);
 			if(background_image !== '')
 				jQuery('.esg-cc .eg-element-cover').css('background-image', 'url('+background_image+')');
 
@@ -1855,7 +2051,7 @@ var GridEditorEssentials = new function(){
 			jQuery('.esg-cc .eg-element-cover').css('background-repeat', bg_repeat);
 		}else{
 			if(jQuery.trim(jQuery('#skin-dz-c').html())){
-				jQuery('.esg-cc .eg-element-cover').css('background-color', full_color);
+				jQuery('.esg-cc .eg-element-cover').css('background', full_color);
 				if(background_image !== '')
 					jQuery('.esg-cc .eg-element-cover').css('background-image', 'url('+background_image+')');
 
@@ -1864,7 +2060,7 @@ var GridEditorEssentials = new function(){
 			}
 
 			if(jQuery.trim(jQuery('#skin-dz-tl').html())){
-				jQuery('.esg-tc .eg-element-cover').css('background-color', full_color);
+				jQuery('.esg-tc .eg-element-cover').css('background', full_color);
 				if(background_image !== '')
 					jQuery('.esg-tc .eg-element-cover').css('background-image', 'url('+background_image+')');
 
@@ -1873,19 +2069,24 @@ var GridEditorEssentials = new function(){
 			}
 
 			if(jQuery.trim(jQuery('#skin-dz-br').html())){
-				jQuery('.esg-bc .eg-element-cover').css('background-color', full_color);
-				if(background_image !== '')
+				
+				if(background_image !== '') {
 					jQuery('.esg-bc .eg-element-cover').css('background-image', 'url('+background_image+')');
+					jQuery('.esg-bc .eg-element-cover').css('background-size', bg_size);
+					jQuery('.esg-bc .eg-element-cover').css('background-repeat', bg_repeat);
+				}
+				else {
+					jQuery('.esg-bc .eg-element-cover').css('background', full_color);
+				}
 
-				jQuery('.esg-bc .eg-element-cover').css('background-size', bg_size);
-				jQuery('.esg-bc .eg-element-cover').css('background-repeat', bg_repeat);
+				
 			}
 
 		}
 
-		jQuery('#eg-elements-container-grid ul').css('background-color', full_color);
+		jQuery('#eg-elements-container-grid ul').css('background', full_color);
 
-		jQuery('.eg-pa-coverring').css('background-color', full_color);
+		jQuery('.eg-pa-coverring').css('background', full_color);
 		//jQuery('.eg-special .skin-dz-elements').css('background-color', full_color);
 	}
 
@@ -1924,10 +2125,13 @@ var GridEditorEssentials = new function(){
 					}else{
 						layers[key]['settings'][handle] = layers[key]['settings'][copy_handle];
 					}
-
+					
+					/* 2.1.6 */
+					/*
 					if(copy_handle == 'background-color') layers[key]['settings']['bg-alpha-hover'] = layers[key]['settings']['bg-alpha'];
 					if(copy_handle == 'shadow-color') layers[key]['settings']['shadow-alpha-hover'] = layers[key]['settings']['shadow-alpha'];
-
+					*/
+					
 					//check the unit of elements
 					if(typeof layers[key]['settings'][copy_handle+'-unit'] !== 'undefined'){
 						layers[key]['settings'][copy_handle+'-unit-hover'] = layers[key]['settings'][copy_handle+'-unit'];
@@ -2178,12 +2382,12 @@ var GridEditorEssentials = new function(){
 		});
 
 		jQuery('#show-fontello-dialog').click(function(){
-			jQuery('#eg-fontello-icons-dialog-wrap').dialog({
+			jQuery('#eg-fontello-icons-dialog-wrap').css('overflow','auto').dialog({
 				modal:true,
 				draggable:false,
 				resizable:false,
-				width:632,
-				height:565,
+				width:700,
+				height:580,
 				title:eg_lang.fontello_icons,
 				closeOnEscape:true,
 				dialogClass:'wp-dialog'
@@ -2498,8 +2702,23 @@ var GridEditorEssentials = new function(){
 
 		//t.check_tblr_fields();
 		t.add_animation_classes();
+		
+		/* 2.1.6 */
+		jQuery('select[name="element-transition"]').change(function() {
+			
+			t.check_no_transition(this.options[this.selectedIndex].value);
+			
+		});
+		
+		t.check_no_transition = function(cur_val) {
 
-
+			var display = cur_val !== 'none' ? 'show' : 'hide';
+			jQuery('.eg-hideable-no-transition')[display]();
+			
+		}
+		
+		/* 2.1.6 */
+		/*
 		jQuery('select[name="element-transition-type"]').change(function() {
 			t.set_transition_type_visibility(jQuery('select[name="element-transition-type"] option:selected').val());
 		});
@@ -2518,6 +2737,7 @@ var GridEditorEssentials = new function(){
 				break;
 			}
 		}
+		*/
 
 		jQuery('select[name="element-align"]').change(function(){
 			switch(jQuery('select[name="element-align"] option:selected').val()){
@@ -2627,47 +2847,57 @@ var GridEditorEssentials = new function(){
 		jQuery('#settings-dz-elements-wrapper').tabs();
 		var chtimer;
 
-		var options = {
+		var options1 = {
 			  color:true,
 			  change:function(event,ui) {
 			  	  clearTimeout(chtimer);
 				  chtimer = setTimeout(function() {
 				  	t.setting_has_changed();
 				  },10);
-			  }
+			  },
+			  wrapper:'<span class="rev-colorpickerspan"></span>'  
 		}
+		
+		/* 2.1.6 options modified to be compatible with both */
+		var clrPicker = typeof RevColor !== 'undefined' ? 'tpColorPicker' : 'wpColorPicker';
+		
+		jQuery('#element-background-color')[clrPicker](options1);
+		jQuery('#element-color')[clrPicker](options1);
+		jQuery('#element-border-color')[clrPicker](options1);
+		jQuery('#element-shadow-color')[clrPicker](options1);
+		jQuery('#element-background-color-hover')[clrPicker](options1);
+		jQuery('#element-color-hover')[clrPicker](options1);
+		jQuery('#element-border-color-hover')[clrPicker](options1);
+		jQuery('#element-shadow-color-hover')[clrPicker](options1);
 
-		jQuery('#element-background-color').wpColorPicker(options);
-		jQuery('#element-color').wpColorPicker(options);
-		jQuery('#element-border-color').wpColorPicker(options);
-		jQuery('#element-shadow-color').wpColorPicker(options);
-		jQuery('#element-background-color-hover').wpColorPicker(options);
-		jQuery('#element-color-hover').wpColorPicker(options);
-		jQuery('#element-border-color-hover').wpColorPicker(options);
-		jQuery('#element-shadow-color-hover').wpColorPicker(options);
-
-		var options = {
+		var options2 = {
 			  color:true,
 			  change:function(event,ui) {
 			  	  clearTimeout(chtimer);
 				  chtimer = setTimeout(function() {
 				  	t.container_setting_has_changed();
 				  },10);
-			  }
+			  },
+			  wrapper:'<span class="rev-colorpickerspan"></span>'  
 		}
+		
+		var options3 = jQuery.extend(true, {}, options2);
+		options3.wrapper = '<span class="rev-colorpickerspan cover-animation-color-wrap"></span>';
 
-		jQuery('#full-border-color').wpColorPicker(options);
-		jQuery('#full-bg-color').wpColorPicker(options);
-		jQuery('#content-border-color').wpColorPicker(options);
-		jQuery('#content-shadow-color').wpColorPicker(options);
-		jQuery('#content-bg-color').wpColorPicker(options);
+		jQuery('#full-border-color')[clrPicker](options2);
+		jQuery('#full-bg-color')[clrPicker](options2);
+		jQuery('#content-border-color')[clrPicker](options2);
+		jQuery('#content-shadow-color')[clrPicker](options2);
+		jQuery('#content-bg-color')[clrPicker](options2);
+		jQuery('.cover-animation-color')[clrPicker](options3);
 
-		jQuery('#container-background-color').wpColorPicker({
+		jQuery('#container-background-color')[clrPicker]({
 			color:true,
 			change: function(event, ui) {
-				jQuery(this).val(ui.color.toString());
+				if(typeof RevColor === 'undefined') jQuery(this).val(ui.color.toString());
 				t.change_bg_color();
-			}
+			},
+			wrapper:'<span class="rev-colorpickerspan"></span>'  
 		});
 
 		jQuery('#container-background-color, input[name="container-background-color-into"]').change(function(){
@@ -2729,23 +2959,28 @@ var GridEditorEssentials = new function(){
 			jQuery('input[name="full-padding[]"]').each(function(){
 			   padding += jQuery(this).val()+'px ';
 			});
-
+			
 			me.css('borderTopWidth', border[0]+'px');
 			me.css('borderRightWidth', border[1]+'px');
 			me.css('borderBottomWidth', border[2]+'px');
 			me.css('borderLeftWidth', border[3]+'px');
-
-			me.css('borderTopLeftRadius', radius[0]+'px');
-			me.css('borderTopRightRadius', radius[1]+'px');
-			me.css('borderBottomRightRadius', radius[2]+'px');
-			me.css('borderBottomLeftRadius', radius[3]+'px');
+			
+			var borderType = jQuery('select[name="full-border-radius-type"] option:selected').val();
+			me.css('borderTopLeftRadius', radius[0]+borderType);
+			me.css('borderTopRightRadius', radius[1]+borderType);
+			me.css('borderBottomRightRadius', radius[2]+borderType);
+			me.css('borderBottomLeftRadius', radius[3]+borderType);
 
 			me.css('padding', padding);
-
-			me.css('backgroundColor', jQuery('#full-bg-color').val());
-
-			me.css('borderColor', jQuery('#full-border-color').val());
+			
+			/* 2.1.6 */
+			var fullBgColor = jQuery('#full-bg-color'),
+				fullBorderColor = jQuery('#full-border-color');
+				
+			me.css('background', fullBgColor.attr('data-color') || fullBgColor.val());
+			me.css('borderColor', fullBorderColor.attr('data-color') || fullBorderColor.val());
 			me.css('borderStyle', jQuery('select[name="full-border-style"] option:selected').val());
+			
 		}
 
 		/**
@@ -2756,24 +2991,34 @@ var GridEditorEssentials = new function(){
 			var cb = jQuery('#eg-dz-hover-wrap'); //both
 			var cc = jQuery('#skin-dz-m-wrap'); //content
 			var cm = jQuery('#skin-dz-wrapper'); //media
+			var cv = jQuery('.eg-element-cover'); // cover
 			var shadow = '';
 
 			//reset on all elements
 			cb.css('-moz-box-shadow', '').css('-webkit-box-shadow', '').css('box-shadow', '');
 			cc.css('-moz-box-shadow', '').css('-webkit-box-shadow', '').css('box-shadow', '');
 			cm.css('-moz-box-shadow', '').css('-webkit-box-shadow', '').css('box-shadow', '');
-
+			cv.css('-moz-box-shadow', '').css('-webkit-box-shadow', '').css('box-shadow', '');
+			
 			if(set_on == 'none') return true;
-
+			var coverType = jQuery('select[name="cover-type"]').val();
+			
+			if(coverType === 'full') cv = cv.filter(function() {return jQuery(this).parent().attr('id') === 'skin-dz-c-wrap';});
+			if(set_on === 'cover' || jQuery('#content-shadow-inset:checked').length) shadow += 'inset ';
+			
 			jQuery('input[name="content-box-shadow[]"]').each(function(){
 			   shadow += jQuery(this).val()+'px ';
 			});
-
-			var shadow_color = jQuery('#content-shadow-color').val();
+			
+			var shadow_color = jQuery('#content-shadow-color');
+			shadow_color = shadow_color.attr('data-color') || shadow_color.val();
+			
+			/* 2.1.6 */
+			/*
 			var shadow_transparency = jQuery('input[name="content-shadow-alpha"]').val();
-
 			shadow_color = AdminEssentials.hex_to_rgba(shadow_color, shadow_transparency, true);
-
+			*/
+			
 			shadow += shadow_color;
 
 			if(set_on == 'both'){
@@ -2782,6 +3027,8 @@ var GridEditorEssentials = new function(){
 				cc.css('-moz-box-shadow', shadow).css('-webkit-box-shadow', shadow).css('box-shadow', shadow);
 			}else if(set_on == 'media'){
 				cm.css('-moz-box-shadow', shadow).css('-webkit-box-shadow', shadow).css('box-shadow', shadow);
+			}else if(set_on == 'cover'){
+				cv.css('-moz-box-shadow', shadow).css('-webkit-box-shadow', shadow).css('box-shadow', shadow);
 			}
 		}
 
@@ -2810,18 +3057,22 @@ var GridEditorEssentials = new function(){
 			me.css('borderRightWidth', border[1]+'px');
 			me.css('borderBottomWidth', border[2]+'px');
 			me.css('borderLeftWidth', border[3]+'px');
-
-			me.css('borderTopLeftRadius', radius[0]+'px');
-			me.css('borderTopRightRadius', radius[1]+'px');
-			me.css('borderBottomRightRadius', radius[2]+'px');
-			me.css('borderBottomLeftRadius', radius[3]+'px');
-
+			
+			var borderType = jQuery('select[name="content-border-radius-type"] option:selected').val();		
+			me.css('borderTopLeftRadius', radius[0]+borderType);
+			me.css('borderTopRightRadius', radius[1]+borderType);
+			me.css('borderBottomRightRadius', radius[2]+borderType);
+			me.css('borderBottomLeftRadius', radius[3]+borderType);
 			me.css('padding', padding);
-
-			me.css('backgroundColor', jQuery('#content-bg-color').val());
-
-			me.css('borderColor', jQuery('#content-border-color').val());
+			
+			/* 2.1.6 */
+			var contentBgColor = jQuery('#content-bg-color'),
+				contentBorderColor = jQuery('#content-border-color');
+			
+			me.css('background', contentBgColor.attr('data-color') || contentBgColor.val());
+			me.css('borderColor', contentBorderColor.attr('data-color') || contentBorderColor.val());
 			me.css('borderStyle', jQuery('select[name="content-border-style"] option:selected').val());
+			
 		}
 
 		jQuery('body').on('click', '#element-delete-button', function(){
@@ -2840,6 +3091,7 @@ var GridEditorEssentials = new function(){
 			jQuery('.esg-cat-tag-settings').hide();
 			jQuery('#eg-source-functonality-wrap').hide().find('.select_fake').hide();
 			jQuery('#eg-source-meta-wrap').hide();
+			jQuery("#eg-source-taxonomy-wrap").hide();
 
 			switch(jQuery(this).val()){
 				case 'event':
@@ -2889,6 +3141,10 @@ var GridEditorEssentials = new function(){
 					else {
 						jQuery('#eg-source-limit-wrap').hide();
 					}
+
+					if(val == "taxonomy" ){
+						jQuery("#eg-source-taxonomy-wrap").show();
+					}
 					
 					jQuery('#eg-source-functonality-wrap').show();
 					jQuery('select[name="element-source-post"]').show().siblings('.select_fake').show();
@@ -2900,7 +3156,7 @@ var GridEditorEssentials = new function(){
 
 		jQuery('select[name="element-source-post"]').change(function(){
 			var source_val = jQuery(this).val();
-			if(source_val == 'cat_list' || source_val == 'tag_list'){
+			if(source_val == 'cat_list' || source_val == 'tag_list' || source_val == 'taxonomy'){
 				jQuery('.esg-cat-tag-settings').show();
 				jQuery('#eg-source-limit-wrap').hide();
 				jQuery('#eg-source-functonality-wrap').show().find('.select_fake').show();
@@ -2909,11 +3165,19 @@ var GridEditorEssentials = new function(){
 				jQuery('#eg-source-limit-wrap').show();
 				jQuery('#eg-source-functonality-wrap').hide().find('.select_fake').hide();
 			}
-			if(source_val == 'meta')
+			if(source_val == 'meta'){
 				jQuery('#eg-source-meta-wrap').show();
-			else
+			}
+			else{
 				jQuery('#eg-source-meta-wrap').hide();
+			}
 
+			if(source_val == 'taxonomy'){
+				jQuery("#eg-source-taxonomy-wrap").show();
+			}
+			else {
+				jQuery("#eg-source-taxonomy-wrap").hide();	
+			}
 		});
 
 		jQuery('select[name="element-source-woocommerce"]').change(function(){
@@ -2934,6 +3198,9 @@ var GridEditorEssentials = new function(){
 			jQuery('#eg-element-post-javascript-wrap').hide();
 			jQuery('#eg-element-link-details-wrap').show();
 			jQuery('#eg-element-facebook-wrap').hide();
+			jQuery('#eg-element-gplus-wrap').hide();
+			jQuery('#eg-element-pinterest-wrap').hide();
+			jQuery('#eg-element-twitter-wrap').hide();
 
 			switch(jQuery(this).val()){
 				case 'post':
@@ -2952,9 +3219,26 @@ var GridEditorEssentials = new function(){
 				case 'sharefacebook':
 					jQuery('#eg-element-link-details-wrap').hide();
 					jQuery('#eg-element-facebook-wrap').show();
+					if(jQuery('select[name="element-facebook-sharing-link"]').val()=="custom") jQuery(".eg-element-facebook_link_custom").show();
+					else jQuery(".eg-element-facebook_link_custom").hide();
+					break;
+				case 'sharegplus':
+					jQuery('#eg-element-link-details-wrap').hide();
+					jQuery('#eg-element-gplus-wrap').show();
+					if(jQuery('select[name="element-gplus-sharing-link"]').val()=="custom") jQuery(".eg-element-gplus_link_custom").show();
+					else jQuery(".eg-element-gplus_link_custom").hide();
+					break;
+				case 'sharepinterest':
+					jQuery('#eg-element-link-details-wrap').hide();
+					jQuery('#eg-element-pinterest-wrap').show();
+					if(jQuery('select[name="element-pinterest-sharing-link"]').val()=="custom") jQuery(".eg-element-pinterest_link_custom").show();
+					else jQuery(".eg-element-pinterest_link_custom").hide();
 					break;
 				case 'sharetwitter':
 					jQuery('#eg-element-link-details-wrap').hide();
+					jQuery('#eg-element-twitter-wrap').show();
+					if(jQuery('select[name="element-twitter-sharing-link"]').val()=="custom") jQuery(".eg-element-twitter_link_custom").show();
+					else jQuery(".eg-element-twitter_link_custom").hide();
 					break;
 				default:
 					break;
@@ -3156,7 +3440,7 @@ var GridEditorEssentials = new function(){
 							{ width:992,amount:6},
 							{ width:1200,amount:7},
 							{ width:1400,amount:7}];
-
+		
 		essapi = jQuery('#eg-elements-container-grid').tpessential({
 
 				layout:"even",
@@ -3164,6 +3448,9 @@ var GridEditorEssentials = new function(){
 				column:5,
 				space:5,
 				aspectratio:"4:3",
+				startAnimation:"none",
+				startAnimationSpeed: 0,
+				startAnimationDelay: 0,
 				pageAnimation:"fade",
 				overflowoffset:20,
 				animSpeed:500,
@@ -3237,6 +3524,100 @@ var GridEditorEssentials = new function(){
 
 			t.change_bg_color();
 		}
+		
+		/* 2.1.6 */
+		jQuery('#element-hover-image').on('change', function() {
+			
+			var display = this.checked ? 'block' : 'none';
+				hov = document.getElementById('eg-hover-img-animation');
+				
+			if(hov) hov.style.display = display;
+			
+		});
+		
+		jQuery(document).on('keydown', function(event) {
+			 if (event.ctrlKey || event.metaKey) {
+				switch (String.fromCharCode(event.which).toLowerCase()) {
+					case 's':
+						var saver = jQuery('#eg-global-change');
+						if(saver.length) {
+							event.preventDefault();
+							saver.click();
+						}
+					break;
+				 }
+			}
+		});
+		
+		/* 2.2.6 */
+		jQuery('.cover-animation-select').change(function() {
+			
+			var level = this.name.replace('cover-animation-', ''),
+				method = this.value.search(/line|spiral|circle/) === -1 ? 'addClass' : 'removeClass';
+			
+			jQuery('#cover-animation-color-' + level).closest('.cover-animation-color-wrap')[method]('cover-animation-color-hide');
+			
+		}).change();
+		
+		/* 2.2.6 */
+		jQuery('#cover-type').change(function() {
+			
+			jQuery('#all-shadow-used').change();
+			
+		});
+		
+		/* 2.2.6 */
+		jQuery('#all-shadow-used').change(function() {
+			
+			var isCover = this.value === 'cover',
+				method = !isCover ? 'removeClass' : jQuery('#cover-type').val() === 'full' ? 'removeClass' : 'addClass';
+				
+			jQuery('#content-box-shadow-hover')[method]('esg-hide-option');
+			
+			method = !isCover ? 'removeClass' : 'addClass';
+			jQuery('#content-box-shadow-inset')[method]('esg-hide-option');
+			
+			
+		}).change();
+		
+		/* 2.2.6 */
+		function onLetterChange() {
+			
+			letterSpacings.off('.letterspacing');
+			var val = this.value.replace('px', '');
+			
+			if(!isNaN(val)) {
+				
+				this.value = val + 'px';
+				jQuery(this).change();
+				
+			}
+			else {
+				
+				if(val !== 'normal' && val !== 'inherit' && val !== 'initial') {
+				
+					this.value = 'normal';
+					jQuery(this).change();
+				
+				}
+			
+			}
+			
+			letterSpacings.on('change.letterspacing', onLetterChange);
+			
+		}
+		
+		/* 2.2.6 */
+		var letterSpacings = jQuery('.letter-spacing').on('change.letterspacing', onLetterChange);
+		
+		/* 2.2.6 */
+		jQuery('#media-animation').change(function() {
+			
+			var method = this.value.search('blur') === -1 ? 'addClass' : 'removeClass';
+			jQuery('#media-animation-blur')[method]('esg-hide-option');
+			
+		}).change();
+		
 	}
 
 	/*
@@ -3298,8 +3679,9 @@ var GridEditorEssentials = new function(){
 
 		var sliders = [
 			{name: 'x-ratio', value: -1, min: 1, max: 16},
-			{name: 'y-ratio', value: -1, min: 1, max: 16},
-			{name: 'container-background-color-opacity', value: 70, min: 0, max: 100}
+			{name: 'y-ratio', value: -1, min: 1, max: 16}
+			/* 2.1.6 */
+			/* {name: 'container-background-color-opacity', value: 70, min: 0, max: 100} */
 			];
 
 		for(var key in sliders){
@@ -3319,9 +3701,12 @@ var GridEditorEssentials = new function(){
 						t.resize_item_skin_preview();
 						//AdminEssentials.eg3dtakeCare(0);
 					}
+					/* 2.1.6 */
+					/*
 					if(jQuery(this).attr('id') == 'element-container-background-color-opacity'){
 						t.change_bg_color();
 					}
+					*/
 				}
 
 			});
@@ -3375,14 +3760,15 @@ var GridEditorEssentials = new function(){
 		jQuery('#content-shadow-alpha .eg-pre-slider').css({width:neww});
 
 
-		var sliders = [
+		var sliders = [/*
 			{name: 'cover-animation-delay-top', value: 0, min: 0, max: 60},
 			{name: 'cover-animation-delay-center', value: 0, min: 0, max: 60},
 			{name: 'cover-animation-delay-bottom', value: 0, min: 0, max: 60},
 			{name: 'cover-group-animation-delay', value: 0, min: 0, max: 60},
-			{name: 'media-animation-delay', value: 0, min: 0, max: 60}
-
-			];
+			{name: 'media-animation-delay', value: 0, min: 0, max: 60},
+			{name: 'hover-image-animation-delay', value: 0, min: 0, max: 60}
+			
+		*/];
 
 		for(var key in sliders){
 			sliders[key].value = jQuery('input[name="'+sliders[key].name+'"]').val();

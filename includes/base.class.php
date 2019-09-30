@@ -33,7 +33,7 @@ class Essential_Grid_Base {
 	 */
 	public static function getVar($arr,$key,$default = "", $type=""){
 		$val = $default;
-		if(isset($arr[$key])) $val = $arr[$key];
+		if(isset($arr[$key]) && !empty($arr[$key])) $val = $arr[$key];
 
 		switch($type){
 			case 'i': //int
@@ -147,10 +147,57 @@ class Essential_Grid_Base {
 			$intro = mb_substr($text, 0, $limit, 'utf-8');
 			if(strlen($text) > $limit) $intro .= '...';
 		}
+		elseif($type == 'sentence'){
+			$text = strip_tags($text);
+			//$intro = mb_substr($text, 0, $limit, 'utf-8');
+			//if(strlen($text) > $limit) $intro .= '...';
+			$intro = Essential_Grid_Base::bac_variable_length_excerpt($text,$limit);
+		}
 
 		$intro = preg_replace('`\[[^\]]*\]`','',$intro);
 
 		return apply_filters('essgrid_get_text_intro', $intro, $text, $limit, $type);
+	}
+
+	public static function bac_variable_length_excerpt($text, $length=1, $finish_sentence=1){
+	       
+	     $tokens = array();
+	     $out = '';
+	     $word = 0;
+	   
+	    //Divide the string into tokens; HTML tags, or words, followed by any whitespace.
+	    $regex = '/(<[^>]+>|[^<>\s]+)\s*/u';
+	    preg_match_all($regex, $text, $tokens);
+	    foreach ($tokens[0] as $t){ 
+	        //Parse each token
+	        if ($word >= $length && !$finish_sentence){ 
+	            //Limit reached
+	            break;
+	        }
+	        if ($t[0] != '<'){ 
+	            //Token is not a tag. 
+	            //Regular expression that checks for the end of the sentence: '.', '?' or '!'
+	            $regex1 = '/[\?\.\!]\s*$/uS';
+	            if ($word >= $length && $finish_sentence && preg_match($regex1, $t) == 1){ 
+	                //Limit reached, continue until ? . or ! occur to reach the end of the sentence.
+	                $out .= trim($t);
+	                break;
+	            }   
+	            $word++;
+	        }
+	        //Append what's left of the token.
+	        $out .= $t;     
+	    }
+	    //Add the excerpt ending as a link.
+	    $excerpt_end = '';
+	     
+	    //Add the excerpt ending as a non-linked ellipsis with brackets.
+	    //$excerpt_end = ' [&hellip;]';
+	     
+	    //Append the excerpt ending to the token. 
+	    $out .= $excerpt_end;
+	     
+	    return trim(force_balance_tags($out)); 
 	}
 
 
@@ -210,7 +257,8 @@ class Essential_Grid_Base {
 			'toaster' => __('Toaster', EG_TEXTDOMAIN),
 			'walden' => __('Walden', EG_TEXTDOMAIN),
 			'willow' => __('Willow', EG_TEXTDOMAIN),
-			'xpro2' => __('X-pro II', EG_TEXTDOMAIN)		
+			'xpro2' => __('X-pro II', EG_TEXTDOMAIN),
+			'grayscale' => __('Grayscale', EG_TEXTDOMAIN)			
 		);
 		
 		return apply_filters('essgrid_get_all_media_filters',$media_filter_sources);
@@ -261,7 +309,7 @@ class Essential_Grid_Base {
 			'single'   => __('Single', EG_TEXTDOMAIN),
 			'bulk'   => __('Bulk', EG_TEXTDOMAIN),
 			'choose_images'   => __('Choose Images', EG_TEXTDOMAIN),
-			'import_demo_post_heavy_loading'   => __('The following demo data will be imported: Grids, Custom Meta, PunchFonts. This can take a while, please do not leave the site until the import is finished', EG_TEXTDOMAIN),
+			'import_demo_post_heavy_loading'   => __('The following demo data will be imported: Ess. Grid Posts, Custom Meta, PunchFonts. This can take a while, please do not leave the site until the import is finished', EG_TEXTDOMAIN),
 			'import_demo_grids_210'   => __('The following demo data will be imported: Grids of the 2.1.0 update. This can take a while, please do not leave the site until the import is finished', EG_TEXTDOMAIN),
 			'save_settings'   => __('Save Settings', EG_TEXTDOMAIN),
 			'add_element'   => __('Add Element', EG_TEXTDOMAIN),
@@ -311,7 +359,7 @@ class Essential_Grid_Base {
 			'selectyouritem' => __('Select Your Item', EG_TEXTDOMAIN),
 			'add_at_least_one_element' => __('Please add at least one element in Custom Grid mode', EG_TEXTDOMAIN),
 			'essential_grid_shortcode_creator' => __('Essential Grid Shortcode Creator', EG_TEXTDOMAIN),
-			'shortcode_generator' => __('Shortcode Generator', EG_TEXTDOMAIN),
+//			'shortcode_generator' => __('Shortcode Generator', EG_TEXTDOMAIN),
 			'shortcode_could_not_be_correctly_parsed' => __('Shortcode could not be parsed.', EG_TEXTDOMAIN),
 			'please_add_at_least_one_layer' => __('Please add at least one Layer.', EG_TEXTDOMAIN),
 			'shortcode_parsing_successfull' => __('Shortcode parsing successfull. Items can be found in step 3', EG_TEXTDOMAIN),
@@ -356,6 +404,56 @@ class Essential_Grid_Base {
 		return apply_filters('essgrid_get_grid_animations', $animations);
 
 	}
+	
+	/**
+	 * get grid animations
+	 */
+	public static function get_start_animations(){
+
+		$animations = array(
+			'none' =>  __('None', EG_TEXTDOMAIN),
+			'reveal' =>  __('Reveal', EG_TEXTDOMAIN),
+			'fade' =>  __('Fade', EG_TEXTDOMAIN),
+			'scale' =>  __('Scale', EG_TEXTDOMAIN),
+			'slideup' => __('Slide Up (short)', EG_TEXTDOMAIN),
+			'covergrowup' =>  __('Slide Up (long)', EG_TEXTDOMAIN),
+			'slideleft' => __('Slide Left', EG_TEXTDOMAIN),
+			'slidedown' => __('Slide Down', EG_TEXTDOMAIN),
+			'flipvertical' => __('Flip Vertical', EG_TEXTDOMAIN),
+			'fliphorizontal' => __('Flip Horizontal', EG_TEXTDOMAIN),
+			'flipup' => __('Flip Up', EG_TEXTDOMAIN),
+			'flipdown' => __('Flip Down', EG_TEXTDOMAIN),
+			'flipright' => __('Flip Right', EG_TEXTDOMAIN),
+			'flipleft' => __('Flip Left', EG_TEXTDOMAIN),
+			'skewleft' => __('Skew', EG_TEXTDOMAIN),
+			'flipleft' => __('Flip Left', EG_TEXTDOMAIN),
+			'zoomin' => __('Rotate Zoom', EG_TEXTDOMAIN),
+			'flyleft' => __('Fly Left', EG_TEXTDOMAIN),
+			'flyright' => __('Fly Right', EG_TEXTDOMAIN)
+		);
+
+		return apply_filters('essgrid_get_grid_start_animations', $animations);
+
+	}
+	
+	/**
+	 * get grid item animations, since 2.1.6.2
+	 */
+	public static function get_grid_item_animations(){
+
+		$animations = array(
+			'none' =>  __('None', EG_TEXTDOMAIN),
+			'zoomin' => __('Zoom In', EG_TEXTDOMAIN),
+			'zoomout' => __('Zoom Out', EG_TEXTDOMAIN),
+			'fade' => __('Fade Out', EG_TEXTDOMAIN),
+			'blur' => __('Blur', EG_TEXTDOMAIN),
+			'shift' => __('Shift', EG_TEXTDOMAIN),
+			'rotate' => __('Rotate', EG_TEXTDOMAIN)
+		);
+
+		return apply_filters('essgrid_get_grid_item_animations', $animations);
+
+	}
 
 
 	/**
@@ -394,7 +492,14 @@ class Essential_Grid_Base {
 				'zoomfront' => __('Zoom from Front', EG_TEXTDOMAIN),
 				'flyleft' => __('Fly Left', EG_TEXTDOMAIN),
 				'flyright' => __('Fly Right', EG_TEXTDOMAIN),
-				'covergrowup' => __('Cover Grow', EG_TEXTDOMAIN)
+				'covergrowup' => __('Cover Grow', EG_TEXTDOMAIN),
+				'collapsevertical' => __('Collapse Vertical', EG_TEXTDOMAIN),
+				'collapsehorizontal' => __('Collapse Horizontal', EG_TEXTDOMAIN),
+				'linediagonal' => __('Line Diagonal', EG_TEXTDOMAIN),
+				'linehorizontal' => __('Line Horizontal', EG_TEXTDOMAIN),
+				'linevertical' => __('Line Vertical', EG_TEXTDOMAIN),
+				'spiralzoom' => __('Spiral Zoom', EG_TEXTDOMAIN),
+				'circlezoom' => __('Circle Zoom', EG_TEXTDOMAIN)
 			);
 		}else{
 			$animations = array(
@@ -423,7 +528,6 @@ class Essential_Grid_Base {
 				'slideupout' => __('Slide Up Out', EG_TEXTDOMAIN),
 				'slidedown' => __('Slide Down In', EG_TEXTDOMAIN),
 				'slidedownout' => __('Slide Down Out', EG_TEXTDOMAIN),
-
 				'slideshortleft' => __('Slide Short Left In', EG_TEXTDOMAIN),
 				'slideshortleftout' => __('Slide Short Left Out', EG_TEXTDOMAIN),
 				'slideshortright' => __('Slide Short Right In', EG_TEXTDOMAIN),
@@ -432,7 +536,6 @@ class Essential_Grid_Base {
 				'slideshortupout' => __('Slide Short Up Out', EG_TEXTDOMAIN),
 				'slideshortdown' => __('Slide Short Down In', EG_TEXTDOMAIN),
 				'slideshortdownout' => __('Slide Short Down Out', EG_TEXTDOMAIN),
-
 				'skewleft' => __('Skew Left In', EG_TEXTDOMAIN),
 				'skewleftout' => __('Skew Left Out', EG_TEXTDOMAIN),
 				'skewright' => __('Skew Right In', EG_TEXTDOMAIN),
@@ -454,7 +557,14 @@ class Essential_Grid_Base {
 				'flyright' => __('Fly Right In', EG_TEXTDOMAIN),
 				'flyrightout' => __('Fly Right Out', EG_TEXTDOMAIN),
 				'covergrowup' => __('Cover Grow In', EG_TEXTDOMAIN),
-				'covergrowupout' => __('Cover Grow Out', EG_TEXTDOMAIN)
+				'covergrowupout' => __('Cover Grow Out', EG_TEXTDOMAIN),
+				'collapsevertical' => __('Collapse Vertical', EG_TEXTDOMAIN),
+				'collapsehorizontal' => __('Collapse Horizontal', EG_TEXTDOMAIN),
+				'linediagonal' => __('Line Diagonal', EG_TEXTDOMAIN),
+				'linehorizontal' => __('Line Horizontal', EG_TEXTDOMAIN),
+				'linevertical' => __('Line Vertical', EG_TEXTDOMAIN),
+				'spiralzoom' => __('Spiral Zoom', EG_TEXTDOMAIN),
+				'circlezoom' => __('Circle Zoom', EG_TEXTDOMAIN)
 			);
 		}
 
@@ -484,7 +594,13 @@ class Essential_Grid_Base {
 			'zoomouttocorner' => __('Zoom Out To Side', EG_TEXTDOMAIN),
 			'zoomintocorner' => __('Zoom In To Side', EG_TEXTDOMAIN),
 			'zoomtodefault' => __('Zoom To Default', EG_TEXTDOMAIN),
+			'zoomdefaultblur' => __('Zoom Default Blur', EG_TEXTDOMAIN),
 			'mediazoom' => __('Zoom', EG_TEXTDOMAIN),
+			'blur' => __('Blur', EG_TEXTDOMAIN),
+			'fadeblur' => __('Fade Blur', EG_TEXTDOMAIN),
+			'grayscalein' => __('GrayScale In', EG_TEXTDOMAIN),
+			'grayscaleout' => __('GrayScale Out', EG_TEXTDOMAIN),
+			'zoomblur' => __('Zoom Blur', EG_TEXTDOMAIN),
             'zoombackout' => __('Zoom to Back', EG_TEXTDOMAIN),
             'zoomfrontout' => __('Zoom to Front', EG_TEXTDOMAIN),
             'zoomandrotate' => __('Zoom And Rotate', EG_TEXTDOMAIN)
@@ -953,8 +1069,10 @@ class Essential_Grid_Base {
 			'posts_per_page'=>$numPosts,
 			'showposts'=>$numPosts,
 			'post_status'=>'publish',
-			'post_type'=>$postTypes
+			'post_type'=>$postTypes,
+			//'fields' => 'ids,post_type'
 		);
+		$enable_caching = false;
 		
 		if(strpos($sortBy, 'eg-') === 0){
 			$meta = new Essential_Grid_Meta();
@@ -997,7 +1115,12 @@ class Essential_Grid_Base {
 		}else{
 			$query["orderby"] = $sortBy;
 		}
-		
+
+		if($query["orderby"] == "likespost"){
+			$query["orderby"] = "meta_value";
+			$query["meta_key"] = "eg_votes_count";
+		}
+
 		//get taxonomies array
 		$arrTax = array();
 		if(!empty($taxonomies)){
@@ -1068,7 +1191,6 @@ class Essential_Grid_Base {
 			$lang_code = Essential_Grid_Wpml::get_current_lang_code();
 		}
 		
-		
 		$objQuery = false;
 		
 		$query_type = get_option('tp_eg_query_type', 'wp_query');
@@ -1076,8 +1198,8 @@ class Essential_Grid_Base {
 		if($objQuery === false){
 		
 			echo '<!-- CACHE CREATED FOR: '.$grid_id.' -->';
-			
-			$query = apply_filters('essgrid_get_posts', $query, $grid_id);
+
+			$query = apply_filters( 'essgrid_get_posts', $query, $grid_id );
 			
 			if($query_type == 'wp_query'){
 				$wp_query = new WP_Query();
@@ -1701,6 +1823,55 @@ class Essential_Grid_Base {
 		return false;
 	}
 
+	/**
+	 * get post taxonomies html list
+	 */
+	public static function get_tax_html_list($postID, $taxonomy, $seperator = ',', $do_type = 'link', $taxmax = false){
+		
+		if(empty($seperator)) $seperator  ='&nbsp;';
+		
+		$terms = get_the_terms($postID , $taxonomy);
+
+		$taxList = array();
+
+		if(!empty($terms)) {
+
+			foreach ($terms as $term) {
+						$taxList[] = '<a href="'.get_term_link($term->term_id).'" style="display:inline">'.$term->name.'</a>';
+					}
+		
+			if($taxmax) {
+				$taxs = array_slice($taxList, 0, $taxmax, true);
+				//$taxList = implode($seperator, $taxs);
+			}
+			
+			switch($do_type){
+				case 'none':
+					$taxList = implode($seperator, $taxList);
+					$taxList = strip_tags($taxList);
+				break;
+				case 'filter':
+					$text = '';
+					if(!empty($taxList)){
+						foreach($taxList as $key => $tax){
+							if($key > 0) $text .= $seperator;
+							$tax = strip_tags($tax);
+							$text .= '<a href="#" class="eg-triggerfilter" data-filter="filter-'.$tax.'">'.sanitize_title($tax).'</a>';
+						}
+					}
+					$taxList = $text;
+				break;
+				case 'link':
+					$taxList = implode($seperator, $taxList);
+				break;
+				
+			}
+			
+		}
+
+		return apply_filters('essgrid_get_tax_html_list', $taxList, $postID, $seperator, $do_type);
+	}
+
 
 	/**
 	 * get post tags html list
@@ -1719,7 +1890,7 @@ class Essential_Grid_Base {
 			if($tagmax) {
 				$tags = explode($seperator, $tagList);
 				$tags = array_slice($tags, 0, $tagmax, true);
-				$tagList = implode($tags, $seperator);
+				$tagList = implode($seperator, $tags);
 			}
 			
 			switch($do_type){
@@ -1746,7 +1917,7 @@ class Essential_Grid_Base {
 			}
 			
 		}
-		
+		// var_dump($tagList);
 		return apply_filters('essgrid_get_tags_html_list', $tagList, $postID, $seperator, $do_type);
 	}
 
@@ -1756,7 +1927,7 @@ class Essential_Grid_Base {
 	 */
 	public function text_has_certain_tag($string, $tag){
 		$r = apply_filters('essgrid_text_has_certain_tag', array('string' => $string, 'tag' => $tag));
-		
+		if(!is_array($r) || !isset($r['string']) || is_array($r['string'])) return "";
 		return preg_match("/<" . $r['tag'] . "[^<]+>/", $r['string'], $m) != 0;
 	}
 
@@ -1890,10 +2061,10 @@ class Essential_Grid_Base {
 			$ret['alternate-image'] = ($alt_img !== false) ? $alt_img['0'] : '';
 			$ret['alternate-image-full'] = ($alt_img_full !== false) ? $alt_img_full['0'] : '';
 			$ret['alternate-image-alt'] = ($alt_img_text !== '') ? $alt_img_text : '';
-			$ret['alternate-image-width'] = ($alt_img !== false) ? $alt_img['0'] : '';
-			$ret['alternate-image-full-width'] = ($alt_img_full !== false) ? $alt_img_full['0'] : '';
-			$ret['alternate-image-height'] = ($alt_img !== false) ? $alt_img['0'] : '';
-			$ret['alternate-image-full-height'] = ($alt_img_full !== false) ? $alt_img_full['0'] : '';
+			$ret['alternate-image-width'] = ($alt_img !== false) ? $alt_img['1'] : '';
+			$ret['alternate-image-full-width'] = ($alt_img_full !== false) ? $alt_img_full['1'] : '';
+			$ret['alternate-image-height'] = ($alt_img !== false) ? $alt_img['2'] : '';
+			$ret['alternate-image-full-height'] = ($alt_img_full !== false) ? $alt_img_full['2'] : '';
 		}else{
 			$ret['alternate-image'] = '';
 		}
@@ -1924,6 +2095,9 @@ class Essential_Grid_Base {
 			$ret['content-html5']['webm'] = '';
 		}
 		
+		$ret['revslider'] = isset($values['eg_sources_revslider']) ? esc_attr($values['eg_sources_revslider'][0]) : '';
+		$ret['essgrid'] = isset($values['eg_sources_essgrid']) ? esc_attr($values['eg_sources_essgrid'][0]) : '';
+		
 		return apply_filters('essgrid_modify_media_sources', $ret, $post_id);
 
 	}
@@ -1933,17 +2107,20 @@ class Essential_Grid_Base {
 	 * return all media data of custom element that we may need
 	 */
 	public function get_custom_media_source_data($values, $image_type){
+		
 		$ret = array();
 		
 		$ret['youtube'] = isset($values['custom-youtube']) ? esc_attr($values['custom-youtube']) : '';
 		$ret['vimeo'] = isset($values['custom-vimeo']) ? esc_attr($values['custom-vimeo']) : '';
-		$ret['wistia'] = isset($values['custom-wistia']) ? esc_attr($values['custom-wistia']) : '';
+		$ret['wistia'] = isset($values['wistia']) ? esc_attr($values['wistia']) : '';
 		
-		if(isset($values['custom-image']) || isset($values['custom-image-url'])){
+		if(isset($values['custom-image']) || isset($values['custom-image-url'])) {
+			
 			if(isset($values['custom-image']) && $values['custom-image'] !== ''){
 				$alt_img = wp_get_attachment_image_src(esc_attr($values['custom-image']), $image_type);
 				$alt_img_full = wp_get_attachment_image_src(esc_attr($values['custom-image']), 'full');
 				$alt_text = get_post_meta(esc_attr($values['custom-image']), '_wp_attachment_image_alt', true);
+				
 			}
 			else {
 				$alt_img = $values['custom-image-url'];
@@ -1954,13 +2131,6 @@ class Essential_Grid_Base {
 				$alt_text = '';
 			}
 			
-			$ret['alternate-image'] = ($alt_img !== false && isset($alt_img['0']) ) ? $alt_img['0'] : '';
-			$ret['alternate-image-full'] = ($alt_img_full !== false && isset($alt_img_full['0']) ) ? $alt_img_full['0'] : '';
-			$ret['alternate-image-alt'] = ($alt_text !== '') ? $alt_text : '';
-			$ret['alternate-image-width'] = ($alt_img !== false) ? @$alt_img['1'] : '';
-			$ret['alternate-image-full-width'] = ($alt_img_full !== false) ? @$alt_img_full['1'] : '';
-			$ret['alternate-image-height'] = ($alt_img !== false) ? @$alt_img['2'] : '';
-			$ret['alternate-image-full-height'] = ($alt_img_full !== false) ? @$alt_img_full['2'] : '';
 			$ret['featured-image'] = ($alt_img !== false && isset($alt_img['0'])) ? $alt_img['0'] : '';
 			$ret['featured-image-full'] = ($alt_img_full !== false && isset($alt_img_full['0'])) ? $alt_img_full['0'] : '';
 			$ret['featured-image-alt'] = ($alt_text !== '') ? $alt_text : '';
@@ -1970,6 +2140,22 @@ class Essential_Grid_Base {
 			$ret['featured-image-full-height'] = ($alt_img_full !== false) ? @$alt_img_full['2'] : '';
 			
 			$ret['alternate-image-preload-url'] = (isset($values['custom-preload-image-url'])) ? $values['custom-preload-image-url'] : '';
+		}
+		
+		if(isset($values['eg-alternate-image']) && $values['eg-alternate-image'] !== '') {
+			
+			$alt_img = wp_get_attachment_image_src(esc_attr($values['eg-alternate-image']), $image_type);
+			$alt_img_full = wp_get_attachment_image_src(esc_attr($values['eg-alternate-image']), 'full');
+			$alt_text = get_post_meta(esc_attr($values['eg-alternate-image']), '_wp_attachment_image_alt', true);
+			
+			$ret['alternate-image'] = ($alt_img !== false && isset($alt_img['0']) ) ? $alt_img['0'] : '';
+			$ret['alternate-image-full'] = ($alt_img_full !== false && isset($alt_img_full['0']) ) ? $alt_img_full['0'] : '';
+			$ret['alternate-image-alt'] = ($alt_text !== '') ? $alt_text : '';
+			$ret['alternate-image-width'] = ($alt_img !== false) ? @$alt_img['1'] : '';
+			$ret['alternate-image-full-width'] = ($alt_img_full !== false) ? @$alt_img_full['1'] : '';
+			$ret['alternate-image-height'] = ($alt_img !== false) ? @$alt_img['2'] : '';
+			$ret['alternate-image-full-height'] = ($alt_img_full !== false) ? @$alt_img_full['2'] : '';
+			
 		}
 		
 		$ret['image-fit'] = isset($values['image-fit']) && $values['image-fit'] != '-1' ? esc_attr($values['image-fit']) : '';
@@ -1982,6 +2168,13 @@ class Essential_Grid_Base {
 		$ret['html5']['mp4'] = isset($values['custom-html5-mp4']) ? esc_attr($values['custom-html5-mp4']) : '';
 		$ret['html5']['ogv'] = isset($values['custom-html5-ogv']) ? esc_attr($values['custom-html5-ogv']) : '';
 		$ret['html5']['webm'] = isset($values['custom-html5-webm']) ? esc_attr($values['custom-html5-webm']) : '';
+		
+		$ret['html5']['webm'] = isset($values['custom-html5-webm']) ? esc_attr($values['custom-html5-webm']) : '';
+		$ret['html5']['webm'] = isset($values['custom-html5-webm']) ? esc_attr($values['custom-html5-webm']) : '';
+		
+		$ret['iframe'] = isset($values['iframe']) ? esc_attr($values['iframe']) : '';
+		$ret['revslider'] = isset($values['revslider']) ? esc_attr($values['revslider']) : '';
+		$ret['essgrid'] = isset($values['essgrid']) ? esc_attr($values['essgrid']) : '';
 		
 		return apply_filters('essgrid_get_custom_media_source_data', $ret);
 
@@ -2020,16 +2213,40 @@ class Essential_Grid_Base {
 	 */
 	public static function get_lb_source_order(){
 
-		$media =  array('featured-image' =>  array('name' => __('Featured Image', EG_TEXTDOMAIN), 'type' => 'picture'),
-						'youtube' =>		 array('name' => __('YouTube Video', EG_TEXTDOMAIN), 'type' => 'video'),
-						'vimeo' =>			 array('name' => __('Vimeo Video', EG_TEXTDOMAIN), 'type' => 'video'),
-						'wistia' =>		 	 array('name' => __('Wistia Video', EG_TEXTDOMAIN), 'type' => 'video'),
-						'html5' =>			 array('name' => __('HTML5 Video', EG_TEXTDOMAIN), 'type' => 'video'),
-						'alternate-image' => array('name' => __('Alternate Image', EG_TEXTDOMAIN), 'type' => 'picture'),
-						'content-image' =>	 array('name' => __('First Content Image', EG_TEXTDOMAIN), 'type' => 'picture')
+		$media =  array('featured-image' =>    array('name' => __('Featured Image', EG_TEXTDOMAIN), 'type' => 'picture'),
+						'youtube' =>		   array('name' => __('YouTube Video', EG_TEXTDOMAIN), 'type' => 'video'),
+						'vimeo' =>			   array('name' => __('Vimeo Video', EG_TEXTDOMAIN), 'type' => 'video'),
+						'wistia' =>		 	   array('name' => __('Wistia Video', EG_TEXTDOMAIN), 'type' => 'video'),
+						'html5' =>			   array('name' => __('HTML5 Video', EG_TEXTDOMAIN), 'type' => 'video'),
+						'alternate-image' =>   array('name' => __('Alternate Image', EG_TEXTDOMAIN), 'type' => 'picture'),
+						'content-image' =>	   array('name' => __('First Content Image', EG_TEXTDOMAIN), 'type' => 'picture'),
+						'post-content' =>	   array('name' => __('Post Content', EG_TEXTDOMAIN), 'type' => 'doc-inv'),
+						'revslider' => array('name' => __('Slider Revolution', EG_TEXTDOMAIN), 'type' => 'arrows-ccw'),
+						'essgrid' => array('name' => __('Essential Grid', EG_TEXTDOMAIN), 'type' => 'th-large'),
+						'soundcloud' =>        array('name' => __('SoundCloud', EG_TEXTDOMAIN), 'type' => 'soundcloud'),
+						'iframe' =>            array('name' => __('iFrame', EG_TEXTDOMAIN), 'type' => 'link')
 						);
 						
 		return apply_filters('essgrid_set_lb_source_order', apply_filters('essgrid_get_lb_source_order', $media));
+		
+	}
+	
+	/**
+	 * set basic Order List for Lightbox Source
+	 */
+	public static function get_lb_button_order(){
+
+		$buttons =  array('share'      =>  array('name' => __('Social Share', EG_TEXTDOMAIN), 'type' => 'forward'),
+						'slideShow'  =>  array('name' => __('Play / Pause', EG_TEXTDOMAIN), 'type' => 'play'),
+						'thumbs'     =>	 array('name' => __('Thumbnails', EG_TEXTDOMAIN), 'type' => 'th'),
+						'zoom'       =>	 array('name' => __('Zoom/Pan', EG_TEXTDOMAIN), 'type' => 'search'),
+						'download'   =>	 array('name' => __('Download Image', EG_TEXTDOMAIN), 'type' => 'download'),
+						'arrowLeft'  =>  array('name' => __('Left Arrow', EG_TEXTDOMAIN), 'type' => 'left'),
+						'arrowRight' =>	 array('name' => __('Right Arrow', EG_TEXTDOMAIN), 'type' => 'right'),
+						'close'      =>	 array('name' => __('Close Button', EG_TEXTDOMAIN), 'type' => 'cancel')
+						);
+						
+		return apply_filters('essgrid_set_lb_button_order', apply_filters('essgrid_get_lb_button_order', $buttons));
 		
 	}
 

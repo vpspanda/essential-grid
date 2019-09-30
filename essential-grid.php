@@ -3,15 +3,15 @@
  * @package   Essential_Grid
  * @author    ThemePunch <info@themepunch.com>
  * @link      http://codecanyon.net/item/essential-grid-wordpress-plugin/7563340
- * @copyright 2017 ThemePunch
+ * @copyright 2018 ThemePunch
  *
  * @wordpress-plugin
  * Plugin Name:       Essential Grid
- * Plugin URI:        http://www.themepunch.com/essential/
- * Description:       Essential Grid - Premium grid plugin
- * Version:           2.1.5.1
+ * Plugin URI:        https://essential.themepunch.com
+ * Description:       Essential Grid - The Original Premium Grid Plugin
+ * Version:           2.3.3
  * Author:            ThemePunch
- * Author URI:        http://themepunch.com
+ * Author URI:        https://themepunch.com
  * Text Domain:       essential-grid
  * Domain Path:       /languages
  */
@@ -38,6 +38,9 @@ $wc_is_localized = false; //used to determinate if already done for cart button 
  * Public-Facing Functionality
  *----------------------------------------------------------------------------*/
 
+ /* 2.1.6 */
+require_once(EG_PLUGIN_PATH . '/includes/colorpicker.class.php');
+ 
 require_once(EG_PLUGIN_PATH . '/includes/base.class.php');
 
 require_once(EG_PLUGIN_PATH . '/public/essential-grid.class.php');
@@ -71,6 +74,12 @@ require_once(EG_PLUGIN_PATH . '/includes/social-gallery.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/external-sources.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/wordpress-update-fix.class.php');
 
+require_once(EG_PLUGIN_PATH . 'includes/loadbalancer.class.php');
+$esg_rsl			= (isset($_GET['esg_refresh_server'])) ? true : false;
+$esglb				= new Essential_Grid_LoadBalancer();
+$GLOBALS['esglb']	= $esglb;
+$esglb->refresh_server_list($esg_rsl);
+
 /*
  * Register hooks that are fired when the plugin is activated or deactivated.
  * When the plugin is deleted, the uninstall.php file is loaded.
@@ -95,17 +104,10 @@ add_shortcode('ess_grid_nav', array('Essential_Grid', 'register_shortcode_filter
 add_shortcode('ess_grid_search', array('Essential_Grid_Search', 'register_shortcode_search'));
 
 add_action('widgets_init', array('Essential_Grid', 'register_custom_sidebars'));
-add_action('widgets_init', create_function('', 'return register_widget("Essential_Grids_Widget");'));
+add_action('widgets_init', array('Essential_Grid', 'register_custom_widget'));
 
-/* //ToDo Widget part
-add_action('widgets_init', create_function('', 'return register_widget("Essential_Grids_Widget_Filter");'));
-add_action('widgets_init', create_function('', 'return register_widget("Essential_Grids_Widget_Pagination");'));
-add_action('widgets_init', create_function('', 'return register_widget("Essential_Grids_Widget_Pagination_Left");'));
-add_action('widgets_init', create_function('', 'return register_widget("Essential_Grids_Widget_Pagination_Right");'));
-add_action('widgets_init', create_function('', 'return register_widget("Essential_Grids_Widget_Sorting");'));
-add_action('widgets_init', create_function('', 'return register_widget("Essential_Grids_Widget_Cart");'));
-*/
-
+// Featured Grid
+add_filter( 'post_thumbnail_html', array('Essential_Grid','post_thumbnail_replace'), 20, 5);
 
 /*----------------------------------------------------------------------------*
  * FrontEnd Special Functionality
@@ -152,6 +154,7 @@ if(is_admin()){ // && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX )
 	$EssentialAsTheme = false;
 	
 	function set_ess_grid_as_theme(){
+		/*
 		global $EssentialAsTheme;
 		
 		if(defined('ESS_GRID_AS_THEME')){
@@ -160,7 +163,7 @@ if(is_admin()){ // && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX )
 		}else{
 			if(get_option('EssentialAsTheme', 'true') == 'true')
 				$EssentialAsTheme = true;
-		}
+		}*/
 	}
 	/*****************
 	 * END: Developer Part for deactivation of the Activation Area
@@ -184,6 +187,10 @@ if(is_admin()){ // && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX )
 	require_once(EG_PLUGIN_PATH . '/admin/includes/plugin-update.class.php');
 	
 	require_once(EG_PLUGIN_PATH . '/admin/includes/newsletter.class.php');
+
+	// require_once(EG_PLUGIN_PATH . 'admin/includes/addon-admin.class.php');
+
+	require_once(EG_PLUGIN_PATH . '/admin/includes/library.class.php');
 	
 	add_action('plugins_loaded', array( 'Essential_Grid_Admin', 'do_update_checks' )); //add update checks
 	

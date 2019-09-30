@@ -82,8 +82,13 @@ $entry_skins = Essential_Grid_Item_Skin::get_essential_item_skins();
 $entry_skin_choosen = $base->getVar($grid['params'], 'entry-skin', '0');
 
 $grid_animations = $base->get_grid_animations();
+$start_animations = $base->get_start_animations();
+$grid_item_animations = $base->get_grid_item_animations();
 $hover_animations = $base->get_hover_animations();
 $grid_animation_choosen = $base->getVar($grid['params'], 'grid-animation', 'fade');
+$grid_start_animation_choosen = $base->getVar($grid['params'], 'grid-start-animation', 'reveal');
+$grid_item_animation_choosen = $base->getVar($grid['params'], 'grid-item-animation', 'none');
+$grid_item_animation_other = $base->getVar($grid['params'], 'grid-item-animation-other', 'none');
 $hover_animation_choosen = $base->getVar($grid['params'], 'hover-animation', 'fade');
 
 if(intval($isCreate) > 0) //currently editing, so default can be empty
@@ -112,7 +117,6 @@ if(intval($isCreate) > 0){ //currently editing, so default can be empty
 
 $poster_source_list = $base->get_poster_source_order();
 
-
 ?>
 
 <!--
@@ -131,7 +135,7 @@ LEFT SETTINGS
 				-moz-box-sizing:border-box;
 				-webkit-box-sizing:border-box;
 				"></li>
-				<li class="selected-esg-setting" data-toshow="eg-create-settings"><i class="eg-icon-cog"></i><p><?php _e('Naming', EG_TEXTDOMAIN); ?></p></li>
+				<li id="esg-naming-tab" class="selected-esg-setting" data-toshow="eg-create-settings"><i class="eg-icon-cog"></i><p><?php _e('Naming', EG_TEXTDOMAIN); ?></p></li>
 				<li class="selected-source-setting" data-toshow="esg-settings-posts-settings"><i class="eg-icon-folder"></i><p><?php _e('Source', EG_TEXTDOMAIN); ?></p></li>
 				<li class="" data-toshow="esg-settings-grid-settings"><i class="eg-icon-menu"></i><p><?php _e('Grid Settings', EG_TEXTDOMAIN); ?></p></li>
 				<li class="" data-toshow="esg-settings-filterandco-settings"><i class="eg-icon-shuffle"></i><p><?php _e('Nav-Filter-Sort', EG_TEXTDOMAIN); ?></p></li>
@@ -192,11 +196,21 @@ LEFT SETTINGS
 									<span class="esg-form-choose-field">	
 										<input type="radio" name="source-type" value="stream" <?php echo checked($base->getVar($grid['postparams'], 'source-type', 'post'), 'stream'); ?>> <span class="eg-tooltip-wrap" title="<?php _e('Fetches dynamic streams from several sources ', EG_TEXTDOMAIN); ?>"><?php _e('Stream', EG_TEXTDOMAIN); ?></span>
 									</span>
+									<?php if(array_key_exists('nggdb', $GLOBALS) ){ ?>
+										<span class="esg-form-choose-field">	
+											<input type="radio" name="source-type" value="nextgen" <?php echo checked($base->getVar($grid['postparams'], 'source-type', 'post'), 'nextgen'); ?>> <span class="eg-tooltip-wrap" title="<?php _e('Fetches NextGen Galleries and Albums ', EG_TEXTDOMAIN); ?>"><?php _e('NextGen Gallery', EG_TEXTDOMAIN); ?></span>
+										</span>
+									<?php } ?>
+									<?php if( function_exists('wp_rml_dropdown') ){ ?>
+										<span class="esg-form-choose-field">	
+											<input type="radio" name="source-type" value="rml" <?php echo checked($base->getVar($grid['postparams'], 'source-type', 'post'), 'rml'); ?>> <span class="eg-tooltip-wrap" title="<?php _e('Fetches Real Media Library Galleries and Folders', EG_TEXTDOMAIN); ?>"><?php _e('Real Media Library', EG_TEXTDOMAIN); ?></span>
+										</span>
+									<?php } ?>
+									<?php do_action('essgrid_grid_source',$base,$grid); ?>
 								</p>
 						</div>
 
 					</div>
-					
 					
 					<div id="custom-sorting-wrap" style="display: none;">
 						<ul id="esg-custom-li-sorter" style="margin:0px">							
@@ -336,8 +350,15 @@ LEFT SETTINGS
 								$max_entries = intval($base->getVar($grid['postparams'], 'max_entries', '-1'));
 								?>
 								<p>
-									<label for="pages" class="eg-tooltip-wrap" title="<?php _e('Defines a entry limit, use only numbers, -1 will disable this option, use only numbers', EG_TEXTDOMAIN); ?>"><?php _e('Maximum Entries', EG_TEXTDOMAIN); ?></label>
-									<input type="text" value="<?php echo $max_entries; ?>" name="max_entries">
+									<label for="pages" class="eg-tooltip-wrap" title="<?php _e('Defines a posts limit, use only numbers, -1 will disable this option, use only numbers', EG_TEXTDOMAIN); ?>"><?php _e('Maximum Posts', EG_TEXTDOMAIN); ?></label>
+									<input type="number" value="<?php echo $max_entries; ?>" name="max_entries">
+								</p>
+								<?php
+								$max_entries_preview = intval($base->getVar($grid['postparams'], 'max_entries_preview', '20'));
+								?>
+								<p>
+									<label for="pages" class="eg-tooltip-wrap" title="<?php _e('Defines a posts limit, use only numbers, -1 will disable this option, use only numbers', EG_TEXTDOMAIN); ?>"><?php _e('Maximum Posts Preview', EG_TEXTDOMAIN); ?></label>
+									<input type="number" value="<?php echo $max_entries_preview; ?>" name="max_entries_preview">
 								</p>
 							</div>
 						</div>
@@ -373,8 +394,11 @@ LEFT SETTINGS
 										<span class="esg-form-choose-field">
 											<input type="radio" name="stream-source-type" value="twitter" <?php checked($base->getVar($grid['postparams'], 'stream-source-type', 'instagram'), 'twitter'); ?>><span class="inplabel"><?php _e('Twitter', EG_TEXTDOMAIN); ?></span>
 										</span>
-										<!--span class="esg-form-choose-field">
+										<span class="esg-form-choose-field">
 											<input type="radio" name="stream-source-type" value="behance" <?php checked($base->getVar($grid['postparams'], 'stream-source-type', 'instagram'), 'behance'); ?>><span class="inplabel"><?php _e('Behance', EG_TEXTDOMAIN); ?></span>
+										</span>
+										<!--span class="esg-form-choose-field">
+											<input type="radio" name="stream-source-type" value="dribbble" <?php checked($base->getVar($grid['postparams'], 'stream-source-type', 'instagram'), 'dribbble'); ?>><span class="inplabel"><?php _e('Dribbble', EG_TEXTDOMAIN); ?></span>
 										</span-->
 									</p>
 									<p id="eg-source-youtube-message">
@@ -480,7 +504,7 @@ LEFT SETTINGS
 									</p>
 									<p class="cachenumbercheck">
 										<input id="youtube-transient-sec" type="number" value="<?php echo $base->getVar($grid['postparams'], 'youtube-transient-sec', '86400'); ?>" name="youtube-transient-sec">&nbsp;<a style="margin-right:10px" id="clear_cache_youtube"  class="button-primary revblue eg-clear-cache" href="javascript:void(0);" data-clear="youtube-transient-sec">Clear Cache</a>
-										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influnce the loading times negatively.', EG_TEXTDOMAIN); ?></span>										
+										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influence the loading times negatively.', EG_TEXTDOMAIN); ?></span>										
 									</p>
 								</div>
 							</div>
@@ -556,7 +580,7 @@ LEFT SETTINGS
 									</p>
 									<p class="cachenumbercheck">
 										<input type="number" value="<?php echo $base->getVar($grid['postparams'], 'vimeo-transient-sec', '86400'); ?>" name="vimeo-transient-sec">&nbsp;<a style="margin-right:10px" id="clear_cache_vimeo"  class="button-primary revblue eg-clear-cache" href="javascript:void(0);" data-clear="vimeo-transient-sec">Clear Cache</a>
-										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influnce the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
+										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influence the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
 									</p>
 								</div>
 							</div>
@@ -564,17 +588,42 @@ LEFT SETTINGS
 						</div><!-- End Vimeo Stream -->
 
 						<div id="instagram-external-stream-wrap">
-							<div class="eg-creative-settings">
+							<div class="eg-creative-settings instagram_user">
 								<div class="eg-cs-tbc-left">
 									<h3><span><?php _e('Stream', EG_TEXTDOMAIN); ?></span></h3>
 								</div>
 								<div class="eg-cs-tbc">
 									<p>
-										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the Instagram User', EG_TEXTDOMAIN); ?>"><?php _e('Instagram User', EG_TEXTDOMAIN); ?></label>
-										<input type="text" value="<?php echo $base->getVar($grid['postparams'], 'instagram-user-id', ''); ?>" name="instagram-user-id">
+										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Source of Instagram images', EG_TEXTDOMAIN); ?>"><?php _e('Images/Videos from', EG_TEXTDOMAIN); ?></label>
+										<input type="checkbox" name="instagram-type-source-users" data-source="users" value="true" class="firstinput instagram-type-source" <?php checked($base->getVar($grid['postparams'], 'instagram-type-source-users', ''), 'true'); ?>><span class="inplabel"><?php _e('People', EG_TEXTDOMAIN); ?></span>
+										<input type="checkbox" name="instagram-type-source-tags" data-source="tags" class="instagram-type-source" value="true" <?php checked($base->getVar($grid['postparams'], 'instagram-type-source-tags', ''), 'true'); ?>><span class="inplabel"><?php _e('Tags', EG_TEXTDOMAIN); ?></span>							
+										<input type="checkbox" name="instagram-type-source-places" data-source="places" class="instagram-type-source" value="true" <?php checked($base->getVar($grid['postparams'], 'instagram-type-source-places', ''), 'true'); ?>><span class="inplabel"><?php _e('Places', EG_TEXTDOMAIN); ?>	</span>
 									</p>
+									<div class="instagram_users">
+										<p>
+											<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the Instagram Users', EG_TEXTDOMAIN); ?>"><?php _e('Instagram User(s)', EG_TEXTDOMAIN); ?></label>
+											<input type="text" value="<?php echo $base->getVar($grid['postparams'], 'instagram-user-id', ''); ?>" name="instagram-user-id">
+											<span class="description"><?php _e('Separate multiple searched users by commas', EG_TEXTDOMAIN); ?></span>
+										</p>
+									</div>
+									<div class="instagram_tags">
+										<p>
+											<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the Instagram Tags', EG_TEXTDOMAIN); ?>"><?php _e('Instagram Tag(s)', EG_TEXTDOMAIN); ?></label>
+											<input type="text" value="<?php echo $base->getVar($grid['postparams'], 'instagram-tags', ''); ?>" name="instagram-tags">
+											<span class="description"><?php _e('Separate multiple searched tags by commas', EG_TEXTDOMAIN); ?></span>
+										</p>
+									</div>
+									<div class="instagram_places">
+										<p>
+											<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the Instagram Places', EG_TEXTDOMAIN); ?>"><?php _e('Instagram Place ID(s)', EG_TEXTDOMAIN); ?></label>
+											<input type="text" value="<?php echo $base->getVar($grid['postparams'], 'instagram-places', ''); ?>" name="instagram-places">
+											<span class="description"><?php _e('Separate multiple searched places by commas', EG_TEXTDOMAIN); ?></span>
+										</p>
+										<span class="description"><?php _e('Get the ID from the URL (Example https://www.instagram.com/explore/locations/<strong><i style="font-size:14px">213121716</i></strong>/cologne-germany/)', EG_TEXTDOMAIN); ?></span>
+									</div>
 								</div>
 							</div>
+
 							<div class="divider1"></div>
 							<div class="eg-creative-settings">
 								<div class="eg-cs-tbc-left">
@@ -589,6 +638,7 @@ LEFT SETTINGS
 											<option value='Thumbnail' <?php selected( $base->getVar($grid['postparams'], 'instagram-thumb-size', 'Low Resolution'), 'Thumbnail');?>><?php _e('Thumbnail (150px)', EG_TEXTDOMAIN);?></option>
 											<option value='Low Resolution' <?php selected( $base->getVar($grid['postparams'], 'instagram-thumb-size', 'Low Resolution'), 'Low Resolution');?>><?php _e('Low Resolution (320px)', EG_TEXTDOMAIN);?></option>
 											<option value='Standard Resolution' <?php selected( $base->getVar($grid['postparams'], 'instagram-thumb-size', 'Low Resolution'), 'Standard Resolution');?>><?php _e('Standard Resolution (640px)', EG_TEXTDOMAIN);?></option>
+											<option value='Original Resolution' <?php selected( $base->getVar($grid['postparams'], 'instagram-thumb-size', 'Standard Resolution'), 'Original Resolution');?>><?php _e('Original Resolution (custom)', EG_TEXTDOMAIN);?></option>
 										</select>
 									</p>
 									<p>
@@ -599,6 +649,7 @@ LEFT SETTINGS
 											<option value='Thumbnail' <?php selected( $base->getVar($grid['postparams'], 'instagram-full-size', 'Standard Resolution'), 'Thumbnail');?>><?php _e('Thumbnail (150px)', EG_TEXTDOMAIN);?></option>
 											<option value='Low Resolution' <?php selected( $base->getVar($grid['postparams'], 'instagram-full-size', 'Standard Resolution'), 'Low Resolution');?>><?php _e('Low Resolution (320px)', EG_TEXTDOMAIN);?></option>
 											<option value='Standard Resolution' <?php selected( $base->getVar($grid['postparams'], 'instagram-full-size', 'Standard Resolution'), 'Standard Resolution');?>><?php _e('Standard Resolution (640px)', EG_TEXTDOMAIN);?></option>
+											<option value='Original Resolution' <?php selected( $base->getVar($grid['postparams'], 'instagram-full-size', 'Standard Resolution'), 'Original Resolution');?>><?php _e('Original Resolution (custom)', EG_TEXTDOMAIN);?></option>
 										</select>
 									</p>
 								</div>
@@ -614,13 +665,14 @@ LEFT SETTINGS
 									</p>
 									<p>
 										<input type="number" value="<?php echo $base->getVar($grid['postparams'], 'instagram-count', '12'); ?>" name="instagram-count">
+										<!--span class="description"><?php _e(' In <a href="https://www.instagram.com/developer/sandbox/" target="_blank">Sandbox mode</a> the max number is 20.', EG_TEXTDOMAIN); ?></span-->
 									</p>
 									<p>
 										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Keep stream result cached (recommended)', EG_TEXTDOMAIN); ?>"><?php _e('Stream Cache (sec)', EG_TEXTDOMAIN); ?></label>
 									</p>
 									<p class="cachenumbercheck">
 										<input type="number" value="<?php echo $base->getVar($grid['postparams'], 'instagram-transient-sec', '86400'); ?>" name="instagram-transient-sec">&nbsp;<a style="margin-right:10px" id="clear_cache_instagram"  class="button-primary revblue eg-clear-cache" href="javascript:void(0);" data-clear="instagram-transient-sec">Clear Cache</a>
-										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influnce the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
+										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Please use no cache smaller than 1800 seconds or Instagram might ban your IP temporarily.', EG_TEXTDOMAIN); ?></span>	
 									</p>
 								</div>
 							</div>
@@ -746,7 +798,7 @@ LEFT SETTINGS
 									</p>
 									<p class="cachenumbercheck">
 										<input type="number" value="<?php echo $base->getVar($grid['postparams'], 'flickr-transient-sec', '86400'); ?>" name="flickr-transient-sec">&nbsp;<a style="margin-right:10px" id="clear_cache_flickr"  class="button-primary revblue eg-clear-cache" href="javascript:void(0);" data-clear="flickr-transient-sec">Clear Cache</a>
-										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influnce the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
+										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influence the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
 									</p>
 								</div>
 							</div>
@@ -816,7 +868,7 @@ LEFT SETTINGS
 									</p>
 									<p class="cachenumbercheck">
 										<input type="number" style="margin-right:10px" value="<?php echo $base->getVar($grid['postparams'], 'facebook-transient-sec', '86400'); ?>" name="facebook-transient-sec"><a style="margin-right:10px" id="clear_cache_facebook"  class="button-primary revblue eg-clear-cache" href="javascript:void(0);" data-clear="facebook-transient-sec">Clear Cache</a>
-										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influnce the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
+										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influence the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
 									</p>
 								</div>
 							</div>
@@ -892,7 +944,7 @@ LEFT SETTINGS
 									</p>
 									<p class="cachenumbercheck">
 										<input type="number" value="<?php echo $base->getVar($grid['postparams'], 'twitter-transient-sec', '86400'); ?>" name="twitter-transient-sec">&nbsp;<a style="margin-right:10px" id="clear_cache_twitter"  class="button-primary revblue eg-clear-cache" href="javascript:void(0);" data-clear="twitter-transient-sec">Clear Cache</a>
-										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influnce the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
+										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influence the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
 									</p>
 								</div>
 							</div>
@@ -1020,16 +1072,33 @@ LEFT SETTINGS
 									</p>
 									<p class="cachenumbercheck">
 										<input type="number" value="<?php echo $base->getVar($grid['postparams'], 'behance-transient-sec', '86400'); ?>" name="behance-transient-sec">&nbsp;<a style="margin-right:10px" id="clear_cache_behance"  class="button-primary revblue eg-clear-cache" href="javascript:void(0);" data-clear="behance-transient-sec">Clear Cache</a>
-										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influnce the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
+										<span style="margin-left:10px" class="importantlabel showonsmallcache description"><?php _e('Small cache intervals may influence the loading times negatively.', EG_TEXTDOMAIN); ?></span>	
 									</p>
 								</div>
 							</div>
 							<div class="divider1"></div>
 						</div> <!-- End behance Stream -->
+						
+						<div id="dribbble-external-stream-wrap">
+							<div class="eg-creative-settings">
+								<div class="eg-cs-tbc-left">	
+									<h3><span><?php _e('API', EG_TEXTDOMAIN); ?></span></h3>
+								</div>
+								<div class="eg-cs-tbc">
+									<p>
+										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the dribbble API key', EG_TEXTDOMAIN); ?>"><?php _e('API Key', EG_TEXTDOMAIN); ?></label>
+										<input type="text" value="<?php echo $base->getVar($grid['postparams'], 'dribbble-api', ''); ?>" name="dribbble-api" id="dribbble-api">						
+										<div class="tp-clearfix"></div>
+										<span class="description"><?php _e('Find information about the dribbble API key <a target="_blank" href="https://developers.google.com/dribbble/v3/getting-started#before-you-start">here</a>', EG_TEXTDOMAIN); ?></span>
+									</p>
+								</div>		
+							</div>
+							<div class="divider1"></div>
+						</div>
 
 					</div>
-			<?php  //NEXTGEN coming soon
-			/*	if(array_key_exists('nggdb', $GLOBALS) ){
+					<?php 
+				if(array_key_exists('nggdb', $GLOBALS) ){
 					$nextgen = new Essential_Grid_Nextgen(); ?>
 					<div id="all-nextgen-wrap">
 						<div id="nextgen-source-wrap">
@@ -1145,7 +1214,56 @@ LEFT SETTINGS
 					<div class="divider1"></div>
 
 				</div>
-			<?php } */?>
+			<?php } 
+
+			if( function_exists("wp_rml_dropdown") ){
+					$rml_items = wp_rml_dropdown($base->getVar($grid['postparams'], 'rml-source-type', '-1'),array(RML_TYPE_COLLECTION),true); ?>
+					<div id="all-rml-wrap">
+						<div id="rml-source-wrap">
+							<div class="eg-creative-settings">
+								<div class="eg-cs-tbc-left">
+									<h3><span><?php _e('Real Media Library', EG_TEXTDOMAIN); ?></span></h3>
+								</div>
+								<div class="eg-cs-tbc">
+									<p>
+									<label for="shortcode" class="eg-tooltip-wrap" title="<?php _e('Choose source of grid items', EG_TEXTDOMAIN); ?>"><?php _e('Source', EG_TEXTDOMAIN); ?></label>
+									</p>
+									<p id="esg-source-choose-wrapper">
+										<select id="rml-source-type" name="rml-source-type"><?php echo $rml_items; ?></select><span class="inplabel"> <?php _e('Select Folder or Gallery', EG_TEXTDOMAIN); ?></span>
+									</p> 
+								</div>
+							</div>
+							<div class="divider1"></div>
+						</div>
+
+						<div class="eg-creative-settings">
+							<div class="eg-cs-tbc-left">
+								<h3><span><?php _e('Image Sizes', EG_TEXTDOMAIN); ?></span></h3>
+							</div>
+							<div class="eg-cs-tbc">
+								<p>
+									<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('For images that appear inside the Grid Items', EG_TEXTDOMAIN); ?>"><?php _e('Grid Image Size', EG_TEXTDOMAIN); ?></label>
+								</p>
+								<p>
+									<select name="rml-thumb-size">
+										<?php echo Essential_Grid_Rml::option_list_image_sizes($base->getVar($grid['postparams'], 'rml-thumb-size', 'original')); ?>
+									</select>
+								</p>
+								<p>
+									<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('For images that appear inside the lightbox, links, etc.', EG_TEXTDOMAIN); ?>"><?php _e('Full Image Size', EG_TEXTDOMAIN); ?></label>
+								</p>
+								<p>
+									<select name="rml-full-size">
+										<?php echo Essential_Grid_Rml::option_list_image_sizes($base->getVar($grid['postparams'], 'rml-full-size', 'original')); ?>
+									</select>
+								</p>
+							</div>
+
+						</div>
+						<div class="divider1"></div>
+				</div>
+			<?php } ?>
+			<?php do_action('essgrid_grid_source_options',$base,$grid); ?>
 
 					<div id="media-source-order-wrap">
 						<div class="eg-creative-settings">
@@ -1239,63 +1357,91 @@ LEFT SETTINGS
 								<h3><span><?php _e('Source Size', EG_TEXTDOMAIN); ?></span></h3>
 							</div>
 							<div class="eg-cs-tbc" style="padding-top:15px">
-								<!-- DEFAULT IMAGE SOURCE -->
-								<label class="eg-tooltip-wrap" title="<?php _e('Grid Image Source Size', EG_TEXTDOMAIN); ?>"><?php _e('Set Image Source Type', EG_TEXTDOMAIN); ?></label>
-									
-								<div style="margin-bottom: 10px;">
-									<?php
-									$image_source_type = $base->getVar($grid['postparams'], 'image-source-type', 'full');
-									?>
-									<select name="image-source-type">
-										<?php
-										foreach($all_image_sizes as $handle => $name){
-											?>
-											<option <?php selected($image_source_type, $handle); ?> value="<?php echo $handle; ?>"><?php echo $name; ?></option>
-											<?php
-										}
-										?>
-									</select>
-								</div>
-							</div>
-						</div>
-						<div class="divider1"></div>
-					</div>
-					<div id="media-source-filter">
-						<div class="eg-creative-settings">
-							<div class="eg-cs-tbc-left">
-								<h3><span><?php _e('Media Filter', EG_TEXTDOMAIN); ?></span></h3>
-							</div>
-							<div class="eg-cs-tbc" style="padding-top:15px">
 								
-									
-								<div style="display:none; margin-bottom: 10px;">
-									<?php
-									$media_filter_type = $base->getVar($grid['postparams'], 'media-filter-type', 'none');									
-									?>									
-									<select id="media-filter-type" name="media-filter-type">
+								<div>
+									<!-- DEFAULT IMAGE SOURCE -->
+									<label class="eg-tooltip-wrap" title="<?php _e('Desktop Grid Image Source Size', EG_TEXTDOMAIN); ?>"><?php _e('Desktop Image Source Type', EG_TEXTDOMAIN); ?></label>
+										
+									<div style="margin-bottom: 10px;">
 										<?php
-										foreach($all_media_filters as $handle => $name){
-											?>
-											<option <?php selected($media_filter_type, $handle); ?> value="<?php echo $handle; ?>"><?php echo $name; ?></option>
-											<?php
-										}
+										$image_source_type = $base->getVar($grid['postparams'], 'image-source-type', 'full');
 										?>
-									</select>
-								</div>
-								<div id="inst-filter-grid">									
-									<?php
-										foreach($all_media_filters as $handle => $name){
-											$selected = $media_filter_type === $handle ? "selected" : "";
-											?>
-											<div data-type="<?php echo $handle; ?>" class="inst-filter-griditem <?php echo $selected; ?>"><div class="ifgname"><?php echo $name; ?></div><div class="inst-filter-griditem-img <?php echo $handle; ?>"></div><div class="inst-filter-griditem-img-noeff"></div></div>
+										<select name="image-source-type">
 											<?php
-										}
-										?>
+											foreach($all_image_sizes as $handle => $name){
+												?>
+												<option <?php selected($image_source_type, $handle); ?> value="<?php echo $handle; ?>"><?php echo $name; ?></option>
+												<?php
+											}
+											?>
+										</select>
+									</div>
 								</div>
+								<div class="clear"></div>
+								<div>
+									<!-- DEFAULT IMAGE SOURCE -->
+									<label class="eg-tooltip-wrap" title="<?php _e('Mobile Grid Image Source Size', EG_TEXTDOMAIN); ?>"><?php _e('Mobile Image Source Type', EG_TEXTDOMAIN); ?></label>
+										
+									<div style="margin-bottom: 10px;">
+										<?php
+										/* 2.1.6 */
+										$image_source_type = $base->getVar($grid['postparams'], 'image-source-type-mobile', $image_source_type);
+										?>
+										<select name="image-source-type-mobile">
+											<?php
+											foreach($all_image_sizes as $handle => $name){
+												?>
+												<option <?php selected($image_source_type, $handle); ?> value="<?php echo $handle; ?>"><?php echo $name; ?></option>
+												<?php
+											}
+											?>
+										</select>
+									</div>
+								</div>
+								
 							</div>
 						</div>
 						<div class="divider1"></div>
 					</div>
+					<?php $enable_media_filter = get_option('tp_eg_enable_media_filter', 'false');
+					if ($enable_media_filter!="false"){ ?>
+						<div id="media-source-filter">
+							<div class="eg-creative-settings">
+								<div class="eg-cs-tbc-left">
+									<h3><span><?php _e('Media Filter', EG_TEXTDOMAIN); ?></span></h3>
+								</div>
+								<div class="eg-cs-tbc" style="padding-top:15px">
+									
+										
+									<div style="display:none; margin-bottom: 10px;">
+										<?php
+										$media_filter_type = $base->getVar($grid['postparams'], 'media-filter-type', 'none');									
+										?>									
+										<select id="media-filter-type" name="media-filter-type">
+											<?php
+											foreach($all_media_filters as $handle => $name){
+												?>
+												<option <?php selected($media_filter_type, $handle); ?> value="<?php echo $handle; ?>"><?php echo $name; ?></option>
+												<?php
+											}
+											?>
+										</select>
+									</div>
+									<div id="inst-filter-grid">									
+										<?php
+											foreach($all_media_filters as $handle => $name){
+												$selected = $media_filter_type === $handle ? "selected" : "";
+												?>
+												<div data-type="<?php echo $handle; ?>" class="inst-filter-griditem <?php echo $selected; ?>"><div class="ifgname"><?php echo $name; ?></div><div class="inst-filter-griditem-img <?php echo $handle; ?>"></div><div class="inst-filter-griditem-img-noeff"></div></div>
+												<?php
+											}
+											?>
+									</div>
+								</div>
+							</div>
+							<div class="divider1"></div>
+						</div>
+					<?php } ?>
 					<div id="media-source-default-templates">
 						<div class="eg-creative-settings">
 							<div class="eg-cs-tbc-left">
@@ -1335,11 +1481,11 @@ LEFT SETTINGS
 								<div style="clear:both"></div>
 							</div>
 						</div>
-						<div class="divider1"></div>
 					</div>
 
 					<div class="eg-creative-settings default-posters notavailable" id="eg-youtube-default-poster">
 						
+						<div class="divider1"></div>
 						<div class="eg-cs-tbc-left">
 							<h3 class="box-closed"><span><?php _e('YouTube Poster', EG_TEXTDOMAIN); ?></span></h3>
 						</div>
@@ -1439,7 +1585,7 @@ LEFT SETTINGS
 			require_once('elements/grid-settings.php');
 		?>
 		
-		
+		<div class="divider1"></div>
 		<div id="custom-element-add-elements-wrapper">
 			<div class="eg-creative-settings">
 				<div class="eg-cs-tbc-left">
@@ -1455,7 +1601,8 @@ LEFT SETTINGS
 						<li><div class="esg-open-edit-dialog" id="esg-add-new-custom-html5-top"><i class="eg-icon-video"></i><?php _e('Self Hosted Media', EG_TEXTDOMAIN); ?></div></li>
 						<li><div class="esg-open-edit-dialog" id="esg-add-new-custom-image-top"><i class="eg-icon-picture-1"></i><?php _e('Image(s)', EG_TEXTDOMAIN); ?></div></li>
 						<li><div class="esg-open-edit-dialog" id="esg-add-new-custom-soundcloud-top"><i class="eg-icon-soundcloud"></i><?php _e('Sound Cloud', EG_TEXTDOMAIN); ?></div></li>
-						<li><div class="esg-open-edit-dialog" id="esg-add-new-custom-text-top"><i class="eg-icon-font"></i><?php _e('Simple Content', EG_TEXTDOMAIN); ?></div></li>										
+						<li><div class="esg-open-edit-dialog" id="esg-add-new-custom-text-top"><i class="eg-icon-font"></i><?php _e('Simple Content', EG_TEXTDOMAIN); ?></div></li>	
+						<li><div class="esg-open-edit-dialog" id="esg-add-new-custom-blank-top"><i class="eg-icon-cancel"></i><?php _e('Blank Item', EG_TEXTDOMAIN); ?></div></li>	
 					</ul>
 					<div style="clear:both"></div>
 				</div>
@@ -1468,7 +1615,7 @@ LEFT SETTINGS
 			<div class="sws-toolbar-button"><a class="button-primary revgreen" href="javascript:void(0);" id="eg-btn-save-grid"><i class="rs-icon-save-light" style="display: inline-block;vertical-align: middle;width: 18px;height: 20px;background-repeat: no-repeat;margin-right:10px !important;margin-left:2px !important;"></i><?php echo $save; ?></a></div>
 			<div class="sws-toolbar-button"><a class="button-primary revblue esg-refresh-preview-button"><i class="eg-icon-arrows-ccw"></i><?php _e('Refresh Preview', EG_TEXTDOMAIN); ?></a></div>
 			<div class="sws-toolbar-button"><a class="button-primary revyellow" href="<?php echo self::getViewUrl(Essential_Grid_Admin::VIEW_OVERVIEW); ?>"><i class="eg-icon-cancel"></i><?php _e('Close', EG_TEXTDOMAIN); ?></a></div>
-			<div class="sws-toolbar-button"><a class="button-primary revpurple" id="createthumbnail" href="#"><i class="eg-icon-picture-1"></i><?php _e('Create Thumb', EG_TEXTDOMAIN); ?></a></div>
+			<!-- <div class="sws-toolbar-button"><a class="button-primary revpurple" id="createthumbnail" href="#"><i class="eg-icon-picture-1"></i><?php _e('Create Thumb', EG_TEXTDOMAIN); ?></a></div> -->
 			<div class="sws-toolbar-button"><?php if($grid !== false){ ?>
 				<a class="button-primary revred" href="javascript:void(0);" id="eg-btn-delete-grid"><i class="eg-icon-trash"></i><?php _e('Delete Grid', EG_TEXTDOMAIN); ?></a>
 			<?php } ?></div>				
@@ -1486,9 +1633,11 @@ LEFT SETTINGS
 				function() {
 					punchgs.TweenLite.to(jQuery(this),0.3,{x:0,ease:punchgs.Power3.easeInOut});					
 				})
+				/*
 				jQuery('#createthumbnail').click(function() {
 					AdminEssentials.buildThumbnail();
 				});
+				*/
 			});
 		</script>
 	</div>

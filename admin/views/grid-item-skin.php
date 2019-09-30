@@ -25,6 +25,9 @@ wp_enqueue_script('essential-grid-item-editor-script', EG_PLUGIN_URL.'admin/asse
 	$skins_c = new Essential_Grid_Item_Skin();
 	$navigation_c = new Essential_Grid_Navigation();
 	$grid_c = new Essential_Grid();
+
+			Essential_Grid_Item_Skin::propagate_default_item_skins();
+
 	
 	$grid['id'] = '1';
 	$grid['name'] = __('Overview', EG_TEXTDOMAIN);
@@ -44,6 +47,11 @@ wp_enqueue_script('essential-grid-item-editor-script', EG_PLUGIN_URL.'admin/asse
 							'grid-animation' => 'fade',
 							'grid-animation-speed' => 800,
 							'grid-animation-delay' => 5,
+							'grid-start-animation' => 'reveal',
+							'grid-start-animation-speed' => '800',
+							'grid-start-animation-delay' => 0,
+							'grid-start-animation-type' => 'item',
+							'grid-animation-type' => 'item',
 							'x-ratio' => 4,
 							'y-ratio' => 3,
 						   );
@@ -64,6 +72,10 @@ wp_enqueue_script('essential-grid-item-editor-script', EG_PLUGIN_URL.'admin/asse
 		$src = array();
 		
 		foreach($skins as $skin){
+			
+			// 2.2.6
+			if(is_array($skin) && array_key_exists('handle', $skin) && $skin['handle'] === 'esgblankskin') continue;
+			
 			if(empty($src)) $src = $demo_img;
 				
 			$item_skin = new Essential_Grid_Item_Skin();
@@ -120,7 +132,6 @@ wp_enqueue_script('essential-grid-item-editor-script', EG_PLUGIN_URL.'admin/asse
 			echo $skins_html;
 
 			$grid_c->output_grid_post();
-			
 			echo '<div style="text-align: center;">';
 			echo $navigation_c->output_pagination(true);
 			echo '</div>';
@@ -133,7 +144,7 @@ wp_enqueue_script('essential-grid-item-editor-script', EG_PLUGIN_URL.'admin/asse
 	
 	<?php
 	$grid_c->output_grid_javascript(false, true);
-	
+
 	echo $skins_css;
 	
 	Essential_Grid_Global_Css::output_global_css_styles_wrapped();
@@ -144,7 +155,7 @@ wp_enqueue_script('essential-grid-item-editor-script', EG_PLUGIN_URL.'admin/asse
 	?>
 </div>
 <a class='button-primary revblue' style="margin-top:15px !important;" href='<?php echo $this->getViewUrl(Essential_Grid_Admin::VIEW_ITEM_SKIN_EDITOR, 'create=true'); ?>'><?php _e('Create New Item Skin', EG_TEXTDOMAIN); ?></a>
-
+<a class='button-primary revblue' style="margin-top:15px !important;" href='<?php echo $this->getViewUrl(Essential_Grid_Admin::VIEW_OVERVIEW, 'update_shop'); ?>'><?php _e('Import from Grid Templates', EG_TEXTDOMAIN); ?></a>
 <script type="text/javascript">
 	jQuery(function(){
 		GridEditorEssentials.initOverviewItemSkin();

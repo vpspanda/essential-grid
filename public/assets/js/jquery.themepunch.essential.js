@@ -1,126 +1,229 @@
 /************************************************************************************
  * jquery.themepunch.essential.js - jQuery Plugin for esg Portfolio Slider
- * @version: 2.1.5.1 (12.06.2017)
- * @requires jQuery v1.7 or later (tested on 1.9)
+ * @version: 2.4 (12.02.2019)
+ * @requires jQuery v1.7 or later
  * @author ThemePunch
 ************************************************************************************/
 //! ++++++++++++++++++++++++++++++++++++++
 
-;(function(jQuery,undefined){
+(function(jQuery,undefined){
 
 	  //! ANIMATION MATRIX
 	  // PREPARE THE HOVER ANIMATIONS
 	  
-	  var esgAnimmatrix;
+	  var esgAnimmatrix,
+		  esgItemAnimations,
+		  supressFocus,
+		  startAnimations,
+		  mergedTransitions,
+		  vhandlers = {};
 	  
 	  function punchgsReady() {
 		  
-			esgAnimmatrix = [
-	  						['.esg-none',				0, {autoAlpha:1,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0},{autoAlpha:1,ease:punchgs.Power2.easeOut, overwrite:"all"}, 0, {autoAlpha:1,overwrite:"all"} ],
+			esgAnimmatrix = {
+			
+					'esg-none':               [0, {autoAlpha:1,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0},{autoAlpha:1,ease:punchgs.Power2.easeOut, overwrite:"all"}, 0, {autoAlpha:1,overwrite:"all"} ],
 
-	    					['.esg-fade',				0.3, {autoAlpha:0,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0},{autoAlpha:1,ease:punchgs.Power2.easeOut, overwrite:"all"}, 0.3, {autoAlpha:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-	    					['.esg-fadeout',			0.3, {autoAlpha:1,ease:punchgs.Power2.easeOut, overwrite:"all"}, {autoAlpha:0,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0}, 0.3, {autoAlpha:1,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+					'esg-fade':               [0.3, {autoAlpha:0,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0},{autoAlpha:1,ease:punchgs.Power2.easeOut, overwrite:"all"}, 0.3, {autoAlpha:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+					
+					'esg-fadeblur':               [0.3, {autoAlpha:1,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0},{autoAlpha:0.5,ease:punchgs.Power2.easeOut, overwrite:"all"}, 0.3, {autoAlpha:1,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+					
+					'esg-fadeout':            [0.3, {autoAlpha:1,ease:punchgs.Power2.easeOut, overwrite:"all"}, {autoAlpha:0,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0}, 0.3, {autoAlpha:1,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
 
-							['.esg-covergrowup',		0.3, {autoAlpha:1,top:"100%",marginTop:-10,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0},{autoAlpha:1,top:"0%", marginTop:0, ease:punchgs.Power2.easeOut, overwrite:"all"}, 0.3, {autoAlpha:1,top:"100%",marginTop:-10,bottom:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ,true],
+					'esg-covergrowup':        [0.3, {autoAlpha:1,top:"100%",marginTop:-10,rotationZ:0,x:0,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0},{autoAlpha:1,top:"0%", marginTop:0, ease:punchgs.Power2.easeOut, overwrite:"all"}, 0.3, {autoAlpha:1,top:"100%",marginTop:-10,bottom:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ,true],
 
+					'esg-flipvertical':       [0.5, {x:0,y:0,scale:1,rotationZ:0,rotationY:0,skewX:0,skewY:0,rotationX:180,autoAlpha:0,z:-0.001,transformOrigin:"50% 50%"}, {rotationX:0,autoAlpha:1,scale:1,z:0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} , 0.5,{rotationX:180,autoAlpha:0,scale:1,z:-0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,true],
+							
+					'esg-flipverticalout':	[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationY:0,skewX:0,skewY:0,rotationX:0,autoAlpha:1,z:0.001,transformOrigin:"50% 50%"},{rotationX:-180,scale:1,autoAlpha:0,z:-150,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,0.5,{rotationX:0,autoAlpha:1,scale:1,z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"} ],
 
+					'esg-fliphorizontal':		[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,skewX:0,skewY:0,rotationY:180,autoAlpha:0,z:-0.001,transformOrigin:"50% 50%"}, {rotationY:0,autoAlpha:1,scale:1,z:0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} , 0.5, {rotationY:180,autoAlpha:0,scale:1,z:-0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,true],
+					
+					'esg-fliphorizontalout':	[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,z:0.001,transformOrigin:"50% 50%"}, {rotationY:-180,scale:1,autoAlpha:0,z:-150,ease:punchgs.Power3.easeInOut,overwrite:"all"} , 0.5, {rotationY:0,autoAlpha:1,scale:1,z:0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} ],
 
-				 			['.esg-flipvertical',		0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,rotationX:180,autoAlpha:0,z:-0.001,transformOrigin:"50% 50%"}, {rotationX:0,autoAlpha:1,scale:1,z:0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} , 0.5,{rotationX:180,autoAlpha:0,scale:1,z:-0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,true],
-			 				['.esg-flipverticalout',	0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,rotationX:0,autoAlpha:1,z:0.001,transformOrigin:"50% 50%"},{rotationX:-180,scale:1,autoAlpha:0,z:-150,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,0.5,{rotationX:0,autoAlpha:1,scale:1,z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"} ],
+					'esg-flipup':				[0.5, {x:0,y:0,scale:0.8,rotationZ:0,rotationX:90,rotationY:0,skewX:0,skewY:0,autoAlpha:0,z:0.001,transformOrigin:"50% 100%"}, {scale:1,rotationX:0,autoAlpha:1,z:0.001,ease:punchgs.Power2.easeOut,overwrite:"all"} , 0.3, {scale:0.8,rotationX:90,autoAlpha:0,z:0.001,ease:punchgs.Power2.easeOut,overwrite:"all"} ,true],
+							
+					'esg-flipupout':			[0.5, {rotationX:0,autoAlpha:1,y:0,ease:punchgs.Bounce.easeOut,overwrite:"all"} ,{x:0,y:0,scale:1,rotationZ:0,rotationX:-90,rotationY:0,skewX:0,skewY:0,autoAlpha:1,z:0.001,transformOrigin:"50% 0%"} , 0.3, {rotationX:0,autoAlpha:1,y:0,ease:punchgs.Bounce.easeOut,overwrite:"all"} ],
+					
+					'esg-flipdown':			[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:-90,rotationY:0,skewX:0,skewY:0,autoAlpha:0,z:0.001,transformOrigin:"50% 0%"},{rotationX:0,autoAlpha:1,y:0,ease:punchgs.Bounce.easeOut,overwrite:"all"} ,0.3, {rotationX:-90,z:0,ease:punchgs.Power2.easeOut,autoAlpha:0,overwrite:"all"},true ],
+					
+					'esg-flipdownout':		[0.5, {scale:1,rotationX:0,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}, {x:0,y:0,scale:0.8,rotationZ:0,rotationX:90,rotationY:0,skewX:0,skewY:0,autoAlpha:0,z:0.001,transformOrigin:"50% 100%"}, 0.3, {scale:1,rotationX:0,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
 
-			 				['.esg-fliphorizontal',		0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,rotationY:180,autoAlpha:0,z:-0.001,transformOrigin:"50% 50%"}, {rotationY:0,autoAlpha:1,scale:1,z:0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} , 0.5, {rotationY:180,autoAlpha:0,scale:1,z:-0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,true],
-				 			['.esg-fliphorizontalout',	0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,z:0.001,transformOrigin:"50% 50%"}, {rotationY:-180,scale:1,autoAlpha:0,z:-150,ease:punchgs.Power3.easeInOut,overwrite:"all"} , 0.5, {rotationY:0,autoAlpha:1,scale:1,z:0.001,ease:punchgs.Power3.easeInOut,overwrite:"all"} ],
+					'esg-flipright':			[0.5, {x:0,y:0,scale:0.8,rotationZ:0,rotationX:0,rotationY:90,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"0% 50%"},{scale:1,rotationY:0,autoAlpha:1,ease:punchgs.Power2.easeOut,overwrite:"all"} ,0.3,{autoAlpha:0,scale:0.8,rotationY:90,ease:punchgs.Power3.easeOut,overwrite:"all"} ,true],
+							
+					'esg-fliprightout':		[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,skewX:0,skewY:0,rotationY:0,autoAlpha:1,transformOrigin:"100% 50%"},{scale:1,rotationY:-90,autoAlpha:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ,0.3,{scale:1,z:0,rotationY:0,autoAlpha:1,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
-			 				['.esg-flipup',				0.5, {x:0,y:0,scale:0.8,rotationZ:0,rotationX:90,rotationY:0,skewX:0,skewY:0,autoAlpha:0,z:0.001,transformOrigin:"50% 100%"}, {scale:1,rotationX:0,autoAlpha:1,z:0.001,ease:punchgs.Power2.easeOut,overwrite:"all"} , 0.3, {scale:0.8,rotationX:90,autoAlpha:0,z:0.001,ease:punchgs.Power2.easeOut,overwrite:"all"} ,true],
-			 				['.esg-flipupout',			0.5, {rotationX:0,autoAlpha:1,y:0,ease:punchgs.Bounce.easeOut,overwrite:"all"} ,{x:0,y:0,scale:1,rotationZ:0,rotationX:-90,rotationY:0,skewX:0,skewY:0,autoAlpha:1,z:0.001,transformOrigin:"50% 0%"} , 0.3, {rotationX:0,autoAlpha:1,y:0,ease:punchgs.Bounce.easeOut,overwrite:"all"} ],
+					'esg-flipleft':			[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:-90,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"100% 50%"},{rotationY:0,autoAlpha:1,z:0.001,scale:1,ease:punchgs.Power3.easeOut,overwrite:"all"} ,0.3,{autoAlpha:0,rotationY:-90,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ,true],
+							
+					'esg-flipleftout':		[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,skewX:0,skewY:0,rotationY:0,autoAlpha:1,transformOrigin:"0% 50%"},{scale:1,rotationY:90,autoAlpha:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ,0.3,{scale:1,z:0,rotationY:0,autoAlpha:1,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
+					'esg-turn':				[0.5, {x:50,y:0,scale:0,rotationZ:0,rotationX:0,rotationY:-40,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{scale:1,x:0,rotationY:0,autoAlpha:1,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,0.3,{scale:0,rotationY:-40,autoAlpha:1,z:0,x:50,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,true],
+							
+					'esg-turnout':			[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{rotationY:40,scale:0.6,autoAlpha:0,x:-50,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,0.3,{scale:1,rotationY:0,z:0,autoAlpha:1,x:0, rotationX:0, rotationZ:0, ease:punchgs.Power3.easeInOut,overwrite:"all"} ],
 
-			 				['.esg-flipdown',			0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:-90,rotationY:0,skewX:0,skewY:0,autoAlpha:0,z:0.001,transformOrigin:"50% 0%"},{rotationX:0,autoAlpha:1,y:0,ease:punchgs.Bounce.easeOut,overwrite:"all"} ,0.3, {rotationX:-90,z:0,ease:punchgs.Power2.easeOut,autoAlpha:0,overwrite:"all"},true ],
-			 				['.esg-flipdownout',		0.5, {scale:1,rotationX:0,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}, {x:0,y:0,scale:0.8,rotationZ:0,rotationX:90,rotationY:0,skewX:0,skewY:0,autoAlpha:0,z:0.001,transformOrigin:"50% 100%"}, 0.3, {scale:1,rotationX:0,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+					'esg-slide':				[0.5, {x:-10000,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,x:0, y:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:-10000,y:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-slideout':			[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,x:0, y:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:0,y:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
 
-			 				['.esg-flipright',			0.5, {x:0,y:0,scale:0.8,rotationZ:0,rotationX:0,rotationY:90,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"0% 50%"},{scale:1,rotationY:0,autoAlpha:1,ease:punchgs.Power2.easeOut,overwrite:"all"} ,0.3,{autoAlpha:0,scale:0.8,rotationY:90,ease:punchgs.Power3.easeOut,overwrite:"all"} ,true],
-			 				['.esg-fliprightout',		0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,rotationY:0,autoAlpha:1,transformOrigin:"100% 50%"},{scale:1,rotationY:-90,autoAlpha:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ,0.3,{scale:1,z:0,rotationY:0,autoAlpha:1,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-slideright':			[0.5, {xPercent:-50,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:-50,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-sliderightout':		[0.5, {autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:50,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
-			 				['.esg-flipleft',			0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:-90,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"100% 50%"},{rotationY:0,autoAlpha:1,z:0.001,scale:1,ease:punchgs.Power3.easeOut,overwrite:"all"} ,0.3,{autoAlpha:0,rotationY:-90,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ,true],
-			 				['.esg-flipleftout',		0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,rotationY:0,autoAlpha:1,transformOrigin:"0% 50%"},{scale:1,rotationY:90,autoAlpha:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ,0.3,{scale:1,z:0,rotationY:0,autoAlpha:1,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-scaleleft':			[0.5, {x:0,y:0,scaleX:0,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"100% 50%"},{autoAlpha:1,x:0, scaleX:1, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:0,z:0,scaleX:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-scaleright':			[0.5, {x:0,y:0,scaleX:0,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"0% 50%"},{autoAlpha:1,x:0, scaleX:1, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:0,z:0,scaleX:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
 
-			 				['.esg-turn',				0.5, {x:50,y:0,scale:0,rotationZ:0,rotationX:0,rotationY:-40,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{scale:1,x:0,rotationY:0,autoAlpha:1,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,0.3,{scale:0,rotationY:-40,autoAlpha:1,z:0,x:50,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,true],
-			 				['.esg-turnout',			0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{scale:1,rotationY:40,scale:0.6,autoAlpha:0,x:-50,ease:punchgs.Power3.easeInOut,overwrite:"all"} ,0.3,{scale:1,rotationY:0,z:0,autoAlpha:1,x:0, rotationX:0, rotationZ:0, ease:punchgs.Power3.easeInOut,overwrite:"all"} ],
+					'esg-slideleft':			[0.5, {xPercent:50,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:50,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-slideleftout':		[0.5, {autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:-50,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"}],
 
-			 				['.esg-slide',				0.5, {x:-10000,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,x:0, y:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:-10000,y:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-slideout',			0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,x:0, y:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:0,y:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+					'esg-slideup':			[0.5, {x:0,yPercent:50,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,yPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,yPercent:50,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+						
+					'esg-slideupout':			[0.5, {autoAlpha:1,yPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:0,yPercent:-50,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,yPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
-			 				['.esg-slideright',			0.5, {xPercent:-50,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:-50,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-sliderightout',		0.5, {autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:50,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-slidedown':			[0.5, {x:0,yPercent:-50,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,yPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,yPercent:-50,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-slidedownout':		[0.5, {autoAlpha:1,yPercent:0, z:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{x:0,yPercent:50,scale:1,rotationZ:0,rotationX:0,z:10,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,yPercent:0,z:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
-			 				['.esg-scaleleft',			0.5, {x:0,y:0,scaleX:0,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"100% 50%"},{autoAlpha:1,x:0, scaleX:1, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:0,z:0,scaleX:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-scaleright',			0.5, {x:0,y:0,scaleX:0,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"0% 50%"},{autoAlpha:1,x:0, scaleX:1, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:0,z:0,scaleX:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+					'esg-slideshortright':	[0.5, {x:-30,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,x:-30,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+						
+					'esg-slideshortrightout':	[0.5, {autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:30,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,x:30, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
-			 				['.esg-slideleft',			0.5, {xPercent:50,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:50,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-slideleftout',		0.5, {autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:-50,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"}],
+					'esg-slideshortleft':		[0.5, {x:30,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,x:30,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-slideshortleftout':	[0.5, {autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:-30,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"}],
 
-			 				['.esg-slideup',			0.5, {x:0,yPercent:50,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,yPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,yPercent:50,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-slideupout',			0.5, {autoAlpha:1,yPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:0,yPercent:-50,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,yPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-slideshortup':		[0.5, {x:0,y:30,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,y:30,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-slideshortupout':	[0.5, {autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:0,y:-30,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
-			 				['.esg-slidedown',			0.5, {x:0,yPercent:-50,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,yPercent:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,yPercent:-50,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-slidedownout',		0.5, {autoAlpha:1,yPercent:0, z:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{x:0,yPercent:50,scale:1,rotationZ:0,rotationX:0,z:10,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,yPercent:0,z:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'.esg-slideshortdown':		[0.5, {x:0,y:-30,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,y:-30,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-slideshortdownout':	[0.5, {autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:0,y:30,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
-			 				['.esg-slideshortright',	0.5, {x:-30,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,x:-30,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-slideshortrightout',	0.5, {autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:30,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,x:30, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-skewright':			[0.5, {xPercent:-100,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:60,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,skewX:-60,xPercent:-100,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-skewrightout':		[0.5, {autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:100,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:-60,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"}],
 
-			 				['.esg-slideshortleft',		0.5, {x:30,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,x:30,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-slideshortleftout',	0.5, {autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:-30,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,x:0, ease:punchgs.Power3.easeOut,overwrite:"all"}],
+					'esg-skewleft':			[0.5, {xPercent:100,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:-60,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:100,z:0,skewX:60,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-skewleftout':		[0.5, {autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:-100,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:60,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"}],
 
-			 				['.esg-slideshortup',		0.5, {x:0,y:30,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,y:30,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-slideshortupout',	0.5, {autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:0,y:-30,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-shifttotop':			[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,y:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
 
-			 				['.esg-slideshortdown',		0.5, {x:0,y:-30,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,y:-30,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-slideshortdownout',	0.5, {autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},{x:0,y:30,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-rollleft':			[0.5, {xPercent:50,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:90,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:50,z:0,rotationZ:90,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-rollleftout':		[0.5, {autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:50,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:90,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
+					'esg-rollright':			[0.5, {xPercent:-50,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:-90,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:-50,rotationZ:-90,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-rollrightout':		[0.5, {autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:-50,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:-90,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
-			 				['.esg-skewright',			0.5, {xPercent:-100,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:60,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,skewX:-60,xPercent:-100,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-skewrightout',		0.5, {autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:100,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:-60,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"}],
+					'esg-falldown':			[0.4, {x:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0, yPercent:-100},{autoAlpha:1,yPercent:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.4,{yPercent:-100,autoAlpha:0,z:0,ease:punchgs.Power2.easeOut,delay:0.2,overwrite:"all"} ],
+							
+					'esg-falldownout':		[0.4, {autoAlpha:1,yPercent:0,ease:punchgs.Back.easeOut,overwrite:"all"},{x:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0, yPercent:100},0.4,{autoAlpha:1,yPercent:0,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
 
-			 				['.esg-skewleft',			0.5, {xPercent:100,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:-60,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:100,z:0,skewX:60,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-skewleftout',		0.5, {autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:-100,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:60,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, skewX:0,ease:punchgs.Power3.easeOut,overwrite:"all"}],
+					'esg-zoomin':		        [0.3, {x:0,y:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:80,scale:0.6,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1,rotationZ:0,ease:punchgs.Back.easeOut,overwrite:"all"},0.3,{autoAlpha:0,scale:0.6,z:0,rotationZ:80,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+							
+					'esg-rotatescaleout':		[0.3, {autoAlpha:1,scale:1,rotationZ:0,ease:punchgs.Back.easeOut,overwrite:"all"},{x:0,y:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:80,scale:0.6,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,scale:1,rotationZ:0,ease:punchgs.Back.easeOut,overwrite:"all"}],
 
-			 				['.esg-shifttotop',			0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,y:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+					'esg-zoomintocorner':		[0.5, {x:0, y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"20% 50%"},{autoAlpha:1,scale:1.2, x:0, y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.5,{x:0, y:0,scale:1,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+							
+					'esg-zoomouttocorner':	[0.5, {x:0, y:0,scale:1.2,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"80% 50%"},{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.5,{x:0, y:0,scale:1.2,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+							
+					'esg-zoomtodefault':		[0.5, {x:0, y:0,scale:1.2,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.5,{x:0, y:0,scale:1.2,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+					
+					'esg-zoomdefaultblur':		[0.5, {x:0, y:0,scale:1.2,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.5,{x:0, y:0,scale:1.2,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+					
+					'esg-zoomback':			[0.5, {x:0, y:0,scale:0.2,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"},0.5,{x:0, y:0,scale:0.2,autoAlpha:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+							
+					'esg-zoombackout':		[0.5, {autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"},{x:0, y:0,scale:0.2,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.5,{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"}],
 
-			 				['.esg-rollleft',			0.5, {xPercent:50,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:90,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:50,z:0,rotationZ:90,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-rollleftout',		0.5, {autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:50,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:90,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-zoomfront':			[0.5, {x:0, y:0,scale:1.5,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.5,{autoAlpha:0,x:0, y:0,scale:1.5,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+							
+					'esg-zoomfrontout':		[0.5, {autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"},{x:0, y:0,scale:1.5,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.5,{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"}],
 
-			 				['.esg-rollright',			0.5, {xPercent:-50,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:-90,transformOrigin:"50% 50%"},{autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:0,xPercent:-50,rotationZ:-90,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-rollrightout',		0.5, {autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"},{xPercent:-50,y:0,scale:1,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:-90,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,xPercent:0, rotationZ:0,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-flyleft':			[0.8, {x:-80, y:0,z:0,scale:0.3,rotationZ:0,rotationY:75,rotationX:10,skewX:0,skewY:0,autoAlpha:0.01,transformOrigin:"30% 10%"},{rotationY:0, rotationX:0,rotationZ:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"},0.8,{autoAlpha:0.01,x:-40, y:0,z:300,rotationY:60,rotationX:20,overwrite:"all"}],
+							
+					'esg-flyleftout':			[0.8, {rotationY:0,rotationX:0,rotationZ:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"},{x:-80, y:0,z:0,scale:0.3,rotationZ:0,rotationY:75,rotationX:10,skewX:0,skewY:0,autoAlpha:0.01,transformOrigin:"30% 10%"},0.8,{rotationY:0,rotationX:0,rotationZ:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"}],
 
-			 				['.esg-falldown',			0.4, {x:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0, yPercent:-100},{autoAlpha:1,yPercent:0,ease:punchgs.Power3.easeOut,overwrite:"all"},0.4,{yPercent:-100,autoAlpha:0,z:0,ease:punchgs.Power2.easeOut,delay:0.2,overwrite:"all"} ],
-			 				['.esg-falldownout',		0.4, {autoAlpha:1,yPercent:0,ease:punchgs.Back.easeOut,overwrite:"all"},{x:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0, yPercent:100},0.4,{autoAlpha:1,yPercent:0,ease:punchgs.Power3.easeOut,overwrite:"all"} ],
+					'esg-flyright':			[0.8, {skewX:0,skewY:0,autoAlpha:0,x:80, y:0,z:0,scale:0.3,rotationZ:0,rotationY:-75,rotationX:10,transformOrigin:"70% 20%"},{rotationY:0,rotationX:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"},0.8,{autoAlpha:0,x:40, y:-40,z:300,rotationY:-60,rotationX:-40,overwrite:"all"}],
+							
+					'esg-flyrightout':		[0.8, {rotationY:0,rotationX:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"},{skewX:0,skewY:0,autoAlpha:0,x:80, y:0,z:0,scale:0.3,rotationZ:0,rotationY:-75,rotationX:10,transformOrigin:"70% 20%"},0.8,{rotationY:0, rotationX:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"}],
 
-			 				['.esg-rotatescale',		0.3, {x:0,y:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:80,scale:0.6,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1,rotationZ:0,ease:punchgs.Back.easeOut,overwrite:"all"},0.3,{autoAlpha:0,scale:0.6,z:0,rotationZ:80,ease:punchgs.Power2.easeOut,overwrite:"all"}],
-			 				['.esg-rotatescaleout',		0.3, {autoAlpha:1,scale:1,rotationZ:0,ease:punchgs.Back.easeOut,overwrite:"all"},{x:0,y:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,rotationZ:80,scale:0.6,transformOrigin:"50% 50%"},0.3,{autoAlpha:1,scale:1,rotationZ:0,ease:punchgs.Back.easeOut,overwrite:"all"}],
+					'esg-mediazoom':			[0.3, {x:0, y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1.4, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:0, y:0,scale:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+					
+					'esg-zoomblur':			[0.3, {x:0, y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1.4, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:0, y:0,scale:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+					
+					'esg-blur':			[0.3, {autoAlpha:1},{autoAlpha:1, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+					
+					'esg-grayscalein':			[0.3, {autoAlpha:1},{autoAlpha:1, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+					
+					'esg-grayscaleout':			[0.3, {autoAlpha:1, filter: 'grayscale(100%)'},{autoAlpha:1, ease:punchgs.Power3.easeOut,overwrite:"all"},0.3,{autoAlpha:1,ease:punchgs.Power2.easeOut,overwrite:"all"}],
+					
+					'esg-zoomandrotate':		[0.6, {x:0, y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1.4, x:0, y:0, rotationZ:30,ease:punchgs.Power2.easeOut,overwrite:"all"},0.4,{x:0, y:0,scale:1,z:0,rotationZ:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
 
-			 				['.esg-zoomintocorner',		0.5, {x:0, y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"20% 50%"},{autoAlpha:1,scale:1.2, x:0, y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.5,{autoAlpha:0,x:0, y:0,scale:1,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
-			 				['.esg-zoomouttocorner',	0.5, {x:0, y:0,scale:1.2,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"80% 50%"},{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.5,{autoAlpha:0,x:0, y:0,scale:1.2,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
-			 				['.esg-zoomtodefault',		0.5, {x:0, y:0,scale:1.2,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.5,{autoAlpha:0,x:0, y:0,scale:1.2,autoAlpha:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
-
-			 				['.esg-zoomback',			0.5, {x:0, y:0,scale:0.2,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"},0.5,{autoAlpha:0,x:0, y:0,scale:0.2,autoAlpha:0,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
-			 				['.esg-zoombackout',		0.5, {autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"},{x:0, y:0,scale:0.2,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.5,{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"}],
-
-			 				['.esg-zoomfront',			0.5, {x:0, y:0,scale:1.5,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Power3.easeOut,overwrite:"all"},0.5,{autoAlpha:0,x:0, y:0,scale:1.5,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
-			 				['.esg-zoomfrontout',		0.5, {autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"},{x:0, y:0,scale:1.5,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:0,transformOrigin:"50% 50%"},0.5,{autoAlpha:1,scale:1, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"}],
-
-			 				['.esg-flyleft',			0.8, {x:-80, y:0,z:0,scale:0.3,rotationZ:0,rotationY:75,rotationX:10,skewX:0,skewY:0,autoAlpha:0.01,transformOrigin:"30% 10%"},{x:0, y:0, rotationY:0,  z:0.001,rotationX:0,rotationZ:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"},0.8,{autoAlpha:0.01,x:-40, y:0,z:300,rotationY:60,rotationX:20,overwrite:"all"}],
-			 				['.esg-flyleftout',			0.8, {x:0, y:0, rotationY:0,  z:0.001,rotationX:0,rotationZ:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"},{x:-80, y:0,z:0,scale:0.3,rotationZ:0,rotationY:75,rotationX:10,skewX:0,skewY:0,autoAlpha:0.01,transformOrigin:"30% 10%"},0.8,{x:0, y:0, rotationY:0,  z:0.001,rotationX:0,rotationZ:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"}],
-
-			 				['.esg-flyright',			0.8, {scale:1,skewX:0,skewY:0,autoAlpha:0,x:80, y:0,z:0,scale:0.3,rotationZ:0,rotationY:-75,rotationX:10,transformOrigin:"70% 20%"},{x:0, y:0, rotationY:0,  z:0.001,rotationX:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"},0.8,{autoAlpha:0,x:40, y:-40,z:300,rotationY:-60,rotationX:-40,overwrite:"all"}],
-			 				['.esg-flyrightout',		0.8, {x:0, y:0, rotationY:0,  z:0.001,rotationX:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"},{scale:1,skewX:0,skewY:0,autoAlpha:0,x:80, y:0,z:0,scale:0.3,rotationZ:0,rotationY:-75,rotationX:10,transformOrigin:"70% 20%"},0.8,{x:0, y:0, rotationY:0,  z:0.001,rotationX:0,autoAlpha:1,scale:1, x:0, y:0, z:0,ease:punchgs.Power3.easeInOut,overwrite:"all"}],
-
-			 				['.esg-mediazoom',			0.3, {x:0, y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1.4, x:0, y:0, ease:punchgs.Back.easeOut,overwrite:"all"},0.3,{autoAlpha:1,x:0, y:0,scale:1,z:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
-			 				['.esg-zoomandrotate',		0.6, {x:0, y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{autoAlpha:1,scale:1.4, x:0, y:0, rotationZ:30,ease:punchgs.Power2.easeOut,overwrite:"all"},0.4,{x:0, y:0,scale:1,z:0,rotationZ:0,ease:punchgs.Power2.easeOut,overwrite:"all"}],
-
-			 				['.esg-pressback',			0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{rotationY:0,autoAlpha:1,scale:0.8,ease:punchgs.Power3.easeOut,overwrite:"all"} ,0.3,{rotationY:0,autoAlpha:1,z:0,scale:1,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
-			 				['.esg-3dturnright',		0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformPerspective:600},{x:-40,y:0,scale:0.8,rotationZ:2,rotationX:5,rotationY:-28,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"100% 50% 40%",transformPerspective:600,ease:punchgs.Power3.easeOut,overwrite:"all"} ,0.3,{z:0,x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,force3D:"auto",ease:punchgs.Power2.easeOut,overwrite:"all"} ,true]
-			 			   ];
+					'esg-pressback':			[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"50% 50%"},{rotationY:0,autoAlpha:1,scale:0.8,ease:punchgs.Power3.easeOut,overwrite:"all"} ,0.3,{rotationY:0,autoAlpha:1,z:0,scale:1,ease:punchgs.Power2.easeOut,overwrite:"all"} ],
+							
+					'esg-3dturnright':		[0.5, {x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,transformPerspective:600},{x:-40,y:0,scale:0.8,rotationZ:2,rotationX:5,rotationY:-28,skewX:0,skewY:0,autoAlpha:1,transformOrigin:"100% 50% 40%",transformPerspective:600,ease:punchgs.Power3.easeOut,overwrite:"all"} ,0.3,{z:0,x:0,y:0,scale:1,rotationZ:0,rotationX:0,rotationY:0,skewX:0,skewY:0,autoAlpha:1,force3D:"auto",ease:punchgs.Power2.easeOut,overwrite:"all"} ,true]
 						   
+				};
+						   
+			esgItemAnimations = {
+	  
+				'esg-item-zoomin': {	
+					enter: {time: 0.3, obj: {transformOrigin: '50% 50%', overwrite: 'all', force3D: 'auto', ease: punchgs.Power3.easeOut}}, 
+					leave:  {time: 0.3, obj: {transformOrigin: '50% 50%', scale: 1, overwrite: 'all', force3D: 'auto', ease: punchgs.Power3.easeOut}}		
+				},
+				
+				'esg-item-zoomout': {	
+					enter: {time: 0.3, obj: {transformOrigin: '50% 50%', overwrite: 'all', force3D: 'auto', ease: punchgs.Sine.easeOut}}, 
+					leave:  {time: 0.3, obj: {transformOrigin: '50% 50%', scale: 1, overwrite: 'all', force3D: 'auto', ease: punchgs.Sine.easeOut}}		
+				},
+				
+				'esg-item-fade': {			
+					enter: {time: 0.3, obj: {overwrite: 'all', force3D: 'auto', ease: punchgs.Sine.easeOut}}, 
+					leave:  {time: 0.3, obj: {opacity: 1, overwrite: 'all', force3D: 'auto', ease: punchgs.Sine.easeOut}}		
+				},
+				
+				'esg-item-blur': {		
+					enter: {time: 0.3, obj: {overwrite: 'all', force3D: 'auto', ease: punchgs.Power2.easeOut}}, 
+					leave:  {time: 0.3, obj: {blur: 0, overwrite: 'all', force3D: 'auto', ease: punchgs.Power2.easeOut}}		
+				},
+				
+				'esg-item-shift': {		
+					enter: {time: 0.3, obj: {overwrite: 'all', force3D: 'auto', ease: punchgs.Sine.easeOut}}, 
+					leave:  {time: 0.3, obj: {x: 0, y: 0, overwrite: 'all', force3D: 'auto', ease: punchgs.Sine.easeOut}}		
+				},
+				
+				'esg-item-rotate': {		
+					enter: {time: 0.3, obj: {transformOrigin: '50% 50%', overwrite: 'all', force3D: 'auto', ease: punchgs.Sine.easeOut}}, 
+					leave:  {time: 0.3, obj: {transformOrigin: '50% 50%', rotation: 0, overwrite: 'all', force3D: 'auto', ease: punchgs.Sine.easeOut}}		
+				}
+				
+			};
+			
+			// 2.2.5
+			startAnimations = jQuery.extend(true, {}, esgAnimmatrix);
+			mergedTransitions = [
+			
+				'slideup',
+				'covergrowup',
+				'slideleft',
+				'slidedown',
+				'flipvertical',
+				'fliphorizontal',
+				'flipup',
+				'flipdown',
+				'flipright',
+				'flipleft',
+				'skewleft',
+				'flipleft',
+				'zoomin',
+				'flyleft',
+				'flyright'
+			
+			];
+			
 	  }
 	  
 	  /* 2.1.5 compatibility for SR defer (tools) */
@@ -154,7 +257,7 @@
 
 		// OUR PLUGIN HERE :)
 		tpessential: function(options) {
-
+				
 				////////////////////////////////
 				// SET DEFAULT VALUES OF ITEM //
 				////////////////////////////////
@@ -194,7 +297,9 @@
 					filterGroupClass:"",
 					filterType:"",
 					filterLogic:"or",
+					filterDeepLink:"off",
 					showDropFilter:"hover",
+					filterNoMatch:"No Items for the Selected Filter",
 					evenGridMasonrySkinPusher:"on",
 
 					loadMoreType:"none",		//none, button, scroll
@@ -243,6 +348,8 @@
 					ajaxCloseStyle:"light",			// Style - Light or Dark
 					ajaxTypes:[],					// AWAITING OF OBJECT  type:"type of content", func:jQuery function
 
+					youtubeNoCookie:"false",
+
 					cookies: {
 						search:"off",
 						filter:"off",
@@ -254,28 +361,41 @@
 				};
 
 				options = jQuery.extend({}, jQuery.fn.tpessential.defaults, options);
-				if (typeof WebFontConfig=="undefined") WebFontConfig = new Object();
-				
+				if (typeof WebFontConfig=="undefined") WebFontConfig = {};
 				
 				/* 2.1.5 compatibility for SR defer (tools) */
 				function onInit() {
 
-					var opt=options;
+					var opt=options,
+						win;
 
-					var container = jQuery(this);
+					var container = jQuery(this),
+						containerIds = container.attr('id');
 					
 					opt.contPadTop = parseInt(container.css('paddingTop'),0);
 					opt.contPadBottom = parseInt(container.css('paddingBottom'),0);
+					opt.viewportBuffer = opt.hasOwnProperty('viewportBuffer') ? opt.viewportBuffer * 0.01 : 0;
+					if(!opt.hasOwnProperty('inViewport')) opt.inViewport = true;
 					
-					if (container == undefined) return false;
+					// if (container == undefined) return false;
 
-					container.parent().css({'position':'relative'});
+					container.parent().css('position','relative');
 
 					if (opt.layout=="cobbles") {
 						opt.layout = "even";
 						opt.evenCobbles = "on";
 					} else {
 						opt.evenCobbles = "off";
+					}
+					
+					/******************************
+						-	GOOGLE FONTS PRELOADING	-
+					********************************/
+					//! GOOGLE FONTS LOADING
+					function gridInit(container,opt) {
+						mainPreparing(container,opt);
+						opt.initialised="ready";
+						jQuery('body').trigger('essentialready',container.attr('id'));
 					}
 
 					if (opt.get!="true" && opt.get!=true) {
@@ -288,10 +408,7 @@
 						} else
 						   opt.filterGroupClass = "."+opt.filterGroupClass;
 
-						 
-						//opt.filterGroupClass = jQuery(opt.filterGroupClass);
-
-
+						   
 
 						// REPORT SOME IMPORTAN INFORMATION ABOUT THE SLIDER
 						if (window.tplogs==true)
@@ -300,7 +417,7 @@
 								console.groupCollapsed("Used Options:");
 								console.info(options);
 								console.groupEnd();
-								console.groupCollapsed("Tween Engine:")
+								console.groupCollapsed("Tween Engine:");
 							} catch(e) {}
 
 						// CHECK IF punchgs.TweenLite IS LOADED AT ALL
@@ -327,10 +444,10 @@
 
 						// FULLSCREEN MODE TESTING
 						jQuery("body").data('fullScreenMode',false);
-						jQuery(window).on ('mozfullscreenchange webkitfullscreenchange fullscreenchange',function(){
+						jQuery(window).on('mozfullscreenchange webkitfullscreenchange fullscreenchange',function(){
 						     jQuery("body").data('fullScreenMode',!jQuery("body").data('fullScreenMode'));
 
-						})
+						});
 
 
 						// CREATE THE SPINNER
@@ -353,7 +470,7 @@
 						opt.animDelay = (opt.delayBasic==0) ? "off" : "on" ;
 
 						opt.container = container;
-						opt.mainul = container.find('ul').first(),
+						opt.mainul = container.find('ul').first();
 						opt.mainul.addClass("mainul").wrap('<div class="esg-overflowtrick"></div>');
 
 						// MANIPULATE LEFT / RIGHT BUTTONS
@@ -391,8 +508,7 @@
 						/******************************
 							-	CHECK VIDEO API'S	-
 						********************************/
-						var vhandlers = loadVideoApis(container,opt);
-
+						loadVideoApis(container,opt);
 
 						/**********************************************************************
 							-	CHECK IF GRID IS FULLSCREEN AND SET PREDEFINED HEIGHT	-
@@ -418,19 +534,8 @@
 							container.closest('.eg-grid-wrapper, .myportfolio-container').css({height:"auto"}).removeClass("eg-startheight");
 						}
 
-
-						/******************************
-							-	GOOGLE FONTS PRELOADING	-
-						********************************/
-						//! GOOGLE FONTS LOADING
-						function gridInit(container,opt) {
-							mainPreparing(container,opt);
-							opt.initialised="ready";
-							jQuery('body').trigger('essentialready',container.attr('id'));
-						}
-
 						if (opt.googleFonts.length!=0 && opt.layout=="masonry") {
-							var fontstoload = opt.googleFonts.length;
+							// var fontstoload = opt.googleFonts.length;
 							var loadit = true;
 
 							jQuery('head').find('*').each(function(){
@@ -441,10 +546,10 @@
 								WebFontConfig = {
 									google: { families: opt.googleFonts  },
 									active: function() {
-												gridInit(container,opt)
+											gridInit(container,opt);
 									},
 									inactive: function() {
-											gridInit(container,opt)
+											gridInit(container,opt);
 									},
 									timeout:1500
 								};
@@ -456,14 +561,14 @@
 								var s = document.getElementsByTagName('script')[0];
 								s.parentNode.insertBefore(wf, s);
 							} else {
-								gridInit(container,opt)
+								gridInit(container,opt);
 							}
 						/**********************************************
 							-	WITHOUT GOOGLE FONT, START THE GRID	-
 						**********************************************/
 
 						} else {
-							gridInit(container,opt)
+							gridInit(container,opt);
 						}
 
 
@@ -517,8 +622,432 @@
 								opt.lmbut.remove();
 						}
 
-						checkAvailableFilters(container,opt);
+						// checkAvailableFilters(container,opt);
 						tabBlurringCheck(container,opt);
+					}
+
+					/* 2.2 */
+					jQuery('body').on('click.' + containerIds, '.esg-filterbutton', function() {
+ 
+					    var grid = jQuery(this).closest('.esg-grid');
+					 
+					    if(grid.find('.tp-esg-item').length === grid.find('.tp-esg-item.itemishidden').length) {
+					 		grid.append('<span class="no-filter-message">'+opt.filterNoMatch+'</span>');
+					        grid.addClass('show-message');
+					 
+					    }
+					    else {
+					 
+					        grid.removeClass('show-message');
+					 
+					    }
+					 
+					}).on('mouseover', '.tp-esg-item', function() {
+						
+						/* 2.2.6 */
+						jQuery('.eg-item-in-focus').removeClass('eg-item-in-focus');
+						jQuery(this).addClass('eg-item-in-focus');
+						
+					}).on('mouseenter.' + containerIds + ' mouseover.' + containerIds, function() {
+						
+						jQuery('.esgbox-container').addClass('esgbox-show-toolbar esgbox-show-nav');
+						
+					}).on('click.' + containerIds, '.esgbox', function() {
+
+						/* 2.1.5 */
+						stopAllVideos(true);
+						
+					}).on('click.' + containerIds, '.esgbox-clone', function() {
+						
+						jQuery(this).closest('.tp-esg-item').find('.esgbox').eq(0).click();
+						return false;
+						
+					}).on('mouseenter.' + containerIds + ' mouseleave.' + containerIds, '.esg-anime-item', function(e) {
+						
+						/* 2.1.6.2 */
+						var $this = jQuery(this).find('.esg-item-anime');
+						if(!$this.length) return;
+						
+						var tpe = e.type.replace('mouse', ''),
+							data = $this.data(),
+							itm = data.anime_itm,
+							other = data.anime_itm_other,
+							anime,
+							start,
+							prop,
+							obj,
+							val,
+							cur,
+							tw;
+
+						if(other) {
+							
+							var animeOther = esgItemAnimations[other][tpe],
+								objOther = jQuery.extend({}, animeOther.obj);
+							
+							if(tpe === 'enter') {
+															
+								switch(other) {
+									
+									case 'esg-item-zoomin':
+										val = data.anime_itm_other_zoomin;
+										if(isNaN(val)) val = '100';
+										val = parseInt(val, 10) * 0.01;
+										objOther.scale = Math.max(Math.min(val, 2), 0);
+									break;
+									
+									case 'esg-item-zoomout':
+										val = data.anime_itm_other_zoomout;
+										if(isNaN(val)) val = '100';
+										val = parseInt(val, 10) * 0.01;
+										objOther.scale = Math.max(Math.min(val, 2), 0);
+									break;
+									
+									case 'esg-item-fade':
+										val = data.anime_itm_other_fade;
+										if(isNaN(val)) val = '100';
+										val = parseInt(val, 10) * 0.01;
+										objOther.opacity = Math.max(Math.min(val, 1), 0);
+									break;
+									
+									case 'esg-item-blur':
+									
+										val = data.anime_itm_other_blur;
+										if(isNaN(val)) val = '5';
+										val = parseInt(val, 10);
+										val = Math.max(Math.min(val, 30), 0);
+										objOther.blur = Math.max(Math.min(val, 30), 0);
+											
+										opt.container.find('.isvisiblenow .esg-item-anime').not($this).each(function() {
+									
+											var $_this = jQuery(this);
+											cur = $_this.data('anime_blur_amount') || 0;
+											anime = $_this.data('anime_blur');
+											if(anime) {
+												anime.eventCallback('onUpdate', null);
+												anime.kill();
+											}
+											
+											start = {blur: cur};
+											obj = jQuery.extend({}, objOther);
+											tw = new punchgs.TweenLite(start, animeOther.time, obj);
+												
+											$_this.data('anime_blur', tw);
+											tw.eventCallback('onUpdate', function() {	
+												
+												$_this.data('anime_blur_amount', start.blur);
+												punchgs.TweenLite.set($_this.find('.esg-entry-media'), {msFilter: 'blur('+ start.blur + 'px)', filter: 'blur('+ start.blur + 'px)', webkitFilter: 'blur(' + start.blur + 'px)'});
+											
+											});
+											
+										});
+										
+									break;
+									
+									case 'esg-item-shift':
+										prop = data.anime_itm_other_shift;
+										val = data.anime_itm_shift_other_amount;
+										if(isNaN(val)) val = '10';
+										val = parseInt(val, 10);
+										if(prop === 'up' || prop === 'right') val *= -1;
+										prop = prop === 'up' || prop === 'down' ? 'y' : 'x';
+										objOther[prop] = Math.max(Math.min(val, 200), -200);
+									break;
+									
+									case 'esg-item-rotate':
+										val = data.anime_itm_other_rotate;
+										if(isNaN(val)) val = '100';
+										val = parseInt(val, 10);
+										objOther.rotation = Math.max(Math.min(val, 359), -359);
+									break;
+									
+								}
+								
+							}
+							
+							if(!objOther.hasOwnProperty('blur')) {
+								punchgs.TweenLite.to(opt.container.find('.isvisiblenow .esg-item-anime').not($this), animeOther.time, objOther);
+							}
+							else if(tpe === 'leave') {
+								
+								opt.container.find('.isvisiblenow .esg-item-anime').not($this).each(function() {
+									
+									var $_this = jQuery(this);
+									cur = $_this.data('anime_blur_amount');
+										
+									if(!cur) return;
+									
+									anime = $_this.data('anime_blur');
+									if(anime) {
+										anime.eventCallback('onUpdate', null);
+										anime.kill();
+									}
+									
+									start = {blur: cur};
+									obj = jQuery.extend({}, objOther);
+									tw = new punchgs.TweenLite(start, animeOther.time, obj);
+										
+									$_this.data('anime_blur', tw);
+									tw.eventCallback('onUpdate', function() {	
+										
+										$_this.data('anime_blur_amount', start.blur);
+										punchgs.TweenLite.set($_this.find('.esg-entry-media'), {msFilter: 'blur('+ start.blur + 'px)', filter: 'blur('+ start.blur + 'px)', webkitFilter: 'blur(' + start.blur + 'px)'});
+									
+									});
+									
+								});
+								
+							}
+							
+						}
+
+						if(itm) {
+							
+							var animeItm = esgItemAnimations[itm][tpe],
+								objAnime = jQuery.extend({}, animeItm.obj);
+							
+							if(tpe === 'enter') {
+								
+								switch(itm) {
+									
+									case 'esg-item-zoomin':
+										val = data.anime_itm_zoomin;
+										if(isNaN(val)) val = '100';
+										val = parseInt(val, 10) * 0.01;
+										objAnime.scale = Math.max(Math.min(val, 2), 0);
+									break;
+									
+									case 'esg-item-zoomout':
+										val = data.anime_itm_zoomout;
+										if(isNaN(val)) val = '100';
+										val = parseInt(val, 10) * 0.01;
+										objAnime.scale = Math.max(Math.min(val, 2), 0);
+									break;
+									
+									case 'esg-item-fade':
+										val = data.anime_itm_fade;
+										if(isNaN(val)) val = '100';
+										val = parseInt(val, 10) * 0.01;
+										objAnime.opacity = Math.max(Math.min(val, 1), 0);
+									break;
+									
+									case 'esg-item-blur':
+									
+										val = data.anime_itm_blur;
+										if(isNaN(val)) val = '5';
+										val = parseInt(val, 10);
+										objAnime.blur = Math.max(Math.min(val, 30), 0);
+										
+										cur = $this.data('anime_blur_amount') || 0;
+										anime = $this.data('anime_blur');
+											
+										if(anime) {
+											anime.eventCallback('onUpdate', null);
+											anime.kill();
+										}
+										
+										start = {blur: cur};
+										tw = new punchgs.TweenLite(start, animeItm.time, objAnime);
+											
+										$this.data('anime_blur', tw);
+										tw.eventCallback('onUpdate', function() {	
+											
+											$this.data('anime_blur_amount', start.blur);
+											punchgs.TweenLite.set($this.find('.esg-entry-media'), {msFilter: 'blur('+ start.blur + 'px)', filter: 'blur('+ start.blur + 'px)', webkitFilter: 'blur(' + start.blur + 'px)'});
+										
+										});
+									
+									break;
+									
+									case 'esg-item-shift':
+										prop = data.anime_itm_shift;
+										val = data.anime_itm_shift_amount;
+										if(isNaN(val)) val = '10';
+										val = parseInt(val, 10);
+										if(prop === 'up' || prop === 'right') val *= -1;
+										prop = prop === 'up' || prop === 'down' ? 'y' : 'x';
+										objAnime[prop] = Math.max(Math.min(val, 200), -200);
+									break;
+									
+									case 'esg-item-rotate':
+										val = data.anime_itm_rotate;
+										if(isNaN(val)) val = '30';
+										val = parseInt(val, 10);
+										objAnime.rotation = Math.max(Math.min(val, 359), -359);
+									break;
+									
+								}
+							}
+
+							if(!objAnime.hasOwnProperty('blur')) {
+								punchgs.TweenLite.to($this, animeItm.time, objAnime);
+							}
+							else {
+								
+								cur = $this.data('anime_blur_amount');
+								if(!cur) return;
+								
+								anime = $this.data('anime_blur');
+								if(anime) {
+									anime.eventCallback('onUpdate', null);
+									anime.kill();
+								}
+								
+								start = {blur: cur};
+								tw = new punchgs.TweenLite(start, animeItm.time, objAnime);
+									
+								$this.data('anime_blur', tw);
+								tw.eventCallback('onUpdate', function() {	
+									
+									$this.data('anime_blur_amount', start.blur);
+									punchgs.TweenLite.set($this.find('.esg-entry-media'), {msFilter: 'blur('+ start.blur + 'px)', filter: 'blur('+ start.blur + 'px)', webkitFilter: 'blur(' + start.blur + 'px)'});
+								
+								});	
+							}
+						}
+					});
+					
+					if(opt.paginationSwipe === 'on') {
+						
+						var pageX,
+							newX;
+						
+						container.find('.esg-overflowtrick').on('touchstart', function(event) {
+							
+							event = event.originalEvent;
+							if(event.touches) event = event.touches[0];
+							pageX = event.pageX;
+							if(opt.paginationDragVer === 'off') return false;
+							
+						}).on('touchmove', function(event) {
+							
+							event = event.originalEvent;
+							if(event.touches) event = event.touches[0];
+							newX = event.pageX;
+							
+						}).on('touchend', function() {
+							
+							if(Math.abs(pageX - newX) > opt.pageSwipeThrottle) {
+							
+								if(pageX > newX) onRightNavClick(container);
+								else onLeftNavClick(container);
+							
+							}
+							
+						});
+						
+ 					}
+					
+					if(opt.paginationAutoplay === 'on') {
+						
+						var paginationMouse, 
+							paginationDelay,
+							paginationLoaded;
+							
+						function paginationMouseOut() {
+
+							paginationMouse = false;
+							clearInterval(paginationDelay);
+							if(paginationLoaded) paginationDelay = setInterval(changeGrid, opt.paginationAutoplayDelay); 
+
+						}
+
+						function changeGrid() {
+
+							onRightNavClick(container);
+
+						}
+							
+						container.on('mouseenter.esgpagination', function() {
+
+							paginationMouse = true;
+							clearInterval(paginationDelay);
+
+						}).on('mouseleave.esgpagination', paginationMouseOut);
+
+						container.on('essential_grid_ready_to_use', function() {
+							
+							if(!container.find('.esg-pagination').length) {
+								
+								container.off('.esgpagination');
+								return;
+								
+							}
+							
+							paginationLoaded = true;
+							if(!paginationMouse) paginationMouseOut();
+							
+						});
+					}
+
+					// 2.2 Deeplinking
+					if(opt.filterDeepLink == "on") {
+	 
+						jQuery(".esg-filterbutton").click(function(){
+					 		var beforehash = window.location.href.split('#');
+					 		beforehash = beforehash[0]; 
+					 		filter = jQuery(this).data("filter");
+					 		if(filter.indexOf("filter-")!=0){
+					 			history.pushState({}, null,  beforehash);
+					 		}
+					 		else{
+					 			var hash = filter.replace("filter-","#");
+					 			history.pushState({}, null,  beforehash + hash);
+					 		}
+					 	});
+
+					    var grid = jQuery('.esg-grid'),
+					    url = window.location.href;
+					    if(!grid.length || url.search('#') === -1) return;
+					 
+					    var hash = url.split('#');
+					    hash = hash[hash.length - 1];
+					    if(!hash) return;
+					 
+					    hash = hash.toLowerCase().split(' ').join('').split('/').join('');
+					    var timer = setInterval(function() {
+					 
+					        if(grid.is(':visible')) {
+					 
+					            clearInterval(timer);
+					            jQuery('div[data-filter="filter-' + hash + '"]').trigger('click');
+					        }
+					 
+					    }, 500);
+
+					}
+					
+					// 2.2.5
+					function scrollCheck() {
+					
+						var rect = container[0].getBoundingClientRect(),
+							high = win.height(),
+							perc = high * opt.viewportBuffer;
+
+						if(rect.top < high - perc && rect.bottom > perc) {
+							
+							win.off('scroll.esgviewport resize.esgviewport', scrollCheck);
+							opt.inViewport = true;
+							
+							container.find('.tp-esg-item').each(function() {
+								
+								var itm = jQuery(this),	
+									vanime = itm.data('viewportanime');
+						
+								if(vanime) punchgs.TweenLite.to(itm, vanime[0], vanime[1]);
+								
+							});
+							
+						}
+						
+					}
+					
+					if(!opt.inViewport) {
+						
+						var ids = container[0].id;
+						win = jQuery(window).on('scroll.esgviewport resize.esgviewport', scrollCheck);
+						scrollCheck();
+						
 					}
 
 				}
@@ -536,7 +1065,7 @@
 						initTimer = setInterval(function() {
 						
 							if(esgAnimmatrix) {
-								
+
 								clearInterval(initTimer);
 								$this.each(onInit);
 								
@@ -565,9 +1094,16 @@
 
 				},
 		esskill: function() {
-						var container = jQuery(this);
+			
+						var container = jQuery(this),
+							ids = container.attr('id');
+						
+						// 2.2.5
+						jQuery('body').off('.' + ids);
+						jQuery(window).off('.resize.essg' + ids + ' resize.esglb' + ids);
+						
 						container.find('*').each(function() {
-							jQuery(this).off('click, focus, focusin, hover, play, ended, stop, pause, essentialready');
+							jQuery(this).off();
 							jQuery(this).remove();
 						});
 						container.remove();
@@ -577,7 +1113,7 @@
 
 		// METHODE CURRENT
 		esreadsettings: function(options) {
-						options = options == undefined ? new Object : options;
+						options = options == undefined ? {} : options;
 						// CATCH THE CONTAINER
 						var container=jQuery(this);
 						var opt = getOptions(container);
@@ -586,7 +1122,7 @@
 
 		// METHODE CURRENT
 		esredraw: function(options) {
-						options = options == undefined ? new Object : options;
+						options = options == undefined ? {} : options;
 						// CATCH THE CONTAINER
 						var container=jQuery(this);
 						var opt = getOptions(container);
@@ -609,6 +1145,7 @@
 							if (options.rowItemMultiplier!=undefined) opt.rowItemMultiplier = options.rowItemMultiplier;
 
 							if (options.responsiveEntries!=undefined) opt.responsiveEntries = options.responsiveEntries;
+							if (options.hideBlankItemsAt!=undefined) opt.hideBlankItemsAt = options.hideBlankItemsAt;
 
 							if (options.column!=undefined)  {
 								if (options.column<=0 || options.column>=20) {
@@ -650,6 +1187,7 @@
 						setOptions(container,opt);
 						setItemsOnPages(opt);
 						organiseGrid(opt,"esquickdraw");
+						stopAllVideos(true);
 
 		},
 
@@ -663,36 +1201,38 @@
 						prepareSortingAndOrders(container);
 
 						return opt.lastslide;
-				},
+				}
 
 
 		// METHODE JUMP TO SLIDE
+		/*
 		somemethodb: function(slide) {
 					return this.each(function() {
 						// CATCH THE CONTAINER
 						var container=jQuery(this);
 
-					})
+					});
 
 				}
+		*/
 
 
-})
-
-
+});
+		
 		function checkBottomPos(opt,scroll) {			
 			var bottompos = (opt.container.offset().top + opt.container.height() + (opt.contPadTop + opt.contPadBottom)) - jQuery(document).scrollTop(),
 				wh = jQuery(window).height(),
 				dh = jQuery(document).height();
-			
-			if ((opt.lastBottomCompare!=bottompos && wh>=bottompos) || (scroll && wh>=bottompos) || (dh===wh && wh>bottompos)) {		
-			
+						
+			if ((opt.lastBottomCompare!=bottompos && wh>=bottompos) || (scroll && wh>=bottompos) || (dh===wh && wh>bottompos) || opt.justfiltered) {					
+					opt.justfiltered = false;
 					opt.lastBottomCompare = bottompos;
 					if (opt.lmbut && opt.lmbut.data('loading')!=1) {
 						opt.lmbut.data('loading',1);								
 						loadMoreItems(opt);
 					}
 			}
+
 		}
 
 
@@ -722,16 +1262,17 @@
 		    }
 		    return null;
 		}
-
+		
+		/*
 		function eraseCookie(name) {
 		    createCookie(name, "", -1);
 		}
-
+		*/
 
 		/******************************
 			-	Action on TAB Blur 	-
 		********************************/
-		var vis = (function(){
+		(function(){
 		    var stateKey,
 		        eventKey,
 		        keys = {
@@ -749,7 +1290,7 @@
 		    return function(c) {
 		        if (c) document.addEventListener(eventKey, c);
 		        return !document[stateKey];
-		    }
+		    };
 		})();
 
 		var tabBlurringCheck = function() {
@@ -763,7 +1304,9 @@
 
 				    // checks for Firefox and other  NON IE Chrome versions
 					jQuery(window).on("focusin", function () {
-
+						
+						if(supressFocus) return;
+						
 				        setTimeout(function(){
 				            // TAB IS ACTIVE, WE CAN START ANY PART OF THE SLIDER
 				            jQuery('body').find('.esg-grid.esg-container').each(function() {
@@ -782,7 +1325,9 @@
 
 				        // bind focus event
 				      window.addEventListener("focus", function (event) {
-
+							
+							if(supressFocus) return;
+							
 				            setTimeout(function(){
 				                 // TAB IS ACTIVE, WE CAN START ANY PART OF THE SLIDER
 					            jQuery('body').find('.esg-grid.esg-container').each(function() {
@@ -799,7 +1344,9 @@
 
 				        // bind focus event
 				        window.attachEvent("focus", function (event) {
-
+							
+							if(supressFocus) return;
+							
 				            setTimeout(function(){
 								// TAB IS ACTIVE, WE CAN START ANY PART OF THE SLIDER
 								jQuery('body').find('.esg-grid.esg-container').each(function() {
@@ -814,13 +1361,14 @@
 				    }
 				}
 			}
-		}
+		};
 
 /*********************************
 	-	CHECK AVAILABLE FILTERS	-
 *********************************/
+/*
 function checkAvailableFilters(container,opt) {
-	/*container.find('.esg-filter-wrapper .esg-filterbutton').each(function() {
+	container.find('.esg-filter-wrapper .esg-filterbutton').each(function() {
 		var filt = jQuery(this);
 
 		if (container.find('ul >li.'+filt.data('filter')).length==0) {
@@ -829,9 +1377,9 @@ function checkAvailableFilters(container,opt) {
 		} else {
 			punchgs.TweenLite.to(filt,0.3,{autoAlpha:1});
 		}
-	});	*/
+	});	
 }
-
+*/
 
 /*********************************************************
 	-	CHECK IF MORE TO LOAD FOR SELECTED FILTERS	-
@@ -840,9 +1388,9 @@ function checkAvailableFilters(container,opt) {
 function checkMoreToLoad(opt) {
 
 	var container = opt.container,
-		selfilters  = new Array;
-		fidlist = new Array,
-		searchchanged = jQuery(opt.filterGroupClass+'.esg-filter-wrapper.eg-search-wrapper .eg-justfilteredtosearch').length,
+		selfilters  = [],
+		fidlist = [],
+		/* searchchanged = jQuery(opt.filterGroupClass+'.esg-filter-wrapper.eg-search-wrapper .eg-justfilteredtosearch').length, */
 		forcesearch =jQuery(opt.filterGroupClass+'.esg-filter-wrapper.eg-search-wrapper .eg-forcefilter').length;
 
 
@@ -857,7 +1405,7 @@ function checkMoreToLoad(opt) {
 	if (jQuery(opt.filterGroupClass+'.esg-filter-wrapper .esg-filterbutton.selected, '+opt.filterGroupClass+' .esg-filter-wrapper .esg-filterbutton.selected').length==0)
 		selfilters.push(-1);
 
-	var itemstoload = new Array();
+	var itemstoload = [];
 
 
 	for (var i=0;i<opt.loadMoreItems.length;i++) {
@@ -866,7 +1414,7 @@ function checkMoreToLoad(opt) {
 				if (selid == filtid && opt.loadMoreItems[i][0]!=-1 && (forcesearch==0 || forcesearch==1 && opt.loadMoreItems[i][2]==="cat-searchresult"))
 					itemstoload.push(opt.loadMoreItems[i]);
 			});
-		})
+		});
 	}
 	
 	addCountSuffix(container,opt);
@@ -888,7 +1436,7 @@ function addCountSuffix(container,opt) {
 
 
 			for (var i=0;i<opt.loadMoreItems.length;i++) {
-				var found = false;
+				// var found = false;
 				if (forcesearch==0)
 					jQuery.each(opt.loadMoreItems[i][1],function(index,filtid) {
 
@@ -905,7 +1453,7 @@ function addCountSuffix(container,opt) {
 
 
 			if (filter.find('.eg-el-amount').length==0) filter.append('<span class="eg-el-amount">0</span>');
-			countToTop(filter,amount)
+			countToTop(filter,amount);
 		}
 	});
 
@@ -940,8 +1488,8 @@ function buildLoader(container,opt,nominheight) {
 									 '</div>');
 		esgloader = container.find('.esg-loader');
 
-		if (opt.spinner=="spinner1" || opt.spinner=="spinner2") esgloader.css({backgroundColor:opt.spinnerColor});
-		if (opt.spinner=="spinner3" || opt.spinner=="spinner4") container.find('.bounce1, .bounce2, .bounce3, .dot1, .dot2').css({backgroundColor:opt.spinnerColor});
+		if (opt.spinner=="spinner1" || opt.spinner=="spinner2") esgloader.css('background', opt.spinnerColor);
+		if (opt.spinner=="spinner3" || opt.spinner=="spinner4") container.find('.bounce1, .bounce2, .bounce3, .dot1, .dot2').css('background', opt.spinnerColor);
 		if (!nominheight) punchgs.TweenLite.to(container,0.3,{minHeight:"100px",zIndex:0});
 		return esgloader;
 		// END OF THE SPINNER FUN
@@ -982,7 +1530,7 @@ function loadMoreItems(opt) {
 	// COLLECT ELEMENTS FROM ARRAY WE NEED TO LOAD
 	var container = opt.container,
 		availableItems = checkMoreToLoad(opt),
-		itemstoload = new Array;
+		itemstoload = [];
 
 
 	// LOAD IT IF WE HAVE SOMETHIGN TO LOAD
@@ -1001,9 +1549,8 @@ function loadMoreItems(opt) {
 	if (opt.loadMoreType==="scroll") {			
 		opt.esgloader.addClass("infinityscollavailable");		
 		if (opt.esgloaderprocess != "add") {
-			//console.log("Show Preloader 1. (no delay, speed 0.5)");
 			opt.esgloaderprocess = "add";
-			punchgs.TweenLite.to(opt.esgloader,0.5,{autoAlpha:1,overwrite:"all"})
+			punchgs.TweenLite.to(opt.esgloader,0.5,{autoAlpha:1,overwrite:"all"});
 		}
 	}
 	
@@ -1018,15 +1565,16 @@ function loadMoreItems(opt) {
 			opt.lmbut.data('loading',1);
 		}
 
-
 		var objData = {
 		     action: opt.loadMoreAjaxAction,
 		     client_action: 'load_more_items',
 		     token: opt.loadMoreAjaxToken,
 		     data: itemstoload,
-		     gridid: opt.gridID
+		     gridid: opt.gridID,
 		    };
-
+		
+		/* 2.1.6 */
+		if(opt.customGallery) objData.customgallery = true;
 
 		jQuery.ajax({
 		     type:'post',
@@ -1037,19 +1585,34 @@ function loadMoreItems(opt) {
 
 				if (data.success) {
 					
-					var addit = jQuery(data.data);
+					var addit = jQuery(data.data).filter(function(i) {
+						
+						if(this.nodeType === 1) {
+							
+							jQuery(this).data('eg-load-more-new', i);
+							return true;
+							
+						}
+						
+					});
+					
+					/* 2.1.6 */
+					if(opt.customGallery) addit.addClass('eg-newli');
+					
 					// IF WE ARE IN SEARCH MODE
 					if (jQuery(opt.filterGroupClass+'.esg-filter-wrapper.eg-search-wrapper .eg-forcefilter').length>0) addit.addClass("cat-searchresult");
 					opt.container.find('ul').first().append(addit);
 
-					checkAvailableFilters(container,opt);
+					// checkAvailableFilters(container,opt);
 
 					// CATCH THE CONTAINER
 					prepareItemsInGrid(opt,true);
 					setItemsOnPages(opt);
+					
+					stopAllVideos(true);
 
 					setTimeout(function() {
-						opt.animDelay = "off";
+						// opt.animDelay = "off";
 						organiseGrid(opt,"Ajax Loaded");
 						prepareSortingAndOrders(container);
 
@@ -1076,7 +1639,7 @@ function loadMoreItems(opt) {
 							opt.animDelay = "on";
 
 
-						},500)
+						},500);
 
 					},10);
 				}
@@ -1089,7 +1652,6 @@ function loadMoreItems(opt) {
 		if (loadMoreEmpty(opt)) {			
 			opt.lmbut.remove();
 			if (opt.loadMoreType==="scroll")  {
-				//console.log("Remove Preloader Now");
 				opt.esgloader.remove();
 				
 			}
@@ -1128,8 +1690,8 @@ function killOldCustomAjaxContent(act) {
 													}
 												},250);
 									}
-								})
-							} catch(e) { console.log(e)}
+								});
+							} catch(e) { console.log(e);}
 					}
 					act.data('lastposttype',"");
 }
@@ -1140,9 +1702,10 @@ function killOldCustomAjaxContent(act) {
 ////////////////////////////////
 function addAjaxNavigagtion(opt,act) {
 	var acclass = ' eg-acp-'+opt.ajaxClosePosition;
-		acclass = acclass+" eg-acp-"+opt.ajaxCloseStyle,
-		acclass = acclass+" eg-acp-"+opt.ajaxCloseType,
-		loc = "eg-icon-left-open-1",
+	acclass = acclass+" eg-acp-"+opt.ajaxCloseStyle;
+	acclass = acclass+" eg-acp-"+opt.ajaxCloseType;
+	
+	var loc = "eg-icon-left-open-1",
 		roc = "eg-icon-right-open-1",
 		xoc = '<i class="eg-icon-cancel"></i>';
 
@@ -1191,11 +1754,11 @@ function addAjaxNavigagtion(opt,act) {
 	});
 
 	function arrayClickableItems(arr1) {
-		var arr2 = new Array();
+		var arr2 = [];
 		jQuery.each(arr1,function(index,obj) {
 			if (jQuery(obj).closest('.itemtoshow.isvisiblenow').length>0)
 			  arr2.push(obj);
-		})
+		});
 		return arr2;
 	}
 
@@ -1277,7 +1840,7 @@ function showHideAjaxContainer(act,show,scroll,scrolloffset,speed,kill) {
 					},
 					onComplete:function() {
 						act.data('lastheight',act.height());
-						jQuery(window).trigger("resize.essg");
+						jQuery(window).trigger("resize.essg" + act.data('container').attr('id'));
 						if (act.find('.eg-ajax-closer-wrapper').length==0) addAjaxNavigagtion(opt,act);
 					}
 				});
@@ -1301,22 +1864,23 @@ function ajaxCallBack(opt,a) {
 	if (opt.ajaxCallback==undefined || opt.ajaxCallback=="" || opt.ajaxCallback.length<3)
 		return false;
 
-	var splitter = opt.ajaxCallback.split(')'),
-		splitter = splitter[0].split('('),
-		callback = splitter[0],
-		arguments = splitter.length>1 && splitter[1]!="" ? splitter[1]+"," : "",
-		obj = new Object();
+	var splitter = opt.ajaxCallback.split(')');
+		splitter = splitter[0].split('(');
+	
+	var callback = splitter[0],
+		args = splitter.length>1 && splitter[1]!="" ? splitter[1]+"," : "",
+		obj = {};
 
 	try{
-		obj.containerid = "#"+opt.ajaxContentTarget,
-		obj.postsource = a.data('ajaxsource'),
+		obj.containerid = "#"+opt.ajaxContentTarget;
+		obj.postsource = a.data('ajaxsource');
 		obj.posttype = a.data('ajaxtype');
-
+		
 		if (opt.ajaxCallbackArgument == "on")
-			eval(callback+"("+arguments+"obj)");
+			eval(callback+"("+args+"obj)");
 		else
-			eval(callback+"("+arguments+")");
-		} catch(e) { console.log("Callback Error"); console.log(e)}
+			eval(callback+"("+args+")");
+		} catch(e) { console.log("Callback Error"); console.log(e);}
 }
 
 ///////////////////////
@@ -1337,7 +1901,7 @@ function loadMoreContent(container,opt,a) {
 			act.data('container',container);
 
 		if (videoaspect=="16:9")
-			videoaspect ="widevideo"
+			videoaspect ="widevideo";
 		else
 			videoaspect ="normalvideo";
 
@@ -1367,7 +1931,7 @@ function loadMoreContent(container,opt,a) {
 						.attr({type:"text/css", rel:"stylesheet"})
 						.attr('href', opt.ajaxCssUrl);
 
-					opt.ajaxCssUrl == "";
+					opt.ajaxCssUrl = "";
 				}
 
 				buildLoader(act.closest('.eg-ajaxanimwrapper'),opt);
@@ -1404,7 +1968,7 @@ function loadMoreContent(container,opt,a) {
 										ajaxCallBack(opt,a);
 
 									}
-							 })
+							 });
 							 act.data('ajaxload').error(function(arg1, arg2, arg3) {
 							 		if (arg2!="abort") {
 								    	jQuery(act).append("<p>FAILURE: <strong>"+arg2+"</strong></p>");
@@ -1416,7 +1980,12 @@ function loadMoreContent(container,opt,a) {
 					// IF THE CONTENER WE LOAD IS A YOUTUBE VIDEO
 					case "youtubeid":
 						setTimeout(function() {
-							act.html('<div class="eg-ajax-video-container '+videoaspect+'"><iframe width="560" height="315" src="//www.youtube.com/embed/'+postid+'?autoplay=1&vq=hd1080" frameborder="0" allowfullscreen></iframe></div>');
+							if(opt.youtubeNoCookie!="false"){
+								act.html('<div class="eg-ajax-video-container '+videoaspect+'"><iframe width="560" height="315" src="//www.youtube-nocookie.com/embed/'+postid+'?autoplay=1&vq=hd1080&fs=1" frameborder="0" allowfullscreen></iframe></div>');
+							}
+							else{
+								act.html('<div class="eg-ajax-video-container '+videoaspect+'"><iframe width="560" height="315" src="//www.youtube.com/embed/'+postid+'?autoplay=1&vq=hd1080&fs=1" frameborder="0" allowfullscreen></iframe></div>');
+							}							
 						    removeLoader(act);
 							showHideAjaxContainer(act,true,opt.ajaxScrollToOnLoad,opt.ajaxScrollToOffset);
 							ajaxCallBack(opt,a);
@@ -1441,17 +2010,18 @@ function loadMoreContent(container,opt,a) {
 							ajaxCallBack(opt,a);
 						},300);
 					break;
-					// IF THE CONTENER WE LOAD IS A VIMEO VIDEO
+					// IF THE CONTENER WE LOAD IS HTML5 VIDEO
 					case "html5vid":
 						postid=postid.split("|");
 						setTimeout(function() {
-							act.html('<video autoplay="true" loop="" class="rowbgimage" poster="" width="100%" height="auto"><source src="'+postid[0]+'" type="video/mp4"><source src="'+postid[1]+'" type="video/webm"><source src="'+postid[2]+'" type="video/ogg"></video>');
+							var mediaType = postid[0].search('mp4') !== -1 ? 'video/mp4' : 'audio/mpeg';
+							act.html('<video autoplay="true" loop="" class="rowbgimage" poster="" width="100%" height="auto"><source src="'+postid[0]+'" type="' + mediaType + '"><source src="'+postid[1]+'" type="video/webm"><source src="'+postid[2]+'" type="video/ogg"></video>');
 						    removeLoader(act);
 							showHideAjaxContainer(act,true,opt.ajaxScrollToOnLoad,opt.ajaxScrollToOffset);
 							ajaxCallBack(opt,a);
 						},300);
 					break;
-					// IF THE CONTENER WE LOAD IS A VIMEO VIDEO
+					// IF THE CONTENER WE LOAD IS SOUNDCLOUD
 					case "soundcloud" :
 					case "soundcloudid":
 						setTimeout(function() {
@@ -1473,7 +2043,7 @@ function loadMoreContent(container,opt,a) {
 								 removeLoader(act);
 								 showHideAjaxContainer(act,true,opt.ajaxScrollToOnLoad,opt.ajaxScrollToOffset);
 								 ajaxCallBack(opt,a);
-							}
+							};
 							img.onerror = function(e) {
 								 act.html("Error");
 								 removeLoader(act);
@@ -1503,7 +2073,7 @@ function loadMoreContent(container,opt,a) {
 									},300);
 								}
 							}
-						})
+						});
 
 					break;
 				}
@@ -1518,9 +2088,9 @@ function loadMoreContent(container,opt,a) {
 	// IS MOBILE ?? //
 	//////////////////
 	var is_mobile = function() {
-	    var agents = ['android', 'webos', 'iphone', 'ipad', 'blackberry','Android', 'webos', ,'iPod', 'iPhone', 'iPad', 'Blackberry', 'BlackBerry'];
+	    var agents = ['android', 'webos', 'iphone', 'ipad', 'blackberry','Android', 'webos', 'iPod', 'iPhone', 'iPad', 'Blackberry', 'BlackBerry'];
 		var ismobile=false;
-	    for(i in agents) {
+	    for(var i in agents) {
 
 		    if (navigator.userAgent.split(agents[i]).length>1) {
 	            ismobile = true;
@@ -1528,14 +2098,14 @@ function loadMoreContent(container,opt,a) {
 	          }
 	    }
 	    return ismobile;
-	}
+	};
 
 /********************************************************************************
 	-	PREPARE PRESELECTED FILTERS, PAGINATION AND SEARCH BASED ON COOKIES	-
 *********************************************************************************/
 function resetFiltersFromCookies(opt,triggerclick,otherids) {
 	if (opt.cookies.filter=="on") {
-				var selectedFilters = otherids!==undefined ? otherids : readCookie("grid_"+opt.girdID+"_filters");
+				var selectedFilters = otherids!==undefined ? otherids : readCookie("grid_"+opt.gridID+"_filters");
 
 				if (selectedFilters!==undefined && selectedFilters!==null && selectedFilters.length>0) {
 					var foundfilters = 0;
@@ -1549,7 +2119,7 @@ function resetFiltersFromCookies(opt,triggerclick,otherids) {
 											jQuery(this).addClass("selected");
 									foundfilters++;
 								}
-							})								
+							});							
 						}
 					});
 					if (foundfilters>0) 
@@ -1561,12 +2131,12 @@ function resetFiltersFromCookies(opt,triggerclick,otherids) {
 function resetPaginationFromCookies(opt,otherids) {
 	// HANDLE THE PAGINATION  - WHICH PAGE SHOULD BE SHOWN IF PAGINATION WAS SAVED AS COOKIE
 	if (opt.cookies.pagination==="on") {
-		var pagec = otherids!==undefined ? otherids : readCookie("grid_"+opt.girdID+"_pagination");		
+		var pagec = otherids!==undefined ? otherids : readCookie("grid_"+opt.gridID+"_pagination");		
 		if (pagec!==undefined && pagec!==null && pagec.length>0)
 		 	jQuery(opt.filterGroupClass+'.esg-filterbutton.esg-pagination-button,'+opt.filterGroupClass+' .esg-filterbutton.esg-pagination-button').each(function() {		 		
 		 		if (parseInt(jQuery(this).data('page'),0) === parseInt(pagec,0) && !jQuery(this).hasClass("selected"))
 		 			jQuery(this).click();
-		 	})
+		 	});
 	}
 }
 
@@ -1580,6 +2150,48 @@ function resetSearchFromCookies(opt) {
 	}
 }
 
+function onRightNavClick(container) {
+	
+	var opt = getOptions(container);
+	
+	opt.oldpage = opt.currentpage;
+	opt.currentpage++;
+
+	if (opt.currentpage>=opt.realmaxpage) opt.currentpage = 0;
+
+	var gbfc = getBestFitColumn(opt,jQuery(window).width(),"id");
+	opt.column = gbfc.column;
+	opt.columnindex = gbfc.index;
+	opt.mmHeight = gbfc.mmHeight;
+
+	setItemsOnPages(opt);
+	organiseGrid(opt,"RightNavigation");
+	setOptions(container,opt);
+	
+	stopAllVideos(true);
+}
+
+function onLeftNavClick(container) {
+	
+	var opt = getOptions(container);
+	opt.oldpage = opt.currentpage;
+	opt.currentpage--;
+
+	if (opt.currentpage<0) opt.currentpage = opt.realmaxpage-1;
+
+	var gbfc = getBestFitColumn(opt,jQuery(window).width(),"id");
+	opt.column = gbfc.column;
+	opt.columnindex = gbfc.index;
+	opt.mmHeight = gbfc.mmHeight;
+
+	setItemsOnPages(opt);
+	organiseGrid(opt,"LeftNavigation");
+	setOptions(container,opt);
+
+	stopAllVideos(true);
+	
+}
+
 /*************************************
 	-	PREPARING ALL THE GOODIES	-
 **************************************/
@@ -1589,7 +2201,7 @@ function mainPreparing(container,opt) {
 			/*************************************************************
 				-	PREPARE PRESELECTED FILTERS BASED ON COOKIED	-
 			**************************************************************/
-			resetFiltersFromCookies(opt)
+			resetFiltersFromCookies(opt);
 
 			/*********************************************
 				-	BUILD LEFT/RIGHT BIG CONTAINER 	-
@@ -1620,6 +2232,7 @@ function mainPreparing(container,opt) {
 			/***********************************
 				-	PREPARE SEARCH FUNCTION	-
 			***********************************/
+
 			if (jQuery(opt.filterGroupClass+'.eg-search-wrapper').length>0) {
 
 				var fgc = opt.filterGroupClass.replace(".",""),
@@ -1670,8 +2283,8 @@ function mainPreparing(container,opt) {
 						 			createCookie("grid_"+opt.gridID+"_search", ival, opt.cookies.timetosave*(1/60/60));
 
 							 	if (opt.cookies.searchjusttriggered === true) {	
-							 		var cpageids = readCookie("grid_"+opt.girdID+"_pagination"),
-							 			cfilterids = readCookie("grid_"+opt.girdID+"_filters");
+							 		var cpageids = readCookie("grid_"+opt.gridID+"_pagination"),
+							 			cfilterids = readCookie("grid_"+opt.gridID+"_filters");
 							 		setTimeout(function() {							 			
 							 			resetFiltersFromCookies(opt,true,cfilterids);										
 							 			resetPaginationFromCookies(opt,cpageids);
@@ -1686,7 +2299,7 @@ function mainPreparing(container,opt) {
 									}});
 									jQuery(opt.filterGroupClass+'.eg-search-wrapper .eg-search-input').trigger("searchended");
 								},1000);
-							   	var rarray = new Array();
+							   	var rarray = [];
 							   	if (result)
 							 		jQuery.each(result,function(index,id){
 								 		if (id!=undefined && jQuery.isNumeric(id))
@@ -1711,7 +2324,7 @@ function mainPreparing(container,opt) {
 
 								jQuery.each(rarray,function(index,id){
 									container.find('.eg-post-id-'+id).addClass("cat-searchresult");
-								})
+								});
 								hidsbutton.addClass("eg-forcefilter").addClass("eg-justfilteredtosearch");
 								
 								/* 2.1.5 */
@@ -1736,7 +2349,7 @@ function mainPreparing(container,opt) {
 					} else {
 						jQuery.each(opt.loadMoreItems,function(andex,litem) {litem[2]="notsearched";});
 						container.find('.cat-searchresult').removeClass("cat-searchresult");
-						var hidsbutton = jQuery(opt.filterGroupClass+'.eg-search-wrapper.esg-filter-wrapper .hiddensearchfield');
+						hidsbutton = jQuery(opt.filterGroupClass+'.eg-search-wrapper.esg-filter-wrapper .hiddensearchfield');
 						hidsbutton.removeClass("eg-forcefilter").addClass("eg-justfilteredtosearch");
 						
 						// CLEAR COOKIE, FIELD IS EMPTY
@@ -1759,7 +2372,7 @@ function mainPreparing(container,opt) {
 						},1000);
 
 					}
-				};
+				}
 				
 				
 				
@@ -1791,7 +2404,7 @@ function mainPreparing(container,opt) {
 						jQuery(opt.filterGroupClass+'.eg-search-wrapper .eg-search-input').trigger("searchended");
 					},1000);
 
-				})
+				});
 
 			}
 
@@ -1803,13 +2416,13 @@ function mainPreparing(container,opt) {
 				-	PREPARE DROP DOWN FILTERS	-
 			****************************************/
 			jQuery(opt.filterGroupClass+'.esg-filter-wrapper,'+opt.filterGroupClass+' .esg-filter-wrapper').each(function(i) {
-
+			
 				var efw = jQuery(this);
 
 				if (efw.hasClass("dropdownstyle")) {
 									efw.find('.esg-filter-checked').each(function() {
 						jQuery(this).prependTo(jQuery(this).parent());
-					})
+					});
 
 					if (!is_mobile()) {
 						if (opt.showDropFilter=="click") {
@@ -1834,7 +2447,7 @@ function mainPreparing(container,opt) {
 								efw.find('.esg-selected-filterbutton').removeClass("hoveredfilter");
 								efw.find('.esg-dropdown-wrapper').stop().hide();
 	
-							})
+							});
 						}
 					} else {
 						efw.find('.esg-selected-filterbutton').click(function() {															
@@ -1861,61 +2474,40 @@ function mainPreparing(container,opt) {
 						opt.container.find('.hoveredfilter').removeClass("hoveredfilter");					
 						opt.container.find('.esg-dropdown-wrapper').stop().hide();							
 					}					
-				})
+				});
 			}
 
 			opt.container.find('.esg-filters').each(function(i) {
 				punchgs.TweenLite.set(this,{zIndex:(70-i)});
-			})
+			});
 
 			opt.container.find('.esg-filter-wrapper.dropdownstyle').each(function(i) {
 				punchgs.TweenLite.set(this,{zIndex:(1570-i)});
-			})
+			});
 			
-
+			var containerIds = container.attr('id');
 
 			/***********************************************
 				-	HANDLE OF LEFT NAVIGATION BUTTON	-
 			*************************************************/
-			jQuery("body").on("click",opt.filterGroupClass+'.esg-left,'+opt.filterGroupClass+' .esg-left',function() {
-				opt = getOptions(container);
-				opt.oldpage = opt.currentpage;
-				opt.currentpage--;
-
-				if (opt.currentpage<0) opt.currentpage = opt.realmaxpage-1;
-
-				var gbfc = getBestFitColumn(opt,jQuery(window).width(),"id");
-				opt.column = gbfc.column;
-				opt.columnindex = gbfc.index;
-				opt.mmHeight = gbfc.mmHeight;
-
-				setItemsOnPages(opt);
-				organiseGrid(opt,"LeftNavigation");
-				setOptions(container,opt);
-				stopAllVideos(true);
+			// 2.2.5
+			jQuery('body').on('click.' + containerIds, '#' + container.attr('id') + ' ' + opt.filterGroupClass+'.esg-left,'+opt.filterGroupClass+' .esg-left', function() {
+				
+				onLeftNavClick(container);
+				
 			});
-
-
+			
 			/***********************************************
 				-	HANDLE OF RIGHT NAVIGATION BUTTON	-
 			***********************************************/
-			jQuery("body").on("click",opt.filterGroupClass+'.esg-right,'+opt.filterGroupClass+' .esg-right',function() {
-				opt = getOptions(container);
-				opt.oldpage = opt.currentpage;
-				opt.currentpage++;
-
-				if (opt.currentpage>=opt.realmaxpage) opt.currentpage = 0;
-
-				var gbfc = getBestFitColumn(opt,jQuery(window).width(),"id");
-				opt.column = gbfc.column;
-				opt.columnindex = gbfc.index;
-				opt.mmHeight = gbfc.mmHeight;
-
-				setItemsOnPages(opt);
-				organiseGrid(opt,"RightNavigation");
-				setOptions(container,opt);
-				stopAllVideos(true);
-			})
+			
+			/* 2.1.6.2 */
+			// 2.2.5
+			jQuery('body').on('click.' + containerIds, '#' + containerIds + ' ' + opt.filterGroupClass+'.esg-right,'+opt.filterGroupClass+' .esg-right', function() {
+			
+				onRightNavClick(container);
+			
+			});
 
 
 			/**************************************
@@ -1927,7 +2519,6 @@ function mainPreparing(container,opt) {
 
 				var opt = getOptions(container);
 
-
 				stopAllVideos(true);
 				var efb = jQuery(this);
 
@@ -1937,20 +2528,20 @@ function mainPreparing(container,opt) {
 					if (efb.hasClass("esg-allfilter")) {
 						jQuery(opt.filterGroupClass+'.esg-filterbutton, '+opt.filterGroupClass+' .esg-filterbutton').each(function() {
 							 jQuery(this).removeClass("selected");
-						})
+						});
 					}
 				}
 
 				if (efb.closest('.esg-filters').hasClass("esg-singlefilters") || opt.filterType=="single") {
 						jQuery(opt.filterGroupClass+'.esg-filterbutton, '+opt.filterGroupClass+' .esg-filterbutton').each(function() {
 							 jQuery(this).removeClass("selected");
-						})
-						efb.addClass("selected")
+						});
+						efb.addClass("selected");
 				} else {
 					if (efb.hasClass("selected"))
-						efb.removeClass("selected")
+						efb.removeClass("selected");
 					else
-						efb.addClass("selected")
+						efb.addClass("selected");
 				}
 
 				var hidsbutton = jQuery(opt.filterGroupClass+'.esg-filter-wrapper .hiddensearchfield');
@@ -1964,11 +2555,11 @@ function mainPreparing(container,opt) {
 					  filtcookie = countofselected===0 ? jQuery(this).data('fid') : filtcookie+","+jQuery(this).data('fid');
 					 }
 
-				})
+				});
 
 				// CREATE A COOKIE FOR THE LAST SELECTION OF FILTERS
 				if (opt.cookies.filter==="on" && opt.cookies.searchjusttriggered !== true) 
-					createCookie("grid_"+opt.girdID+"_filters",filtcookie,opt.cookies.timetosave*(1/60/60));
+					createCookie("grid_"+opt.gridID+"_filters",filtcookie,opt.cookies.timetosave*(1/60/60));
 				
 
 				if (countofselected==0)
@@ -1984,9 +2575,10 @@ function mainPreparing(container,opt) {
 					 jQuery(opt.filterGroupClass+'.navigationbuttons,'+opt.filterGroupClass+' .navigationbuttons').css({display:'inline-block'});
 					 jQuery(opt.filterGroupClass+'.esg-pagination,'+opt.filterGroupClass+' .esg-pagination').css({display:'inline-block'});
 				}
-				
+								
 				if (opt.lmbut!=undefined && opt.lmbut.length>0)	{
-					var itemtoload = checkMoreToLoad(opt).length;
+
+					var itemtoload = checkMoreToLoad(opt).length;				
 					if (itemtoload>0) {
 						if (opt.loadMoreNr=="off")
 							opt.lmbut.html(opt.loadMoreTxt);
@@ -1997,12 +2589,11 @@ function mainPreparing(container,opt) {
 						opt.lmbut.data('loading',0).html(opt.loadMoreEndTxt);
 
 				} 
-
-
-
+				opt.justfiltered = true;
 				setItemsOnPages(opt);
 				organiseGrid(opt,"filtergroup");
 				setOptions(container,opt);
+				//jQuery(document).trigger('ess-filter-done',container.attr('id'));
 			}
 			
 			jQuery(opt.filterGroupClass+'.esg-filterbutton, '+opt.filterGroupClass+' .esg-filterbutton').each(function() {
@@ -2011,16 +2602,15 @@ function mainPreparing(container,opt) {
 					jQuery(this).click(onFilterClick);
 
 
-			})
+			});
 
 
 			/*****************************************
 				-	IN CASE WINDOW IS RESIZED 	-
 			******************************************/
 			var resizetimer;
-
-
-			jQuery(window).on("resize.essg",function() {
+			jQuery(window).on("resize.essg" + containerIds,function(e) {
+				
 					clearTimeout(resizetimer);
 
 					if (opt.forceFullWidth=="on" || opt.forceFullScreen=="on") {
@@ -2044,126 +2634,282 @@ function mainPreparing(container,opt) {
 
 				setOptions(container,opt);
 				resizetimer = setTimeout(function() {
+					
+					opt.fromResize = true;
+					
 					opt = getOptions(container);					
 					setItemsOnPages(opt);
 					organiseGrid(opt,"resize");
 					setOptions(container,opt);
+					
+					/* 2.1.5 */
+					stopAllVideos(true, false, false, true);
+					
 				},200);
-				//stopAllVideos(true);
 
+			}).on('resize.esglb' + containerIds, function() {
+				
+				var lbVid = jQuery('.esgbox-slide--video .esgbox-iframe');
+				if(lbVid.length) {
+					
+					var ratio = jQuery('body').hasClass('esg-four-by-three'),
+						scale = opt.container.data('lightboxsettings').videoScale,
+						win = jQuery(window),
+						winWide = win.width(),
+						winTall = win.height(),
+						high,
+						wid,
+						vw,
+						vh;
+						
+					if(scale) {
+						buffer = opt.container.data('lightboxsettings').videoScaleBuffer;
+						if(buffer) winTall -= buffer * 2;
+					}
+						
+					if(!ratio) {	
+						vw = 1280;
+						vh = 720;
+					}
+					else {
+						vw = 800;
+						vh = 600;
+					}
+				
+					lbVid.each(function() {
+
+						if(vw < winWide && vh < winTall && !scale) {	
+							wid = vw;
+							high = vh;
+						}
+						else {
+							wid = winWide / vw;
+							high = winTall / vh;
+							
+							var perc = wid > high ? high : wid;
+							wid = vw * perc;
+							high = vh * perc;
+							
+							if(winWide > winTall) {		
+								if(high > winTall) {
+									high = winTall;
+									wid = vw * (high / vh);
+								}
+							}
+							else {
+								if(wid > high) {
+									if(wid > winWide) {
+										wid = winWide;
+										high = vh * (wid / vw);
+									}
+								}
+								else {
+									if(high > winTall) {
+										high = winTall;
+										wid = vw * (high / vh);
+									}
+								}
+							}
+						}
+						jQuery(this).width(wid).height(high);
+					});
+				}
 			});
 
 
 			/************************************************
 				-	Container Height to right position	-
 			************************************************/
+			
+			// 2.2.5
+			function onItemPosition() {
+				
+				var navcont = container.find('.eg-leftright-container'),
+					esgo = container.find('.esg-overflowtrick').first(),
+					positionDif,
+					ul;
+				
+				clearTimeout(container.data('callednow'));
+
+				if (opt.maxheight>0 && opt.maxheight<9999999999) {
+					opt.inanimation = false;
+					ul = opt.mainul;
+						
+					navcont = container.find('.eg-leftright-container');
+
+					var padtop = parseInt(esgo.css('paddingTop'),0);
+					padtop = padtop == undefined ? 0 : padtop;
+					padtop = padtop == null ? 0 : padtop;
+					var padbot = parseInt(esgo.css('paddingBottom'),0);
+					padbot = padbot == undefined ? 0 : padbot;
+					padbot = padbot == null ? 0 : padbot;
+
+					var newheight = opt.maxheight+opt.overflowoffset+padtop+padbot;
+
+					if (opt.forceFullScreen=="on") {
+						var coh = jQuery(window).height();
+						if (opt.fullScreenOffsetContainer!=undefined) {
+							try{
+								var offcontainers = opt.fullScreenOffsetContainer.split(",");
+								jQuery.each(offcontainers,function(index,searchedcont) {
+									coh = coh - jQuery(searchedcont).outerHeight(true);
+
+									if (coh<opt.minFullScreenHeight) coh=opt.minFullScreenHeight;
+								});
+							} catch(e) {}
+						}
+
+						newheight =coh;
+					}
+					
+					// 2.2.5
+					var heightspeed = opt.firstLoadFinnished ? opt.animSpeed : opt.startAnimationSpeed * 0.001;
+					
+					/*
+					var heightspeed = 0.3;
+					
+					if (ul.height()<200)
+						heightspeed = 1;
+					*/
+					
+					ul.data('hhh', newheight);
+					esgo.data('hhh', newheight);
+					
+					punchgs.TweenLite.to(ul,heightspeed,{force3D:"auto",height:newheight,ease:punchgs.Power3.easeInOut,clearProps:"transform"});
+					punchgs.TweenLite.to(esgo,heightspeed,{force3D:true,height:newheight,ease:punchgs.Power3.easeInOut,clearProps:"transform",onComplete:function() {
+						container.closest('.eg-grid-wrapper, .myportfolio-container').css({height:"auto"}).removeClass("eg-startheight").addClass('esg-revealed');
+						opt.releaseHovers = true;
+					}});
+
+					if (navcont.length>0)
+						punchgs.TweenLite.to(navcont,heightspeed,{minHeight:newheight,ease:punchgs.Power3.easeInOut});
+
+						var ensl = jQuery(opt.filterGroupClass+'.esg-navbutton-solo-left,'+opt.filterGroupClass+' .esg-navbutton-solo-left');
+						var ensr = jQuery(opt.filterGroupClass+'.esg-navbutton-solo-right,'+opt.filterGroupClass+' .esg-navbutton-solo-right');
+
+						if (ensl.length>0)
+							ensl.css({marginTop:(0-ensl.height()/2)});
 
 
-			container.on('itemsinposition',function() {
+						if (ensr.length>0)
+							ensr.css({marginTop:(0-ensr.height()/2)});
 
+				} else {
+					if (opt.maxheight==0) {
+						ul = container.find('ul').first();
+						punchgs.TweenLite.to(ul,1,{force3D:"auto",height:0,ease:punchgs.Power3.easeInOut,clearProps:"transform"});
+						punchgs.TweenLite.to(esgo,1,{force3D:true,height:0,ease:punchgs.Power3.easeInOut,clearProps:"transform"});
+					}
+				}
+				
+				container.data('callednow',setTimeout(function() {
+					container.find('.itemtoshow.isvisiblenow').each(function() {
+						hideUnderElems(jQuery(this));
+					});
+				},250));
+
+				// IF WE ARE IN THE FIRST LOAD AND ACTIVATE PROCESS
+				if (opt.firstLoadFinnished===undefined) {
+					container.trigger("essential_grid_ready_to_use");
+					
+					// HANDLE THE COOKIES WHICH NEED TO BE HANDLED AFTER FIRST LOAD
+					resetSearchFromCookies(opt);
+
+					// HANDLE THE PAGINATION  - WHICH PAGE SHOULD BE SHOWN IF PAGINATION WAS SAVED AS COOKIE
+					resetPaginationFromCookies(opt);
+
+					opt.firstLoadFinnished = true;
+				}
+							
+			}
+				
+			container.on('itemsinposition',function(e, complete) {
+				
+				// 2.2.5
+				/*
 				var container = jQuery(this),
 					opt = getOptions(container);				
-
-				clearTimeout(opt.iteminspositiontimer);
-				opt.iteminspositiontimer = setTimeout(function() {
-
-					
-					var navcont = container.find('.eg-leftright-container');
-					
-					clearTimeout(container.data('callednow'));
-
-
-					if (opt.maxheight>0 && opt.maxheight<9999999999) {
-						opt.inanimation = false;
-						var esgo = container.find('.esg-overflowtrick').first();
-							ul = opt.mainul,
-							navcont = container.find('.eg-leftright-container');
-
-
-						var padtop = parseInt(esgo.css('paddingTop'),0);
-						padtop = padtop == undefined ? 0 : padtop;
-						padtop = padtop == null ? 0 : padtop;
-						var padbot = parseInt(esgo.css('paddingBottom'),0);
-						padbot = padbot == undefined ? 0 : padbot;
-						padbot = padbot == null ? 0 : padbot;
-
-						var newheight = opt.maxheight+opt.overflowoffset+padtop+padbot;
-
-						if (opt.forceFullScreen=="on") {
-							var coh = jQuery(window).height();
-							if (opt.fullScreenOffsetContainer!=undefined) {
-								try{
-									var offcontainers = opt.fullScreenOffsetContainer.split(",");
-									jQuery.each(offcontainers,function(index,searchedcont) {
-										coh = coh - jQuery(searchedcont).outerHeight(true);
-
-										if (coh<opt.minFullScreenHeight) coh=opt.minFullScreenHeight;
-									});
-								} catch(e) {}
-							}
-
-							newheight =coh;
-						}
-
-						var heightspeed = 0.3;
-
-
-						if (ul.height()<200)
-							heightspeed = 1;
-						punchgs.TweenLite.to(ul,heightspeed,{force3D:"auto",height:newheight,ease:punchgs.Power3.easeInOut,clearProps:"transform"});
-						punchgs.TweenLite.to(esgo,heightspeed,{force3D:true,height:newheight,ease:punchgs.Power3.easeInOut,clearProps:"transform",onComplete:function() {
-							container.closest('.eg-grid-wrapper, .myportfolio-container').css({height:"auto"}).removeClass("eg-startheight");
-						}});
-
-
-						if (navcont.length>0)
-							punchgs.TweenLite.set(navcont,{minHeight:newheight,ease:punchgs.Power3.easeInOut});
-
-							var ensl = jQuery(opt.filterGroupClass+'.esg-navbutton-solo-left,'+opt.filterGroupClass+' .esg-navbutton-solo-left');
-							var ensr = jQuery(opt.filterGroupClass+'.esg-navbutton-solo-right,'+opt.filterGroupClass+' .esg-navbutton-solo-right');
-
-							if (ensl.length>0)
-								ensl.css({marginTop:(0-ensl.height()/2)});
-
-
-							if (ensr.length>0)
-								ensr.css({marginTop:(0-ensr.height()/2)});
-
-					} else {
-						if (opt.maxheight==0) {
-							var esgo = container.find('.esg-overflowtrick').first();
-							var ul = container.find('ul').first();
-							punchgs.TweenLite.to(ul,1,{force3D:"auto",height:0,ease:punchgs.Power3.easeInOut,clearProps:"transform"});
-							punchgs.TweenLite.to(esgo,1,{force3D:true,height:0,ease:punchgs.Power3.easeInOut,clearProps:"transform"});
-						}
-					}
-					container.data('callednow',setTimeout(function() {
-						container.find('.itemtoshow.isvisiblenow').each(function() {
-							hideUnderElems(jQuery(this));
-						})
-					},250));
-
-					// IF WE ARE IN THE FIRST LOAD AND ACTIVATE PROCESS
-					if (opt.firstLoadFinnished===undefined) {
-						container.trigger("essential_grid_ready_to_use");
-						
-						// HANDLE THE COOKIES WHICH NEED TO BE HANDLED AFTER FIRST LOAD
-						resetSearchFromCookies(opt);
-
-						// HANDLE THE PAGINATION  - WHICH PAGE SHOULD BE SHOWN IF PAGINATION WAS SAVED AS COOKIE
-						resetPaginationFromCookies(opt);
-
-						opt.firstLoadFinnished = true;
-					}
+				*/
 				
-				},50);
+				isComplete = complete;
+				clearTimeout(opt.iteminspositiontimer);
+				opt.iteminspositiontimer = setTimeout(onItemPosition, 50);
 
 			});
-		
-
+			
 			prepareSortingAndOrders(container);
 			prepareSortingClicks(container);
+			
+			// 2.2.5
+			var convertNav = opt.convertFilterMobile && 'ontouchend' in document;
+			if(convertNav) {
+				
+				prepareMobileDropdowns(container);
+				
+			}
+			else {
+				
+				container.find('.esg-filter-wrapper').css('visibility', 'visible');
+				container.find('.esg-selected-filterbutton').show();
+				
+			}
+			
+			// 2.2.6
+			var id = container.attr('id');
+			if(id.search('esg-grid-') !== -1) {
+			
+				id = id.split('esg-grid-')[1];
+				if(id.search('-') === -1) return;
+				
+				id = id.split('-')[0];
+				var shortcodes = jQuery('.esg-filter-wrapper.esg-fgc-' + id);
+				if(!shortcodes.length) return;
+				
+				if(convertNav) {
+					
+					prepareMobileDropdowns(shortcodes, true);
+					
+				}
+				else {
 
+					shortcodes.css('visibility', 'visible');
+					shortcodes.find('.esg-selected-filterbutton').show();
+					
+				}
+			}
+
+}
+
+// 2.2.5
+function prepareMobileDropdowns(container, shortcode) {
+	
+	var selct;
+	function buildMobileDrop() {
+			
+		var $this = jQuery(this).hide();
+		selct += '<option value="' + $this.attr('data-filter') + '">' + $this.children('span').not('.esg-filter-checked').eq(0).text() + '</option>';
+		
+	}
+	
+	container.find('.esg-mobile-filter-button').addClass('esg-selected-filterbutton').show();
+	
+	if(!shortcode) container = container.find('.esg-filter-wrapper');
+	container.addClass('esg-mobile-filter-wrap').each(function() {
+		
+		var $this = jQuery(this).css('position', 'relative');
+		selct = '<select class="esg-sorting-select">';
+		$this.find('.esg-filterbutton').each(buildMobileDrop);
+		selct += '</select>';
+		
+		jQuery(selct).on('change', function() {
+			
+			$this.find('.esg-filterbutton[data-filter="' + this.value + '"]').click();
+			$this.find('.esg-selected-filterbutton span').eq(0).text(jQuery(this.options[this.selectedIndex]).text());
+			
+		}).appendTo($this);
+		
+	});
+	
 }
 
 /**********************************************
@@ -2182,13 +2928,13 @@ function prepareSortingAndOrders(container) {
 			container.find('.tp-esg-item').each(function() {
 				var dd = new Date(jQuery(this).data('date'));
 				jQuery(this).data('date',dd.getTime()/1000);
-			})
+			});
 
 			jQuery(opt.filterGroupClass+'.esg-sortbutton-order,'+opt.filterGroupClass+' .esg-sortbutton-order').each(function() {
 				var eso = jQuery(this);
 				eso.removeClass("tp-desc").addClass("tp-asc");
 				eso.data('dir',"asc");
-			})
+			});
 	}
 
 function prepareSortingClicks(container) {
@@ -2207,7 +2953,6 @@ function prepareSortingClicks(container) {
 				}
 
 				var dir = eso.data('dir');
-
 				stopAllVideos(true,true);
 				jQuery(opt.filterGroupClass+'.esg-sorting-select,'+opt.filterGroupClass+' .esg-sorting-select').each(function() {
 
@@ -2223,7 +2968,7 @@ function prepareSortingClicks(container) {
 
 				});
 
-			})
+			});
 
 			// SORTING FUNCTIONS
 			jQuery(opt.filterGroupClass+'.esg-sorting-select,'+opt.filterGroupClass+' .esg-sorting-select').each(function() {
@@ -2238,6 +2983,7 @@ function prepareSortingClicks(container) {
 					var sorter = sel.val();
 					var sortername = sel.find('option:selected').text();
 					var dir = eso.data('dir');
+
 					stopAllVideos(true,true);
 					clearTimeout(resizetimer);
 					sel.parent().parent().find('.sortby_data').text(sortername);
@@ -2281,7 +3027,7 @@ function getBestFitColumn(opt,winw,resultoption) {
 		smallest =9999,
 		largest = 0,
 		samount = opt.column,
-		lamoung = opt.column,
+		/* lamoung = opt.column, */
 		lastamount = opt.column,
 		resultid = 0,
 		resultidb = 0;
@@ -2307,17 +3053,28 @@ function getBestFitColumn(opt,winw,resultoption) {
 					lastamount = cura;
 					resultid = index;
 			}
-		})
+		});
 
 	if (smallest>winw) {
 		lastamount = samount;
 		resultid = resultidb;
 	}
 
-	var obj = new Object;
+	var obj = {};
 	obj.index = resultid;
 	obj.column = lastamount;
 	obj.mmHeight = opt.responsiveEntries[obj.index].mmheight;	
+	
+	// 2.2.6 
+	var blankItems = jQuery('.eg-esgblankskin-wrapper'),
+		hideBlankAt = opt.hideBlankItemsAt;	
+	
+	if(blankItems.length && hideBlankAt !== 'none') {
+		
+		var method = resultid >= parseInt(hideBlankAt, 10) ? 'addClass' : 'removeClass';
+		blankItems[method]('skipblank');
+	}
+	
 	if (resultoption=="id")
 		return obj;
 	else
@@ -2331,14 +3088,14 @@ function getBestFitColumn(opt,winw,resultoption) {
 ********************************/
  function getOptions(container){
  	return container.data('opt');
- };
+ }
 
 /******************************
 	-	Set Options	-
 ********************************/
  function setOptions(container,opt){
  	container.data('opt',opt);
- };
+ }
 
 
 /******************************
@@ -2348,19 +3105,19 @@ function checkMediaListeners(item) {
 	// MAKE SURE THAT YOUTUBE OR VIMEO PLAYER HAS LISTENER
 	item.find('iframe').each(function(i) {
 		var ifr = jQuery(this);
-		if (ifr.attr('src').toLowerCase().indexOf('youtube')>0) prepareYT(ifr)
+		if (ifr.attr('src').toLowerCase().indexOf('youtube')>0) prepareYT(ifr);
 		else
 		if (ifr.attr('src').toLowerCase().indexOf('vimeo')>0) prepareVimeo(ifr);
 		else
-		if (ifr.attr('src').toLowerCase().indexOf('wistia')>0) prepareWs(ifr)
+		if (ifr.attr('src').toLowerCase().indexOf('wistia')>0) prepareWs(ifr);
 		else
 		if (ifr.attr('src').toLowerCase().indexOf('soundcloud')>0) prepareSoundCloud(ifr);
-	 })
+	 });
 
 	 //  VIDEO PLAYER HAS LISTENER ?
      item.find('video').each(function(i) {
 		prepareVideo(jQuery(this));
- 	 })
+ 	 });
 
 }
 
@@ -2368,7 +3125,7 @@ function checkMediaListeners(item) {
 /******************************
 	-	CHECK MEDIA LISTENERS	-
 ********************************/
-function waitMediaListeners(item) {
+function waitMediaListeners(item, container, opt) {
 	 var ifr =  item.find('iframe').first(),
 	 	 vid = item.find('video').first(),
 	 	 vt = ifr.length>0 && ifr.attr('src').toLowerCase().indexOf('youtube')>0 ? "y" :
@@ -2379,11 +3136,18 @@ function waitMediaListeners(item) {
 
 	 var intr = setInterval(function() {
 		// MAKE SURE THAT YOUTUBE OR VIMEO PLAYER HAS LISTENER
-		item.find('iframe').each(function(i) {			
-			if (vt==="" || (vt==="y" && prepareYT(ifr)) || (vt==="v" && prepareVimeo(ifr)) || (vt==="w" && prepareWs(ifr)) || (vt==="s" && prepareSoundCloud(ifr)) || (vt==="h" && prepareVideo(ifr)))
-				clearInterval(intr);			
-		 })
-	 },50)
+		item.find('iframe, video').each(function(i) {	
+			/* 2.1.5 */
+			if (vt==="" || (vt==="y" && prepareYT(ifr)) || (vt==="v" && prepareVimeo(ifr)) || (vt==="w" && prepareWs(ifr)) || (vt==="s" && prepareSoundCloud(ifr)) || (vt==="h" && prepareVideo(vid))) {
+				
+				clearInterval(intr);
+				
+				// 2.2.6
+				if(item.data('simplevideo') === 1) videoClickEvent(item, container, opt, true);
+				
+			}
+		 });
+	 },50);
 
 }
 
@@ -2393,7 +3157,7 @@ function waitMediaListeners(item) {
 ********************************/
 function directionPrepare(direction,effect,ww,hh,correction) {
 
-		var xy = new Object;
+		var xy = {};
 		switch( direction ) {
 			case 0:
 				// from top
@@ -2419,7 +3183,7 @@ function directionPrepare(direction,effect,ww,hh,correction) {
 				xy.x = effect=="in" ? (0-ww) : (10+ww) ;
 				xy.x = correction  && effect=="in" ? xy.x - 5 : xy.x;
 				break;
-		};
+		}
 		return xy;
 }
 
@@ -2474,34 +3238,91 @@ function hideUnderElems(item) {
 ***********************************************/
 
 function offsetParrents(off,item) {
+	
 	var ul = item.closest('.mainul'),
-		ot = ul.parent();
+		ot = ul.parent(),
+		uldh = ul.data('hhh');
+	
+	if(!uldh || !ot.data('hhh')) return;
+	
+	if ((item.position().top + item.height()>uldh+40) || off==0 || (ul.data('bh')!=0 && ul.data('bh')!=undefined && item.position().top + item.height()>parseInt(ul.data('bh'),0)+40)) {
 
-	if ((item.position().top + item.height()>ul.height()+40) || off==0 || (ul.data('bh')!=0 && ul.data('bh')!=undefined && item.position().top + item.height()>parseInt(ul.data('bh'),0)+40)) {
-
-		if (ul.data('bh') == undefined || ul.data('bh') == 0)  ul.data('bh',ul.height());
-		if (ot.data('bh') == undefined || ot.data('bh') == 0)  ot.data('bh',ot.height());
+		if (ul.data('bh') == undefined || ul.data('bh') == 0) ul.data('bh',ul.data('hhh'));
+		if (ot.data('bh') == undefined || ot.data('bh') == 0) ot.data('bh',ot.data('hhh'));
 
 		var ulb = ul.data('bh'),
 			otb = ot.data('bh');
+			
+		// 2.1.5
+		var grid = ot.closest('.esg-grid'),
+			navLeft = grid.find('.esg-navbutton-solo-left'),
+			navRight = grid.find('.esg-navbutton-solo-right');
+			
+		if(!navLeft.length) navLeft = false;
+		if(!navRight.length) navRight = false;
+		
+		if(!ot.data('fheightcalc')) {
+			
+			var filterHeight = 0,
+				otIndex = ot.index(),
+				fHeight = grid.find('.esg-filters').each(function() {
+				
+				var $this = jQuery(this);
+				if($this.css('position') === 'relative' && $this.index() > otIndex && this.className.search(/solo-left|solo-right/) === -1) {
+					filterHeight += $this.outerHeight(true);
+				}
+			
+			});
+			
+			var filterMargin = filterHeight ? (parseInt(grid.css('padding-top'), 10) + parseInt(grid.css('padding-bottom'), 10)) / 2 : 0;
+			ot.data({fheightcalc: filterHeight || true, fmargincalc: filterMargin, fstartval: Math.ceil(filterHeight / 2) + Math.ceil(filterMargin / 2)});
+			
+		}
 
 		if (off!=0) {
+			
+			clearTimeout(ul.data('offtimer'));
+			if(!ot.data('navarrowtrick')) {
+				
+				if(navLeft) navLeft.appendTo(grid);
+				if(navRight) navRight.appendTo(grid);
+				ot.data('navarrowtrick', true);
+				
+			}
+			
 			ul.data('alreadyinoff',false);
 			punchgs.TweenLite.to(ul,0.2,{height:ulb + off});
 			punchgs.TweenLite.to(ot,0.2,{height:otb + off});
+			
+			var fHeight = ot.data('fheightcalc'),
+				fMargin = ot.data('fmargincalc') || 0;
+				
+			if(fHeight === true) fHeight = 0;
+			if(navLeft || navRight) punchgs.TweenLite.set([navLeft, navRight], {top: (otb / 2) + (fHeight / 2), y: fMargin});
+			
 		} else {
+			
 			if (!ul.data('alreadyinoff')) {
-				ul.data('alreadyinoff',true);
-				punchgs.TweenLite.to(ul,0.3,{height:ulb,ease:punchgs.Power3.easeIn,onComplete:function() {
-					ul.data('bh',0);
-					ot.data('bh',0);
-					ul.data('alreadyinoff',false);
-				}});
-				punchgs.TweenLite.to(ot,0.3,{height:otb,ease:punchgs.Power3.easeIn,onComplete:function() {
-					ul.data('bh',0);
-					ot.data('bh',0);
-					ul.data('alreadyinoff',false);
-				}});
+				ul.data('offtimer', setTimeout(function() {
+					
+					ul.data('alreadyinoff',true);
+					punchgs.TweenLite.to(ul,0.3,{height:ulb,ease:punchgs.Power3.easeIn});
+					punchgs.TweenLite.to(ot,0.3,{height:otb,ease:punchgs.Power3.easeIn,onComplete:function() {
+						ul.data('bh',0);
+						ot.data('bh',0);
+						ul.data('alreadyinoff',false);
+						if(navLeft) navLeft.appendTo(ot);
+						if(navRight) navRight.appendTo(ot);
+						
+						var obj = {top: '50%'};
+							fMar = ot.data('fstartval');
+							
+						if(fMar) obj.y = fMar;
+						if(navLeft || navRight) punchgs.TweenLite.set([navLeft, navRight], obj);
+						ot.removeData('navarrowtrick');
+					}});
+					
+				}, 100));
 			}
 		}
 	}
@@ -2513,30 +3334,29 @@ function offsetParrents(off,item) {
 
  function itemHoverAnim(item,art,opt,direction) {
 
-
-	  	 if (item.data('simplevideo') != 1) checkMediaListeners(item);
+	  	 if(item.data('simplevideo') != 1) checkMediaListeners(item);
+		 if(item.hasClass('esg-video-active')) return;
 	  	 
 		 /* 2.1.5 */
 	  	 // if (item.find('.isplaying, .isinpause').length>0) return false;
 	  	 
-  		 clearTimeout(item.data('hovertimer'));
-  		 var curdelays = opt.mainhoverdelay;
-  		 if (art=="set") curdelays=0;
+		 // 2.2.5
+  		 // clearTimeout(item.data('hovertimer'));
+		 // if (art=="set") curdelays=0;
+  		 //item.data('hovertimer',setTimeout(function() {
 
-  		 item.data('hovertimer',setTimeout(function() {
 	  		 	 item.data('animstarted',1);
-
 
 	  		 	 punchgs.TweenLite.set(item,{z:0.01,x:0,y:0,rotationX:0,rotationY:0,rotationZ:0});
 			 	 // ADD A CLASS FOR ANY FURTHER DEVELOPEMENTS
 				 item.addClass("esg-hovered");
 				 var ecc = item.find('.esg-entry-cover');
 				 punchgs.TweenLite.set(ecc,{transformStyle:"flat"});
-				 if (art!="set") fixCenteredCoverElement(item,ecc);
+				 /* if (art!="set") */ fixCenteredCoverElement(item,ecc);
 
 				 //if (!ecc.hasClass("esg-visible-cover")) punchgs.TweenLite.fromTo(ecc,0.2,{autoAlpha:0},{force3D:"auto",autoAlpha:1,overwrite:"auto"});
 
-				 if (item.find('.esg-entry-content').length>0 && art!="set" && opt.layout=="even") {
+				 if (item.find('.esg-entry-content').length>0 && /* art!="set" && */ opt.layout=="even") {
 				 	var pt = item.data('pt'), pb = item.data('pb'), pl = item.data('pl'), pr = item.data('pr'),
 				 		bt = item.data('bt'), bb = item.data('bb'), bl = item.data('bl'), br = item.data('br');
 
@@ -2544,11 +3364,17 @@ function offsetParrents(off,item) {
 				 	item.data('www',item.outerWidth());
 
 					punchgs.TweenLite.set(item.find('.esg-entry-content'),{display:"block"});
-
-					//punchgs.TweenLite.set(item.find('.esg-entry-media'),{height:item.data('hhh')});
+					
+					/* 2.1.6 */
+					if(item.hasClass('esg-split-content')) {
+						punchgs.TweenLite.set(item.find('.esg-entry-media-wrapper'),{height:item.data('hhh')});
+					}
+					
 					punchgs.TweenLite.set(item,{z:0.1,zIndex:50,x:0-(pl+pr+br+bl)/2, y:0-(pt+pb+bt+bb)/2,height:"auto",width:item.data('www')+pl+pr+bl+br});
-
-
+					
+					// 2.2.5
+					if (opt.inanimation != true && opt.releaseHovers) punchgs.TweenLite.set(item.closest('.esg-overflowtrick'),{overflow:"visible"});
+					
 					if (opt.evenGridMasonrySkinPusher=="on") {
 						var hdifference = item.height() - item.data('hhh');
 						offsetParrents(hdifference,item);
@@ -2560,18 +3386,26 @@ function offsetParrents(off,item) {
 				 	 			paddingRight:pr+"px",
 				 	 			paddingBottom:pr+"px"
 				 	 		});
-
 				 	 item.css({borderTopWidth:bt+"px",borderBottomWidth:bb+"px",borderLeftWidth:bl+"px",borderRightWidth:br+"px"});
 
-					 if (opt.inanimation != true ) punchgs.TweenLite.set(item.closest('.esg-overflowtrick'),{overflow:"visible",overwrite:"all"});
 				 }
-
-				 jQuery.each(esgAnimmatrix,function(index,key) {
-					 item.find(key[0]).each(function() {
-						 	 var elem = jQuery(this),
-							  	 dd = elem.data('delay')!=undefined ? elem.data('delay') : 0;
-							  	 animfrom = key[2];
-							  	 animto = key[3];
+					
+				// 2.2.5
+				 // jQuery.each(esgAnimmatrix,function(index,key) {
+					 
+					 item.find('.esg-transition').each(function() {
+							
+							var elem = jQuery(this),
+								trans = elem.attr('data-transition'),
+								duration = elem.attr('data-duration');
+							
+							if(!esgAnimmatrix.hasOwnProperty(trans)) return;
+							var key = esgAnimmatrix[trans];
+							duration = !duration || duration === 'default' ? key[0] : parseInt(duration, 10) * 0.001;
+						 
+						 	 var dd = elem.data('delay')!=undefined ? elem.data('delay') : 0;
+							  	 animfrom = jQuery.extend({}, key[1]);
+							  	 animto = jQuery.extend({}, key[2]);
 
 	  						  // SET ANIMATE POSITIONS
 	  						  animto.delay=dd;
@@ -2582,79 +3416,130 @@ function offsetParrents(off,item) {
 	  						  var elemdelay = 0;
 
 	  						  // IF IT IS NOT MEDIA, WE CAN REMOVE ALL TRANSFORMS
-	  						  var isOut = key[0].indexOf('out') > -1;
+	  						  var isOut = trans.indexOf('out') > -1;
 	  						  if (!elem.hasClass("esg-entry-media") && !isOut)
 	  						  	animto.clearProps="transform";
 
 	  						  if (isOut) animfrom.clearProps = "transform";
 	  						  
-		  					  animto.z=0.001;
+		  					  // animto.z=0.001;
 
 		  					  // SET PERSPECTIVE IF IT IS STILL UNDEFINED
 		  					  if (animfrom.transformPerspective ==undefined)
 			  						  animfrom.transformPerspective = 1000;
 
 			  				  // IF IT IS AN OVERLAY, WE NEED TO SET Z POSITION EXTREM
-			  				  if (elem.hasClass("esg-overlay")) {
-				  				  if (animfrom.z == undefined) animfrom.z = -0.002;
-				  				  animto.z = -.0001;
-			  				  }
+			  				  // if (elem.hasClass("esg-overlay")) {
+				  				  // if (animfrom.z == undefined) animfrom.z = -0.002;
+				  				  // animto.z = -0.0001;
+			  				  // }
 
 	  						  var animobject = elem;
-	  						  var splitted = false;
+	  						  // var splitted = false;
 
 	  						  // ID MEDIA EXIST AND VIDEO EXIST, NO HOVER NEEDED
 	  						  if (elem.hasClass("esg-entry-media") && elem.find('.esg-media-video').length>0)
 	  						    return true;
 
 	  						  // ANIMATE BREAK DOWN
-	  						 var tw = punchgs.TweenLite.killTweensOf(animobject,false);
+	  						 punchgs.TweenLite.killTweensOf(animobject,false);
+							 var xy,
+								 af,
+								 at,
+								 tw;								 
 
-
-	  						  
-
-	  						  // IF IT IS ONLY START, WE NEED TO SET INSTEAD OF ANIMATE
+							  // 2.2.5
+							  /*
+							  // IF IT IS ONLY START, WE NEED TO SET INSTEAD OF ANIMATE
 	  						  if (art=="set" ) {	  						  		
-		  							var tw = punchgs.TweenLite.set(animobject,animfrom);	
-		  							punchgs.TweenLite.set(item.find('.esg-entry-cover'),{visibility:"visible"});	  							
+		  							tw = punchgs.TweenLite.set(animobject,animfrom);	
+		  							//punchgs.TweenLite.set(item.find('.esg-entry-cover'),{visibility:"visible"});	  							
 		  							if (isOut) {			  						  	
 		  						  		tw.eventCallback("onComplete",resetTransforms,[animobject]);			  						
 			  						}
 	  						  } else
-  						  		switch (key[0]) {
-	  						  		case ".esg-shifttotop":
+						      */
+  						  		switch (trans) {
+	  						  		case "esg-shifttotop":
 	  						  				animto.y =  0 - item.find('.esg-bc.eec').last().height();
-	  						  				var tw = punchgs.TweenLite.fromTo(elem,0.5,{y:0},{y:animto.y});
+	  						  				punchgs.TweenLite.fromTo(elem,0.5,{y:0},{y:animto.y});
 	  						  		break;
-	  						  		case ".esg-slide":
-	  						  				var xy =  directionPrepare(direction,"in",item.width(),item.height());
-											var af = new Object();
-											var at = new Object();
+	  						  		case "esg-slide":
+	  						  				xy =  directionPrepare(direction,"in",item.width(),item.height());
+											af = {};
+											at = {};
 											jQuery.extend(af,animfrom);
 											jQuery.extend(at,animto);
-	  						  				af.css.x = xy.x;
-	  						  				af.css.y = xy.y;
-											var tw = punchgs.TweenLite.fromTo(animobject,key[1],af,at,elemdelay);
+											
+	  						  				// af.css.x = xy.x;
+	  						  				// af.css.y = xy.y;
+											
+											af.x = xy.x;
+	  						  				af.y = xy.y;
+											
+											punchgs.TweenLite.fromTo(animobject,duration,af,at,elemdelay);
 	  						  		break;
-	  						  		case ".esg-slideout":
-	  						  				var xy =  directionPrepare(direction,"out",item.width(),item.height());
-											var af = new Object();
-											var at = new Object();
+	  						  		case "esg-slideout":
+	  						  				xy =  directionPrepare(direction,"out",item.width(),item.height());
+											af = {};
+											at = {};
 											jQuery.extend(af,animfrom);
 											jQuery.extend(at,animto);
 	  						  				at.x = xy.x;
 	  						  				at.y = xy.y;
 	  						  				at.clearProps="";
-											var tw = punchgs.TweenLite.fromTo(animobject,key[1],af,at,elemdelay);
+											punchgs.TweenLite.fromTo(animobject,duration,af,at,elemdelay);
 	  						  		break;
+									
+									case 'esg-blur':
+									case 'esg-fadeblur':
+									case 'esg-zoomblur':
+									case 'esg-zoomdefaultblur':
+										
+										var blur,
+											amount = parseInt(this.dataset.bluramount, 10);
+											
+										at = {onUpdate: function() {
+											if (tw) {
+												blur = tw.progress() * amount;
+												animobject.css('filter', 'blur(' + blur + 'px)');
+											}
+											
+										}};
+										jQuery.extend(at,animto);
+										delete animfrom.z
+										delete at.z;
+										tw = punchgs.TweenLite.fromTo(animobject,duration,animfrom,at,elemdelay);
+										
+									break;
+									
+									case 'esg-grayscalein':
+									case 'esg-grayscaleout':
+										
+										var grayscale,
+											animein = trans.search('in') !== -1;
+											
+										at = {onUpdate: function() {
+											if (tw) {
+												grayscale = animein ? tw.progress() * 100 : (1 - tw.progress()) * 100;
+												animobject.css('filter', 'grayscale(' + grayscale + '%)');
+											}
+											
+										}};
+										jQuery.extend(at,animto);
+										tw = punchgs.TweenLite.fromTo(animobject,duration,animfrom,at,elemdelay);
+										
+									break;
 
 	  						  		default:
-	  						  				var tw = punchgs.TweenLite.fromTo(animobject,key[1],animfrom,animto,elemdelay);	  						  				
+									
+	  						  				punchgs.TweenLite.fromTo(animobject,duration,animfrom,animto,elemdelay);	 
+											
 	  						  		break;
   						  		}
-					 })
-				 })
-		},curdelays));
+					 });
+				 // });
+		//},curdelays));
 
 }
 
@@ -2665,20 +3550,26 @@ function offsetParrents(off,item) {
 
 function videoClickEvent(item,container,opt,simpleframe) {
 
+	 supressFocus = true;
+	
 	 item.css({transform:"none",'-moz-transform':'none','-webkit-transform':'none'});
 	 item.closest('.esg-overflowtrick').css({transform:"none",'-moz-transform':'none','-webkit-transform':'none'});
 	 item.closest('ul').css({transform:"none",'-moz-transform':'none','-webkit-transform':'none'});
-
-
+	 item.addClass('esg-video-active');
+	
 	 // PREPARE THE CONTAINERS FOR MEDIAS
 	 if (!simpleframe)
 		 item.find('.esg-media-video').each(function() {
 		   var prep = jQuery(this),
 		   	   media= item.find('.esg-entry-media');
 		   if (prep.data('youtube')!=undefined && item.find('.esg-youtube-frame').length==0) {
-			  
-		  	  var ytframe = "https://www.youtube.com/embed/"+prep.data('youtube')+"?version=3&enablejsapi=1&html5=1&controls=1&autohide=1&rel=0&showinfo=0";
-			  media.append('<iframe class="esg-youtube-frame" wmode="Opaque" style="position:absolute;top:0px;left:0px;display:none" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" data-src="'+ytframe+'" src="about:blank"></iframe>');
+			  if(opt.youtubeNoCookie!="false"){
+		  	  	var ytframe = "https://www.youtube-nocookie.com/embed/"+prep.data('youtube')+"?version=3&enablejsapi=1&html5=1&controls=1&autohide=1&rel=0&showinfo=0&fs=1";
+			  }
+			  else {
+			  	var ytframe = "https://www.youtube.com/embed/"+prep.data('youtube')+"?version=3&enablejsapi=1&html5=1&controls=1&autohide=1&rel=0&showinfo=0&fs=1";	
+			  }
+			  media.append('<iframe class="esg-youtube-frame" wmode="Opaque" style="position:absolute;top:0px;left:0px;display:none" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" data-src="'+ytframe+'" src="about:blank" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>');
 		   }
 
 		   if (prep.data('vimeo')!=undefined && item.find('.esg-vimeo-frame').length==0) {
@@ -2698,27 +3589,30 @@ function videoClickEvent(item,container,opt,simpleframe) {
 		   }
 
 		   if ((prep.data('mp4')!=undefined || prep.data('webm')!=undefined || prep.data('ogv')!=undefined) && item.find('.esg-video-frame').length==0 ) {
-		   	  
+
 	           media.append('<video class="esg-video-frame" style="position:absolute;top:0px;left:0px;display:none" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" data-origw="'+prep.attr("width")+'" data-origh="'+prep.attr("height")+'" ></video');
-		       if (prep.data('mp4')!=undefined) media.find('video').append('<source src="'+prep.data("mp4")+'" type="video/mp4" />');
+		       if (prep.data('mp4')!=undefined) {
+				   var mediaType = prep.data("mp4").search('mp4') !== -1 ? 'video/mp4' : 'audio/mpeg';
+				   media.find('video').append('<source src="'+prep.data("mp4")+'" type="' + mediaType + '" />');
+			   }
 		       if (prep.data('webm')!=undefined) media.find('video').append('<source src="'+prep.data("webm")+'" type="video/webm" />');
 		       if (prep.data('ogv')!=undefined) media.find('video').append('<source src="'+prep.data("ogv")+'" type="video/ogg" />');
 		   }
 
-		 })
+		 });
 
 	 adjustMediaSize(item,true,null,opt);
 
 	 var ifr = item.find('.esg-youtube-frame'),
 	 	cover = item.find('.esg-entry-cover'),
-	 	poster = item.find('.esg-media-poster')
+	 	poster = item.find('.esg-media-poster'),
 	 	vt = "y",
 	 	go = false;
 
-	 if (ifr.length==0) { ifr=item.find('.esg-vimeo-frame'); vt = "v";}
-	 if (ifr.length==0) { ifr=item.find('.esg-wistia-frame'); vt="w";}
-	 if (ifr.length==0) { ifr=item.find('.esg-soundcloud-frame'); vt="s";}
-	 if (ifr.length==0) { ifr=item.find('.esg-video-frame'); vt="h"; }
+	 if (!ifr.length) { ifr=item.find('.esg-vimeo-frame'); vt = "v";}
+	 if (!ifr.length) { ifr=item.find('.esg-wistia-frame'); vt="w";}
+	 if (!ifr.length) { ifr=item.find('.esg-soundcloud-frame'); vt="s";}
+	 if (!ifr.length) { ifr=item.find('.esg-video-frame'); vt="h"; }
 
 
 	 // IN CASE NO FRAME IS PREDEFINED YET WE NEED TO LOAD API, AND VIDEO, AND CHANGE SRC
@@ -2730,15 +3624,19 @@ function videoClickEvent(item,container,opt,simpleframe) {
 	 	punchgs.TweenLite.set(ifr,{opacity:0,display:"block"});
 	 else 
 	 	go = true;
+	
 	 loadVideoApis(container,opt);
 	 
-	 if (!simpleframe) punchgs.TweenLite.set(ifr,{opacity:0,display:"block"});
-	 var intr = setInterval(function() {
-	 	
+	 if (!simpleframe) punchgs.TweenLite.set(ifr,{opacity:1,display:"block"});
+	 
+	 var intr;
+	 function onCheck() {
+
 	 	if (go || (vt=="y" && prepareYT(ifr)) || (vt=="v" && prepareVimeo(ifr)) || (vt=="w" && prepareWs(ifr)) || (vt=="s" && prepareSoundCloud(ifr)) || (vt=="h" && prepareVideo(ifr))) {
  			clearInterval(intr);
 
  			if (!simpleframe) {
+
  				if (is_mobile()) {
 	 				punchgs.TweenLite.set(ifr,{autoAlpha:1});
 			 		punchgs.TweenLite.set(poster,{autoAlpha:0});
@@ -2747,13 +3645,19 @@ function videoClickEvent(item,container,opt,simpleframe) {
 			 		punchgs.TweenLite.to(ifr,0.5,{autoAlpha:1});
 			 		punchgs.TweenLite.to(poster,0.5,{autoAlpha:0});
 			 		punchgs.TweenLite.to(cover,0.5,{autoAlpha:0});
-			 		if (vt==="y" || vt==="w") playYT(ifr,simpleframe);
+			
 			 	}
+				
+				if (vt==="y") playYT(ifr,simpleframe);
 			 	if (vt==="v") playVimeo(ifr,simpleframe);
 			 	if (vt==="s") playSC(ifr,simpleframe);
 			 	if (vt==="h") playVideo(ifr,simpleframe);
+				if (vt==="w") playWs(ifr,simpleframe);
 		 	}
+			
+			/*
 		 	if (ifr.attr('src') !=undefined) {
+
 		 		if (ifr.attr('src').toLowerCase().indexOf('youtube')>0)
 				 	playYT(ifr,simpleframe);
 				if (ifr.attr('src').toLowerCase().indexOf('vimeo')>0)
@@ -2762,34 +3666,40 @@ function videoClickEvent(item,container,opt,simpleframe) {
 				 	playWs(ifr,simpleframe);
 				if (ifr.attr('src').toLowerCase().indexOf('soundcloud')>0)
 				 	playSC(ifr,simpleframe);
-
+				
 			}
-	 	}				 			
-	},100);						
+			*/
+	 	}	
+
+		suppressFocus = false;
+		
+	}
+	 
+	 intr = setInterval(onCheck,100);
+	 onCheck();
 }
 
 function setMediaEntryAspectRatio(obj)  {
 	
 	var attrw = obj.img!==undefined ? obj.img.attr('width') : 1,
 		attrh = obj.img!==undefined ? obj.img.attr('height') : 1;
-
 		
-	if (obj.ar===undefined || obj.ar=="auto" || obj.ar===NaN) {
-		obj.imgw = obj.imgw===undefined ? obj.img!=undefined ? obj.img.width() : 1 : obj.imgw,
+	if (obj.ar===undefined || obj.ar=="auto" || isNaN(obj.ar)) {
+		obj.imgw = obj.imgw===undefined ? obj.img!=undefined ? obj.img.width() : 1 : obj.imgw;
 		obj.imgh = obj.imgh===undefined ? obj.img!=undefined ? obj.img.height() : 1 : obj.imgh;
 
-		obj.imgw = obj.imgw===null || obj.imgw===NaN || obj.imgw===undefined || obj.imgw===false ? 1 : obj.imgw;
-		obj.imgh = obj.imgh===null || obj.imgh===NaN || obj.imgh===undefined || obj.imgh===false ? 1 : obj.imgh;
+		obj.imgw = obj.imgw===null || isNaN(obj.imgw) || obj.imgw===undefined || obj.imgw===false ? 1 : obj.imgw;
+		obj.imgh = obj.imgh===null || isNaN(obj.imgh) || obj.imgh===undefined || obj.imgh===false ? 1 : obj.imgh;
 						
 		obj.imgw = obj.img!=undefined ? attrw!==undefined && attrw!==false ? attrw : obj.imgw : 1;
 		obj.imgh = obj.img!=undefined ? attrh!==undefined && attrh!==false ? attrh : obj.imgh : 1;
 		
 		obj.ar = obj.img!==undefined && obj.img.length>=1 ? (obj.imgh/obj.imgw)*100 : 0;
 	}
-
+	
 	if (obj.ip.data('keepAspectRatio')!==1) {
 		obj.ip.css({paddingBottom:obj.ar+"%"});
-		obj.ip.data('bottompadding',obj.ar);			
+		obj.ip.data('bottompadding',obj.ar);		
 	}
 
 	if (obj.keepAspectRatio)	
@@ -2798,12 +3708,20 @@ function setMediaEntryAspectRatio(obj)  {
 
 }
 
+/*
+function onMouseMoveTrigger() {
+	
+	var $this = jQuery(this);
+	if($this.data('animstarted') != 1) $this.trigger('mouseenter');
+
+}
+*/
 
  /**********************************
  	-	PREPARE PORTFOLIO -
  **********************************/
  function prepareItemsInGrid(opt,appending) {
- 	
+
  	var container = opt.container;
  	container.addClass("esg-container");
 
@@ -2814,12 +3732,12 @@ function setMediaEntryAspectRatio(obj)  {
  	}
 
  	// BASIC VARIABLES
-	var items = opt.mainul[0].getElementsByClassName('eg-newli'), // opt.mainul.find('>.eg-newli'), //
-		itemw = 100/opt.column,
+	var items = opt.mainul[0].getElementsByClassName('eg-newli'), /* opt.mainul.find('>.eg-newli'), */
+		/* itemw = 100/opt.column, */
 		ar = opt.aspectratio,
 		cwidth = container.find('.esg-overflowtrick').parent().width(),
-		ul = container.find('ul').first(),
-		esgo = container.find('.esg-overflowtrick').first(),
+		/* ul = container.find('ul').first(), */
+		/* esgo = container.find('.esg-overflowtrick').first(), */
 		itemh=0,
 		aratio = 1,
 		hratio = 1;
@@ -2838,6 +3756,12 @@ function setMediaEntryAspectRatio(obj)  {
 		hratio ="auto";
 		kar=false;
 	}
+	
+	/* 2.1.6.2 */
+	var itemAnime = container.find('li[data-anime]').length,
+		itemAnimeOther = container.find('li[data-anime-other]').length;
+		
+	if(itemAnime || itemAnimeOther) container.addClass('esg-itm-anime');
  
 	// PREPARE THE ITEMS
 	for (var q=0;q<items.length;q++) {			
@@ -2858,18 +3782,50 @@ function setMediaEntryAspectRatio(obj)  {
 
 	 	// PREPARE CLASS OF ITEM
 	 	item.addClass("tp-esg-item");
+		
+		// 2.1.6.2
+		if(itemAnime || itemAnimeOther) {
+			
+			var blur1 = item.attr('data-anime-blur'),
+				blur2 = item.attr('data-anime-other-blur');
+				
+			if(blur1 || blur2) item.addClass('esg-anime-blur');
+			
+			item.addClass('esg-anime-item').find('.esg-media-cover-wrapper').addClass('esg-item-anime').data({
+				
+				anime_itm: item.attr('data-anime'),
+				anime_itm_other: item.attr('data-anime-other'),	
+				anime_itm_zoomin: item.attr('data-anime-zoomin'),
+				anime_itm_other_zoomin: item.attr('data-anime-other-zoomin'),	
+				anime_itm_zoomout: item.attr('data-anime-zoomout'),
+				anime_itm_other_zoomout: item.attr('data-anime-other-zoomout'),	
+				anime_itm_fade: item.attr('data-anime-fade'),
+				anime_itm_other_fade: item.attr('data-anime-other-fade'),	
+				anime_itm_shift: item.attr('data-anime-shift'),	
+				anime_itm_other_shift: item.attr('data-anime-other-shift'),	
+				anime_itm_shift_amount: item.attr('data-anime-shift-amount'),
+				anime_itm_shift_other_amount: item.attr('data-anime-other-shift-amount'),
+				anime_itm_rotate: item.attr('data-anime-rotate'),
+				anime_itm_other_rotate: item.attr('data-anime-other-rotate'),
+				anime_itm_blur: blur1,
+				anime_itm_other_blur: blur2
+				
+			}).find('.esg-entry-media.grayscale').removeClass('grayscale').parent().addClass('grayscale');
+
+		}
 
 	 	var imgopts  = { bgpos: img.length>=1 && img!=undefined ? img.data("bgposition") : undefined,
 	 					 bgsize: img.length>=1 && img!=undefined ? img.data("bgsize") : undefined,
 	 					 bgrepeat: img.length>=1 && img!=undefined ? img.data("bgrepeat") : undefined,
-	 					}
+	 					};
 
 	 	imgopts.bgpos =  imgopts.bgpos===undefined ? "" : "background-position:"+imgopts.bgpos+";";
 	 	imgopts.bgsize =  imgopts.bgsize===undefined ? "" : "background-size:"+imgopts.bgsize+";";
 	 	imgopts.bgrepeat =  imgopts.bgrepeat===undefined ? "" : "background-repeat:"+imgopts.bgrepeat+";";
 	 	
-	 	media.append('<div class="esg-media-poster" src="'+lzysrc+'" data-src="'+lzysrc+'" data-lazythumb="'+img.data("lazythumb")+'" style="'+imgopts.bgsize+imgopts.bgrepeat+imgopts.bgpos+'background-image:url('+lzysrc+')"></div>');		 	
-
+		/* 2.1.6 */
+		var bgUrl = lzysrc || '';
+	 	media.append('<div class="esg-media-poster" src="'+lzysrc+'" data-src="'+lzysrc+'" data-lazythumb="'+img.data("lazythumb")+'" style="'+imgopts.bgsize+imgopts.bgrepeat+imgopts.bgpos+'background-image:url('+bgUrl+')"></div>');		 	
 	 	
 	 	// WRAP MEDIA CONTENT
 	 	if (opt.layout=="even") {	 			  						
@@ -2884,68 +3840,81 @@ function setMediaEntryAspectRatio(obj)  {
 
 
 		item.find('.esg-media-video').each(function() {
+			
 			var prep = jQuery(this),				
 				videovisible = "display:none;",
-				viddatasrc = "data-src=",
+				viddatasrc = "data-src=";
 				vidsrc = "src=";
 
 		   if (prep.data('poster')!=undefined && prep.data('poster').length>3)	
 		   			media.find('.esg-media-poster').css({opacity:1,backgroundImage:"url("+prep.data('poster')+")"}).attr('src',prep.data('poster')).data('src',prep.data('poster'));	   						
 		   else {
-	 			 item.find('.esg-entry-cover').remove();
+			   
+			      // 2.2.5 
+	 			 if(!item.hasClass('esg-split-content')) item.find('.esg-entry-cover').remove();
+
 	 			 item.find('.esg-media-poster').remove();
-				 videovisible = "display:block;"
-				 viddatasrc = "src=";
-				 vidsrc = "data-src=";
+				 videovisible = "display:block;";
 				 hratio = (parseInt(prep.attr('height'),0) / parseInt(prep.attr('width'),0))*100;				 
 				 setMediaEntryAspectRatio({ip:media,ar:hratio,keepAspectRatio:true});
 				 /**
 				 -	CLICK ON ITEM TO PLAY VIDEO IN SIMPLEFRAME-
 				 **/
 				 item.data('simplevideo',1);
-				 //videoClickEvent(item,container,opt,true);
+				 // videoClickEvent(item,container,opt,true);
 			}
-
+	
+		// ?
 		if (item.find('.esg-click-to-play-video').length==0) {
 			  item.find('.esg-entry-cover').find('*').each(function () {
 				  if (jQuery(this).closest('a').length==0 && jQuery(this).find('a').length==0) {
 					  jQuery(this).addClass("esg-click-to-play-video");
 				  }
-			  })
+			  });
 
 			  item.find('.esg-overlay').addClass("esg-click-to-play-video");
 		   }
 
 			//YOUTUBE PREPARING
 			if (prep.data('youtube')!=undefined) {
-
-				var ytframe = "https://www.youtube.com/embed/"+prep.data('youtube')+"?version=3&enablejsapi=1&html5=1&controls=1&autohide=1&rel=0&showinfo=0";
-			  	media.append('<iframe class="esg-youtube-frame" wmode="Opaque" style="position:absolute;top:0px;left:0px;'+videovisible+'" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" '+viddatasrc+'"'+ytframe+'" '+vidsrc+'"about:blank"></iframe>');
+				
+				if(opt.youtubeNoCookie!="false"){
+					var ytframe = "https://www.youtube-nocookie.com/embed/"+prep.data('youtube')+"?version=3&enablejsapi=1&html5=1&controls=1&autohide=1&rel=0&showinfo=0&fs=1&playsinline=1";
+				}
+				else {
+					var ytframe = "https://www.youtube.com/embed/"+prep.data('youtube')+"?version=3&enablejsapi=1&html5=1&controls=1&autohide=1&rel=0&showinfo=0&fs=1&playsinline=1";	
+				}	
+			  	media.append('<iframe class="esg-youtube-frame" wmode="Opaque" style="position:absolute;top:0px;left:0px;'+videovisible+'" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" '+viddatasrc+'"'+ytframe+'"' + vidsrc + '"about:blank" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>');
 			}
 
 			//VIMEO PREPARING
 			if (prep.data('vimeo')!=undefined) {
-			  	var vimframe = "https://player.vimeo.com/video/"+prep.data('vimeo')+"?title=0&byline=0&html5=1&portrait=0";
-				media.append('<iframe class="esg-vimeo-frame" style="position:absolute;top:0px;left:0px;'+videovisible+'" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""  width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" '+viddatasrc+'"'+vimframe+'" '+vidsrc+'"about:blank"></iframe>');
+				
+			  	var vimframe = "https://player.vimeo.com/video/"+prep.data('vimeo')+"?title=0&byline=0&html5=1&portrait=0&playsinline=1";
+				media.append('<iframe class="esg-vimeo-frame" style="position:absolute;top:0px;left:0px;'+videovisible+'" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""  width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" '+viddatasrc+'"'+vimframe+'"' + vidsrc + '"about:blank"></iframe>');
 			}
 			   
 			//wistia PREPARING
 			if (prep.data('wistia')!=undefined) {
 				var wsframe = "https://fast.wistia.net/embed/iframe/"+prep.data('wistia')+"?version=3&enablejsapi=1&html5=1&controls=1&autohide=1&rel=0&showinfo=0";
-				media.append('<iframe class="esg-wistia-frame" wmode="Opaque" style="position:absolute;top:0px;left:0px;'+videovisible+'" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" '+viddatasrc+'"'+wsframe+'" '+vidsrc+'"about:blank"></iframe>');
+				media.append('<iframe class="esg-wistia-frame" wmode="Opaque" style="position:absolute;top:0px;left:0px;'+videovisible+'" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" '+viddatasrc+'"'+wsframe+'"' + vidsrc + '"about:blank"></iframe>');
 			}
 			
 			//SOUND CLOUD PREPARING
 			if (prep.data('soundcloud')!=undefined) {
 		   		var scframe = 'https://w.soundcloud.com/player/?url=https://api.soundcloud.com/tracks/'+prep.data('soundcloud')+'&amp;auto_play=false&amp;hide_related=false&amp;visual=true&amp;show_artwork=true';
-		   		media.append('<iframe class="esg-soundcloud-frame" style="position:absolute;top:0px;left:0px;'+videovisible+'" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen="" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" '+viddatasrc+'"'+scframe+'" '+vidsrc+'"about:blank"></iframe>');
+		   		media.append('<iframe class="esg-soundcloud-frame" style="position:absolute;top:0px;left:0px;'+videovisible+'" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen="" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" '+viddatasrc+'"'+scframe+'"' + vidsrc + '"about:blank"></iframe>');
 		   	}
 
 			//VIDEO PREPARING
 			if (prep.data('mp4')!=undefined || prep.data('webm')!=undefined || prep.data('ogv')!=undefined) {
-			   media.append('<video class="esg-video-frame" controls style="position:absolute;top:0px;left:0px;'+videovisible+'" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" data-origw="'+prep.attr("width")+'" data-origh="'+prep.attr("height")+'"></video');
+
+			   media.append('<video class="esg-video-frame" controls style="position:absolute;top:0px;left:0px;'+videovisible+'" width="'+prep.attr("width")+'" height="'+prep.attr("height")+'" data-origw="'+prep.attr("width")+'" data-origh="'+prep.attr("height")+'" playsinline></video');
 			   var hvid = media.find('video');
-			   if (prep.data('mp4')!=undefined) hvid.append('<source src="'+prep.data("mp4")+'" type="video/mp4" />');
+			   if (prep.data('mp4')!=undefined) {
+				   var mediaType = prep.data("mp4").search('mp4') !== -1 ? 'video/mp4' : 'audio/mpeg';
+				   hvid.append('<source src="'+prep.data("mp4")+'" type="' + mediaType + '" />');
+			   }
 			   if (prep.data('webm')!=undefined) hvid.append('<source src="'+prep.data("webm")+'" type="video/webm" />');
 			   if (prep.data('ogv')!=undefined) hvid.append('<source src="'+prep.data("ogv")+'" type="video/ogg" />');
 
@@ -2956,13 +3925,23 @@ function setMediaEntryAspectRatio(obj)  {
 			 **************************************/
 
 			 item.find('.esg-click-to-play-video').click(function() {
-				 var item = jQuery(this).closest('.tp-esg-item');
+				 
+				 var item = jQuery(this);
+				 if(item.hasClass('eg-ajaxclicklistener') || item.closest('.eg-ajaxclicklistener').length) return;
+				 
+				 item = item.closest('.tp-esg-item');
 				 videoClickEvent(item,container,opt);
-			 })
+			 });
+			
+			 if (item.data('simplevideo')==1) {
+				 
+				 var vid = item.find('video');
+				 if(!vid.length) waitMediaListeners(item, container, opt);
+				 else vid.css('opacity', '1');
+				 
+			 }
 
-			 if (item.data('simplevideo')==1) waitMediaListeners(item);
-
-		})
+		});
 
 		// PREPARE THE CONTAINERS FOR MEDIAS
 		if (item.find('.esg-media-video').length==0) item.find('.esg-click-to-play-video').remove();
@@ -2987,7 +3966,8 @@ function setMediaEntryAspectRatio(obj)  {
 			 var eec = jQuery(this),
 			 	 clickable = eec.data('clickable');
 
-			 eec.css({visibility:"hidden"});
+			 // 2.2.5
+			 // eec.css({visibility:"hidden"});
 
 			 eec.find('.esg-top').wrapAll('<div class="esg-tc eec"></div>');
 			 eec.find('.esg-left').wrapAll('<div class="esg-lc eec"></div>');
@@ -3003,7 +3983,7 @@ function setMediaEntryAspectRatio(obj)  {
 					  jQuery(this).find('.eg-invisiblebutton')[0].click();
 				 }).css({cursor:"pointer"});
 			 }
-		 })
+		 });
 
 		 	item.data('pt',parseInt(item.css("paddingTop"),0));
 		 	item.data('pb',parseInt(item.css("paddingBottom"),0));
@@ -3047,7 +4027,7 @@ function setMediaEntryAspectRatio(obj)  {
 					 });
 
 				 }
-			 })
+			 });
 
 		 /***********************************************
 		 	-	TRIGGER FILTER ON CATEGORY CLICK	-
@@ -3064,103 +4044,191 @@ function setMediaEntryAspectRatio(obj)  {
 		 /******************************
 		 	-	HOVER ON ITEMS	-
 		 ********************************/
-		item.on( 'mouseenter.hoverdir, mouseleave.hoverdir', function( event ) {
-		  	var item=jQuery(this),
-		    	direction = getDir( item, { x : event.pageX, y : event.pageY } );
-
-		  	if (event.type === 'mouseenter')
-			  	 itemHoverAnim(jQuery(this),"nope",opt,direction);
+		item.on('mouseenter.hoverdir mouseleave.hoverdir', function( event ) {
+			
+			var item=jQuery(this);/*.off('mousemove.hoverdir', onMouseMoveTrigger);*/
+			
+			// 2.2.5
+			/*
+			if(!opt.releaseHovers && opt.startAnimation === 'none') {
+				
+				item.on('mousemove.hoverdir', onMouseMoveTrigger);
+				return;
+				
+			}
+			*/
+			
+		    var direction = getDir( item, { x : event.pageX, y : event.pageY } );	
+			//if(item.find('.isplaying').length) return;
+				
+		  	if (event.type === 'mouseenter') {
+				
+				itemHoverAnim(jQuery(this),"nope",opt,direction);
+				
+			}
 			else {
-
-
-		  		 clearTimeout(item.data('hovertimer'));
+					
+				 // 2.2.5
+		  		 // clearTimeout(item.data('hovertimer'));
+				 
 		  		 if ( item.data('animstarted')==1) {
 			  		  item.data('animstarted',0);
 
 				 	 // REMOVE THE CLASS FOR ANY FURTHER DEVELOPEMENTS
 					 item.removeClass("esg-hovered");
-					 var ecc = item.find('.esg-entry-cover'),
-					 	 maxdelay=0;
+					 /* var ecc = item.find('.esg-entry-cover'), */
+					 var maxdelay=0;
 
 					 if (item.find('.esg-entry-content').length>0 && opt.layout=="even") {
 						punchgs.TweenLite.set(item.find('.esg-entry-content'),{display:"none"});
 						punchgs.TweenLite.set(item,{zIndex:5});
-						punchgs.TweenLite.set(item.closest('.esg-overflowtrick'),{overflow:"hidden",overwrite:"all"});
+						punchgs.TweenLite.set(item.closest('.esg-overflowtrick'),{overflow:"hidden"});
 
 						// SPECIAL FUN FOR OVERLAPPING CONTAINER, SHOWING MASONRY IN EVEN GRID !!!
 						item.css({paddingTop:"0px",paddingLeft:"0px",paddingRight:"0px",paddingBottom:"0px"});
 						item.css({borderTopWidth:"0px",borderBottomWidth:"0px",borderLeftWidth:"0px",borderRightWidth:"0px"});
 					 	//item.find('.esg-entry-media').css({height:"100%"});
-					 	punchgs.TweenLite.set(item,{z:0,'height':item.data('hhh'),width:item.data('www'),x:0,y:0});
-					 	if (opt.evenGridMasonrySkinPusher=="on") offsetParrents(0,item)
+					 	
+						// 2.2.5
+						if(!isNaN(item.data('hhh'))) {
+							punchgs.TweenLite.set(item,{z:0,'height':item.data('hhh'),width:item.data('www'),x:0,y:0});
+						}
+					 	
+						if (opt.evenGridMasonrySkinPusher=="on") offsetParrents(0,item);
 					 }
 
 
-
-					 jQuery.each(esgAnimmatrix,function(index,key) {
-						 item.find(key[0]).each(function() {
-							  var elem = jQuery(this),
-							  	  dd = elem.data('delay')!=undefined ? elem.data('delay') : 0,
-							  	  animto = key[5],
-							  	  elemdelay =0;
+					 // 2.2.5
+					 // jQuery.each(esgAnimmatrix,function(index,key) {
+						 item.find('.esg-transition').each(function() {
+							 
+							var elem = jQuery(this),
+								trans = elem.attr('data-transition');
+								
+							if(!esgAnimmatrix.hasOwnProperty(trans)) return;
+							var key = esgAnimmatrix[trans];
+							 
+							  var dd = elem.data('delay')!=undefined ? elem.data('delay') : 0,
+							  	  animto = key[4],
+							  	  elemdelay =0,
 							  	  animobject = elem,
-							  	  splitted = false,
-							  	  isOut = key[0].indexOf('out') > -1;		
+							  	  /* splitted = false, */
+							  	  isOut = trans.indexOf('out') > -1,
+								  xy,
+								  tw;
 							  	 				  	  
 							  	 
 								  if (maxdelay<dd) maxdelay = dd;
-		  						  if (animto.z == undefined) animto.z = 1;
-		  						  switch (key[0]) {
-		  						  		case ".esg-slide":
-		  						  				var xy =  directionPrepare(direction,"in",item.width(),item.height(),true);
+		  						  // if (animto.z == undefined) animto.z = 1;
+		  						  switch (trans) {
+		  						  		case "esg-slide":
+		  						  				xy =  directionPrepare(direction,"in",item.width(),item.height(),true);
 
 		  						  				animto.x = xy.x;
 		  						  				animto.y = xy.y;
-												var tw = punchgs.TweenLite.to(animobject,0.5,{y:animto.y, x:animto.x,overwrite:"all",onCompleteParams:[animobject],onComplete:function(obj) {
+												tw = punchgs.TweenLite.to(animobject,0.5,{y:animto.y, x:animto.x,overwrite:"all",onCompleteParams:[animobject],onComplete:function(obj) {
 													punchgs.TweenLite.set(obj,{autoAlpha:0});
 												}});
 		  						  		break;
-		  						  		case ".esg-slideout":
+		  						  		case "esg-slideout":
 
-		  						  				var xy =  directionPrepare(direction,"out",item.width(),item.height());
+		  						  				xy =  directionPrepare(direction,"out",item.width(),item.height());
 		  						  				animto.x = 0;
 		  						  				animto.y = 0;
 		  						  				animto.overwrite = "all";
-												var tw = punchgs.TweenLite.fromTo(animobject,0.5,{autoAlpha:1,x:xy.x,y:xy.y},{x:0,y:0,autoAlpha:1,overwrite:"all"});
+												tw = punchgs.TweenLite.fromTo(animobject,0.5,{autoAlpha:1,x:xy.x,y:xy.y},{x:0,y:0,autoAlpha:1,overwrite:"all"});
 		  						  		break;
+										
+										case 'esg-blur':
+										case 'esg-fadeblur':
+										case 'esg-zoomblur':
+										case 'esg-zoomdefaultblur':
+										
+											var blur,
+												amount = parseInt(this.dataset.bluramount, 10),
+												at = {onUpdate: function() {
+												
+												blur = (1 - tw.progress()) * amount;
+												animobject.css('filter', 'blur(' + blur + 'px)');
+												
+											}};
+											delete at.z;
+											jQuery.extend(at,animto);
+											tw = punchgs.TweenLite.to(animobject,key[3],at,elemdelay);
+											
+										break;
+										
+										case 'esg-grayscalein':
+										case 'esg-grayscaleout':
+										
+											var grayscale,
+												animein = trans.search('in') !== -1;
+												
+											at = {onUpdate: function() {
+												
+												grayscale = animein ? (1 - tw.progress()) * 100 : tw.progress() * 100;
+												animobject.css('filter', 'grayscale(' + grayscale + '%)');
+												
+											}};
+											jQuery.extend(at,animto);
+											tw = punchgs.TweenLite.to(animobject,key[3],at,elemdelay);
+											
+										break;
 
 		  						  		default:
 
 												animto.force3D="auto";																										
-		  						  				var tw = punchgs.TweenLite.to(animobject,key[4],animto,elemdelay);
+		  						  				tw = punchgs.TweenLite.to(animobject,key[3],animto,elemdelay);
 		  						  		break;
 	  						  		}
 	  						  		
 	  						  	if (isOut) {			  						  	
 			  						tw.eventCallback("onComplete",resetTransforms,[animobject]);			  						
 			  					}
-			  			})
-					 })
+			  			});
+					 //});
 				 
  				}
-
+				
+				// 2.2.5
+				/*
 	 			if (item.hasClass("esg-demo"))
 	 				setTimeout(function() {
 		 				  itemHoverAnim(item);
 	 				},800);
+				*/
  			}
-		})
-
+		});
+		
+		/*
+			2.2.5
+		*/
 		 // PREPARE VISIBLE AND UNVISIBLE ELEMENTS !!
-		 itemHoverAnim(item,"set",opt);
+		 //itemHoverAnim(item,"set",opt);
 
-		 if (item.hasClass("esg-demo")) itemHoverAnim(item);
-
+		 //if (item.hasClass("esg-demo")) itemHoverAnim(item);
 
 	}
+	
+	// 2.2.5
+	container.find('.esg-transition').each(function() {
+		
+		var elem = jQuery(this);
+		if(elem.data('prepared')) return;
+		elem.data('prepared', true);
+			
+		var trans = elem.attr('data-transition');
+		if(!esgAnimmatrix.hasOwnProperty(trans)) return;
+		
+		var key = esgAnimmatrix[trans],
+			animfrom = jQuery.extend({}, key[1]);
+			
+		punchgs.TweenLite.set(elem, animfrom);
+		
+	});
+	
 	loadVideoApis(container,opt);
  	setItemsOnPages(opt);
- 	
 	opt.mainul.find('.eg-newli').removeClass('eg-newli');
 	
  }
@@ -3202,7 +4270,7 @@ function adjustMediaSize(item,resize,p,opt) {
 		 	   punchgs.TweenLite.set(ifr,{width:"100%",height:"100%"});			 	   
 		 	  // punchgs.TweenLite.set(item.find('.esg-entry-media'),{width:"100%",height:"100%"});
 	 		}
-	 	})
+	 	});
 		} 	
  }
 
@@ -3218,17 +4286,19 @@ function adjustMediaSize(item,resize,p,opt) {
 		var container = opt.container;
 
 		 // BASIC VARIABLES
-		 var items = container.find('.mainul>li'),
-		 	 itemperpage = opt.column*opt.row;
+		 // 2.2.6
+		 var items = container.find('.mainul>li').not('.skipblank'),
+		 	 itemperpage = opt.column*opt.row,
+			 i;
 
 		 // CALCULATE ITEM PER PAGE HERE (BASED ON LAYOUT AND MULTIPLIER
 		 var mp = opt.rowItemMultiplier;
 		 var mpl = mp.length;
-
+		
 		 if (mpl>0)
 			 if (/*opt.column!=1 &&*/ opt.layout=="even") {
 			 	 itemperpage = 0;
-				 for (var i=0;i<opt.row;i++) {
+				 for (i=0;i<opt.row;i++) {
 					 var cle = i - (mpl*Math.floor(i/mpl));
 					 	itemperpage = itemperpage + mp[cle][opt.columnindex];
 				 }
@@ -3236,10 +4306,11 @@ function adjustMediaSize(item,resize,p,opt) {
 
 		// COBBLES PATTER SHOULD SHOW ONLY AS MANY ROWS AS MAX ROWS REALLY SET
 		if (opt.evenCobbles == "on" && opt.cobblesPattern!=undefined) {
-			 var trow = 0,
-			 	 tcol = 0,
-			 	 tcount = 0,
-			 	 itemperpage = 0;
+			 /* var trow = 0, */
+			 /* var tcol = 0, */
+			 var tcount = 0;
+			 
+			 itemperpage = 0;
 
 			  jQuery.each(items, function(i,$item) {
 				   var item = jQuery(item),
@@ -3261,31 +4332,110 @@ function adjustMediaSize(item,resize,p,opt) {
 
 					if ((opt.column*opt.row)>=tcount) itemperpage++;
 
-			})
+			});
 		}
 
 		 var minindex = itemperpage*opt.currentpage,
-		 	 cwidth = container.find('.esg-overflowtrick').parent().width(),
+		 	 /* cwidth = container.find('.esg-overflowtrick').parent().width(), */
 		 	 maxindex = minindex + itemperpage,
 		 	 filters = jQuery(opt.filterGroupClass+'.esg-filterbutton.selected:not(.esg-navigationbutton),'+opt.filterGroupClass+' .esg-filterbutton.selected:not(.esg-navigationbutton)'),
-		 	 indexcounter = 0;
-
-
-
-
-
+		 	 indexcounter = 0,
+			 isStream = opt.container.closest('.myportfolio-container').hasClass('source_type_stream');
+		 
+		 // 2.2.5
+		 container.find('.esgbox').each(function() {
+			
+			if(this.className.search('facebook') !== -1) {
+				
+				jQuery(this).removeAttr('data-width data-height');
+				
+			}
+			 
+		 });
+		 
 		 // PREPARE THE ITEMS IF WE HAVE FILTERS ON PAGE
 		 if (jQuery(opt.filterGroupClass+'.esg-filter-wrapper, '+opt.filterGroupClass+' .esg-filter-wrapper').length>0) {		 	
 					 jQuery.each(items,function(index,$item) {
 
-					 	var item= jQuery($item);
-					 	item.find('.esgbox').each(function() {
-					 		if (opt.lightBoxMode=="all")
-					 			jQuery(this).attr('rel',"group");
-					 		else
-						 	if (opt.lightBoxMode!="contentgroup")
-						 		jQuery(this).attr('rel',"");
-					 	})
+					 	var item= jQuery($item),
+					 	items = item.find('.esgbox');
+						
+						if(items.length > 1) {	
+							var len = items.length,
+								itm;
+
+							for(var i = 1; i < len; i++) {
+								itm = items.eq(i);
+								if(!itm.parent().hasClass('esgbox-additional')) continue;
+								itm.removeClass('esgbox').addClass('esgbox-clone').off('click.essbox-start').removeAttr('data-esgbox').removeData('esgbox');
+							}
+						}
+						
+						item.find('.esgbox').each(function() {
+							
+							var $this = jQuery(this),
+								oTitle = $this.data('posttitle') || $this.data('caption');
+								
+							theTitle = oTitle ? encodeURIComponent(oTitle) : '';
+							
+					 		if (opt.lightBoxMode=="all") {
+					 			$this.attr('data-esgbox',opt.lightboxHash);
+							}
+					 		else if (opt.lightBoxMode!="contentgroup") {
+						 		$this.attr('data-esgbox',"");
+							}
+							
+							var settings = {
+							
+								featured: $this.data('featured'),
+								titl: theTitle,
+								lbTitle: opt.lightBoxPostTitle,
+								lbTag: opt.lightBoxPostTitleTag,
+								lbImg: opt.lightBoxFeaturedImg,
+								lbMargin: opt.lightBoxFeaturedMargin,
+								lbWidth: opt.lightBoxFeaturedWidth,
+								lbPos: opt.lightBoxFeaturedPos,
+								lbMin: opt.lightboxPostMinWid,
+								lbMax: opt.lightboxPostMaxWid,
+								margin: opt.lightboxMargin,
+								padding: opt.lbContentPadding,
+								overflow: opt.lbContentOverflow,
+								revslider: $this.data('revslider'),
+								essgrid: $this.data('lbesg'),
+								ispost: $this.data('ispost'),
+								gridid: $this.data('gridid')
+								
+							};
+							
+							settings = JSON.stringify(settings);
+							
+							if($this.hasClass('esgbox-post') && $this.attr('href') === 'javascript:void(0);') {
+								
+								$this.attr('data-type', 'ajax')
+									 .attr('href', opt.loadMoreAjaxUrl + 
+									       '?action=' + opt.loadMoreAjaxAction + 
+										   '&client_action=load_post_content' + 
+										   '&token=' + opt.loadMoreAjaxToken + 
+										   '&postid=' + $this.data('post') + 
+										   '&settings=' + settings
+								);
+								
+							}
+							
+							var additional = $this.closest('.tp-esg-item').find('.esgbox-additional').find('.esgbox');
+							if(additional.length) {
+								
+								additional.each(function() {	
+									jQuery(this).attr('data-caption', oTitle).find('img').remove();
+								});
+								
+							}
+							
+							if(isStream) $this.data('ratio', '16:9');
+							
+					 	});
+						
+						if(jQuery.fn.esgbox) opt.container.find('.esgbox').esgbox(opt.container.data('lightboxsettings'));
 
 					 	// CHECK IF THE FILTER SELECTED, AND IT FITS TO THE CURRENT ITEM
 					 	var nofilter = true,
@@ -3295,7 +4445,7 @@ function adjustMediaSize(item,resize,p,opt) {
 						 		nofilter=false;
 						 		foundfilter++;
 						 	}
-					 	})
+					 	});
 
 					 	// IF ELEMENT DO NOT PASS IN ALL SELECTED FILTER, THEN DO NOT SHOW IT
 					 	if (opt.filterLogic=="and" && foundfilter < filters.length) nofilter = true;
@@ -3303,21 +4453,18 @@ function adjustMediaSize(item,resize,p,opt) {
 					 	// IF SEARCH FILTER IS ACTIVATED, AND ELEMENT IS NOT FITTING IN SEARCH AND IN SELECTED FILTER, THEN HIDE IT
 					 	hidsbutton = jQuery(opt.filterGroupClass+'.esg-filter-wrapper .hiddensearchfield');
 					 	if (hidsbutton.hasClass("eg-forcefilter") && foundfilter < filters.length) nofilter = true;
-
-
+						
 					 	// FILTER BASED SHOW OR HIDE THE ITEM (Less then Items fit on Page
 					 	if (indexcounter>=minindex && indexcounter<maxindex && !nofilter) {
 
 						 	item.addClass("itemtoshow").removeClass("itemishidden").removeClass("itemonotherpage");
 
-						 	if (opt.lightBoxMode=="filterpage" || opt.lightBoxMode=="filterall") 
-						 		item.find('.esgbox').attr('rel',"group");
-						 								 
+						 	if (opt.lightBoxMode=="filterpage" || opt.lightBoxMode=="filterall") {
+						 		item.find('.esgbox').attr('data-esgbox',opt.filterGroupClass.replace('.', ''));
+							}						 
 						 	indexcounter++;
 					 	} else {
 
-						 	if (opt.lightBoxMode=="filterall")
-						 		item.find('.esgbox').attr('rel',"group");
 						 	if (!nofilter) {
 						 		if (indexcounter<minindex || indexcounter>=maxindex) {
 							 		 item.addClass("itemonotherpage");
@@ -3328,40 +4475,111 @@ function adjustMediaSize(item,resize,p,opt) {
 							 		indexcounter++;
 								}
 							 	item.addClass("fitsinfilter");
+								
+								if (opt.lightBoxMode=="filterall") {
+									item.find('.esgbox').attr('data-esgbox',opt.filterGroupClass.replace('.', ''));
+								}
+								
 						 	}  else {
 								item.addClass("itemishidden").removeClass("itemtoshow").removeClass("fitsinfilter");
 							}
 					 	}
 
-				 	})
+				 	});
 		} else {
-
+	
 				jQuery.each(items,function(index,$item) {
-
-					 	var item= jQuery($item);
-
-
-					 	item.find('.esgbox').each(function() {
+					 	var item= jQuery($item),
+					 	items = item.find('.esgbox');
+						
+						if(items.length > 1) {	
+							var len = items.length,
+								itm;
+								
+							for(var i = 1; i < len; i++) {
+								itm = items.eq(i);
+								if(!itm.parent().hasClass('esgbox-additional')) continue;
+								itm.removeClass('esgbox').addClass('esgbox-clone').off('click.essbox-start').removeAttr('data-esgbox').removeData('esgbox');
+							}
+						}
+						
+						item.find('.esgbox').each(function() {
+							
+							var $this = jQuery(this),
+								oTitle = $this.data('posttitle') || $this.data('caption');
+								
+							theTitle = oTitle ? encodeURIComponent(oTitle) : '';
+							
 					 		if (opt.lightBoxMode=="all")
-					 			jQuery(this).attr('rel',"group");
+					 			$this.attr('data-esgbox',opt.lightboxHash);
 					 		else
 						 	if (opt.lightBoxMode!="contentgroup")
-						 		jQuery(this).attr('rel',"");
-					 	})
+						 		$this.attr('data-esgbox',"");
+							
+							var settings = {
+							
+								featured: $this.data('featured'),
+								titl: theTitle,
+								lbTitle: opt.lightBoxPostTitle,
+								lbTag: opt.lightBoxPostTitleTag,
+								lbImg: opt.lightBoxFeaturedImg,
+								lbMargin: opt.lightBoxFeaturedMargin,
+								lbWidth: opt.lightBoxFeaturedWidth,
+								lbPos: opt.lightBoxFeaturedPos,
+								lbMin: opt.lightboxPostMinWid,
+								lbMax: opt.lightboxPostMaxWid,
+								margin: opt.lightboxMargin,
+								padding: opt.lbContentPadding,
+								overflow: opt.lbContentOverflow,
+								revslider: $this.data('revslider'),
+								essgrid: $this.data('lbesg'),
+								ispost: $this.data('ispost'),
+								gridid: $this.data('gridid')
+								
+							};
+							
+							settings = JSON.stringify(settings);
+							
+							if($this.hasClass('esgbox-post') && $this.attr('href') === 'javascript:void(0);') {
+								
+								$this.attr('data-type', 'ajax')
+									 .attr('href', opt.loadMoreAjaxUrl + 
+									       '?action=' + opt.loadMoreAjaxAction + 
+										   '&client_action=load_post_content' + 
+										   '&token=' + opt.loadMoreAjaxToken + 
+										   '&postid=' + $this.data('post') + 
+										   '&settings=' + settings
+								);
+								
+							}
+							
+							var additional = $this.closest('.tp-esg-item').find('.esgbox-additional').find('.esgbox');
+							if(additional.length) {
+								
+								additional.each(function() {	
+									jQuery(this).attr('data-caption', oTitle).find('img').remove();
+								});
+								
+							}
+							
+							if(isStream) $this.data('ratio', '16:9');
+							
+					 	});
 
 					 	if (opt.lightBoxMode=="filterall") 
-						 	item.find('.esgbox').attr('rel',"group");
+						 	item.find('.esgbox').attr('data-esgbox',opt.lightboxHash);
 
 
 					 	// FILTER BASED SHOW OR HIDE THE ITEM (Less then Items fit on Page
 					 	if (indexcounter>=minindex && indexcounter<maxindex) {
-
-						 	item.addClass("itemtoshow").removeClass("itemishidden").removeClass("itemonotherpage");
+					 		item.addClass("itemtoshow").removeClass("itemishidden").removeClass("itemonotherpage");
 						 	indexcounter++;
-						 	if (opt.lightBoxMode=="filterpage" || opt.lightBoxMode=="filterall") 
-						 		item.find('.esgbox').attr('rel',"group");
-					 	} else {
 
+
+						 	if (opt.lightBoxMode=="filterpage" || opt.lightBoxMode=="filterall") {
+						 		item.find('.esgbox').attr('data-esgbox',opt.lightboxHash);
+							}
+					 	} else {
 
 						 		if (indexcounter<minindex || indexcounter>=maxindex) {
 							 		 item.addClass("itemonotherpage");
@@ -3374,7 +4592,10 @@ function adjustMediaSize(item,resize,p,opt) {
 							 	item.addClass("fitsinfilter");
 					 	}
 
-				 	})
+				 	});
+					
+					if(jQuery.fn.esgbox) opt.container.find('.esgbox').esgbox(opt.container.data('lightboxsettings'));
+
 		}
 
 
@@ -3394,7 +4615,7 @@ function adjustMediaSize(item,resize,p,opt) {
 			 		amnt = amnt + newc;
 			 		if (newc==0) onewaszero = true;
 			 	}
-		 	})
+		 	});
 
 		 	if (filters.length==0 || filters.length==1) amnt=1;
 
@@ -3420,7 +4641,7 @@ function adjustMediaSize(item,resize,p,opt) {
  		if (pageamounts>7 && opt.smartPagination=="on") {
 		 	//BUILD PAGINATION IF ONLY SMART PAGES SHOULD BE ADDED
 		 	if (opt.currentpage<3) {
-			 	for (var i=0;i<4;i++) {
+			 	for (i=0;i<4;i++) {
 				  if (i==opt.currentpage)
 		 		 	extraclass="selected";
 		 		  else
@@ -3437,7 +4658,7 @@ function adjustMediaSize(item,resize,p,opt) {
 		 	if (pageamounts - opt.currentpage<4) {
 			 	paginholder.append('<div class="esg-navigationbutton esg-filterbutton esg-pagination-button '+extraclass+'" data-page="0">1</div>');
 			 	paginholder.append('<div class="esg-navigationbutton">...</div>');
-			 	for (var i=pageamounts-4;i<pageamounts;i++) {
+			 	for (i=pageamounts-4;i<pageamounts;i++) {
 				  if (i==opt.currentpage)
 		 		 	extraclass="selected";
 		 		  else
@@ -3448,7 +4669,7 @@ function adjustMediaSize(item,resize,p,opt) {
 		 	} else {
 			 	paginholder.append('<div class="esg-navigationbutton esg-filterbutton esg-pagination-button '+extraclass+'" data-page="0">1</div>');
 			 	paginholder.append('<div class="esg-navigationbutton">...</div>');
-			 	for (var i=opt.currentpage-1;i<opt.currentpage+2;i++) {
+			 	for (i=opt.currentpage-1;i<opt.currentpage+2;i++) {
 				  if (i==opt.currentpage)
 		 		 	extraclass="selected";
 		 		  else
@@ -3464,7 +4685,7 @@ function adjustMediaSize(item,resize,p,opt) {
  		} else {
 
 	 		// BUILD PAGINATION WHEN ALL PAGES SHOULD BE ADDED
-		 	for (var i=0;i<pageamounts;i++) {
+		 	for (i=0;i<pageamounts;i++) {
 
 		 		if (i==opt.currentpage)
 		 			extraclass="selected";
@@ -3494,7 +4715,7 @@ function adjustMediaSize(item,resize,p,opt) {
 		 		counter++;
 		 		if (counter<maxindex)
 		 		  jQuery(this).removeClass("itemonotherpage");
-	 		})
+	 		});
 	 		paginholder.find('.esg-pagination-button').first().addClass("selected");
 	 	}
 	 	if (opt.currentpage<0) opt.currentpage=0;
@@ -3504,6 +4725,10 @@ function adjustMediaSize(item,resize,p,opt) {
 
 	 	/** HANDLE OF PAGINATION BUTTONS **/
 		paginholder.find('.esg-pagination-button').on("click",function() {
+			
+			/* 2.1.5 */
+			stopAllVideos(true);
+			
 		 	opt.oldpage=opt.currentpage;
 		 	opt.currentpage = jQuery(this).data('page');
 			opt = getOptions(container);	//new added
@@ -3514,12 +4739,12 @@ function adjustMediaSize(item,resize,p,opt) {
 
 			// CREATE A COOKIE FOR THE LAST SELECTION OF FILTERS
 			if (opt.cookies.pagination==="on" && opt.cookies.searchjusttriggered !== true) 
-				createCookie("grid_"+opt.girdID+"_pagination",opt.currentpage,opt.cookies.timetosave*(1/60/60));
+				createCookie("grid_"+opt.gridID+"_pagination",opt.currentpage,opt.cookies.timetosave*(1/60/60));
 
 		 	setItemsOnPages(opt);
 			organiseGrid(opt,"paginholder");
 			setOptions(container,opt);
-			stopAllVideos(true);
+			
 			if (opt.paginationScrollToTop=="on") {
 				jQuery("html, body").animate({scrollTop:(container.offset().top-opt.paginationScrollToTopOffset)},{queue:false,speed:0.5});
 			}
@@ -3528,30 +4753,180 @@ function adjustMediaSize(item,resize,p,opt) {
 
 
 		if (opt.firstshowever==undefined) jQuery(opt.filterGroupClass+'.esg-navigationbutton,'+opt.filterGroupClass+' .esg-navigationbutton').css({visibility:"hidden"});
-
-
+		
+		/*
+			BEGIN SPECIAL CSS TRANSITIONS
+			2.2.6
+		*/
+		var special = jQuery('.esg-overlay.esg-transition').filter(function() {
+			
+			return this.dataset.transition && this.dataset.transition.search(/collapse|line|spiral|circle/) !== -1;
+			
+		});
+		
+		if(special.length) {
+			
+			if(!opt.specialStyle) opt.specialStyle = jQuery('<style type="text/css" />').appendTo(jQuery('head'));
+			
+			var styles = '',
+				specialStyles = [],
+				containerId = opt.container.attr('id');
+				
+			special.each(function() {
+				
+				var level,
+					paths,
+					ids = '',
+					$this = jQuery(this),
+					len = specialStyles.length,
+					par = $this.closest('.eec'),
+					animName = this.dataset.transition,
+					skin = $this.closest('.tp-esg-item').attr('data-skin');
+				
+				if(par.length) {
+						
+					level = par.hasClass('esg-tc') ? 'tc' : par.hasClass('esg-cc') ? 'cc' : par.hasClass('esg-bc') ? 'bc' : '';
+					if(level) ids = ' .esg-' + level;
+					
+				}
+				
+				var objName = !this.dataset.animcolor ? animName : animName + level + this.dataset.animcolor;
+				for(var i = 0; i < len; i++) if(specialStyles[i][objName] === animName) return;
+				
+				specialStyles[len] = {};
+				specialStyles[len][objName] = animName;
+				
+				var svg,
+					color,
+					colorOne,
+					colorTwo,
+					bg = 'background',
+					isLine = animName.search('line') !== -1,
+					isSpiral = animName.search('spiral') !== -1,
+					isCircle = animName.search('circle') !== -1,
+					isCollapse = animName.search('collapse') !== -1,
+					isSvg = isLine || isSpiral;
+				
+				if(!$this.data('specialcolorone')) {
+					
+					colorOne = $this.css('background-image');
+					color = this.dataset.animcolor || '#FFFFFF';
+					
+					if(!colorOne || colorOne === 'none') colorOne = $this.css('background-color');
+					if(isLine) {
+					
+						if(animName.search('linediagonal') !== -1) {
+						
+							svg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400px" height="300px"><line x1="0" y1="300" x2="400" y2="0" stroke="' + color + '" stroke-width="1"></line></svg>';
+						
+						}
+						else {
+							
+							if(animName.search('horizontal') !== -1) paths = ['0', '150', '100%', '1', '400', '0', '100%', '1', '400', '150', '100%', '1'];
+							else paths = ['200', '0', '1', '100%', '0', '300', '1', '100%', '200', '300', '1', '100%'];
+							
+							// rectangle needed for sharp/crisp lines
+							svg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400px" height="300px">';
+							svg += '<rect x="0" y="0" width="100%" height="100%" fill="transparent"></rect>';
+							svg += '<rect x="' + paths[0] + '" y="' + paths[1] + '" width="' + paths[2] + '" height="' + paths[3] + '" fill="' + color + '" shape-rendering="crispEdges"></rect>';
+							svg += '<rect x="' + paths[4] + '" y="' + paths[5] + '" width="' + paths[6] + '" height="' + paths[7] + '" fill="' + color + '" shape-rendering="crispEdges"></rect>';
+							svg += '<rect x="' + paths[8] + '" y="' + paths[9] + '" width="' + paths[10] + '" height="' + paths[11] + '" fill="' + color + '" shape-rendering="crispEdges"></rect>';
+							svg += '</svg>';
+							
+						}
+						
+						colorTwo = "url('" + svg + "')";
+					
+					}
+					else if(isSpiral) {
+							
+						svg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="250px" height="234px">';
+						svg += '<path fill="' + color + '" d="M201.449,16.732 C229.021,59.363 222.332,125.403 176.384,153.001 C188.917,168.041 211.475,162.194 226.514,153.823 C235.694,147.985 244.060,141.291 249.903,132.928 C240.707,148.816 229.021,163.025 212.306,173.888 C198.097,183.089 183.074,188.105 166.358,189.776 C150.489,190.613 133.774,188.105 119.563,179.743 C116.244,188.105 118.735,196.460 122.917,203.985 C134.620,222.372 154.672,229.896 173.878,233.244 C123.748,235.752 68.620,197.300 67.772,143.800 C56.088,144.628 48.568,156.331 45.214,166.363 C40.201,183.089 41.879,201.477 48.568,217.365 C30.175,187.268 26.010,148.816 41.049,116.209 C48.568,101.169 59.425,89.460 73.633,80.265 C69.451,76.088 64.438,72.741 58.594,71.903 C35.188,70.233 13.477,82.773 0.097,101.169 C22.673,56.024 84.490,28.435 130.437,54.346 C135.450,43.483 129.607,31.781 122.087,23.419 C109.555,10.039 92.839,3.354 76.122,0.015 C103.694,0.015 129.607,8.370 151.319,26.765 C169.695,43.483 180.567,66.056 182.243,90.290 C189.747,89.460 194.760,84.443 198.925,78.597 C211.475,59.363 208.123,36.797 201.449,16.732 L201.449,16.732 Z"/>';
+						svg += '</svg>';
+						colorTwo = "url('" + svg + "')";
+					
+					}
+					else {
+					
+						colorTwo = !isCollapse ? color : colorOne;
+					
+					}
+					
+					$this.data({specialcolorone: colorOne, specialcolortwo: colorTwo});
+					
+				}
+				else {
+				
+					colorOne = $this.data('specialcolorone');
+					colorTwo = $this.data('specialcolortwo');
+				
+				}
+				
+				var duration = this.dataset.duration || 'default';
+				duration = duration === 'default' ? 0.3 : duration * 0.001;
+				
+				var easing,
+					delayed = '';
+					delay = this.dataset.delay || '',
+					transition = !isCollapse ? 'transform' : 'all';
+					
+				if(delay) delay = ' ' + delay + 's';
+				
+				styles += '#' + containerId + ' .tp-esg-item[data-skin="' + skin + '"]' + ids + ' .esg-transition[data-transition="' + animName + '"] {background: transparent !important}';
+				styles += '#' + containerId + ' .tp-esg-item[data-skin="' + skin + '"]' + ids + ' .esg-transition[data-transition="' + animName + '"]:before {';
+				styles += 'transition: all ' + duration + 's ease-out;';
+				styles += bg + ': ' + colorOne;
+				styles += '}';
+				styles += '#' + containerId + ' .esg-hovered[data-skin="' + skin + '"]' + ids + ' .esg-transition[data-transition="' + animName + '"]:before {';
+				styles += 'transition-delay: ' + delay + ';';
+				styles += '}';
+				
+				if(isCircle) duration += 0.7;
+				if(isSvg) bg = 'background-image';
+				easing = isSpiral ? 'ease-in' : isCircle ? 'ease' : 'ease-out';
+				
+				styles += '#' + containerId + ' .tp-esg-item[data-skin="' + skin + '"]' + ids + ' .esg-transition[data-transition="' + animName + '"]:after {';
+				styles += 'transition: ' + transition + ' ' + duration + 's ' + easing + ';';
+				styles += bg + ': ' + colorTwo;
+				styles += '}';
+				styles += '#' + containerId + ' .esg-hovered[data-skin="' + skin + '"]' + ids + ' .esg-transition[data-transition="' + animName + '"]:after {';
+				styles += 'transition-delay: ' + delay + ';';
+				styles += '}';
+				
+			});
+			
+			if(styles) opt.specialStyle.html(styles);
+			
+		}
 	
  }
 
-function waittorungGrid(img,opt,what) {
+function waittorungGrid(img,opt,what,inited) {
 	
 	var mainul = img.closest('.mainul');
 	clearTimeout( mainul.data("intreorganisier"));
 	if (!mainul.hasClass("gridorganising")) {
-
-		runGrid(opt,what);
+		if(!inited.init) runGrid(opt,what,inited);
 	} else {
 		 mainul.data("intreorganisier",setTimeout(function() {
-			waittorungGrid(img,opt,what)
+			waittorungGrid(img,opt,what,inited);
 		 },10));
 	}
+	
+}
+
+function loadHoverImage(img) {
+	
+	var hoverImg = img.parent().find('.esg-hover-image');
+	if(hoverImg.length) hoverImg.css('background-image', 'url("' + hoverImg.data('src') + '")').appendTo(img);
 	
 }
 
 /*******************************************
 	-	PREPARE LOADING OF IMAGES	-
 ********************************************/
-function loadAllPrepared(img,opt) {
+function loadAllPrepared(img,opt,inited) {
+		
 		if (img.data('preloading')==1) return false;
 
 		var limg = new Image();
@@ -3564,31 +4939,33 @@ function loadAllPrepared(img,opt) {
 
 		img.data('preloading',1);
 
-
 		limg.onload = function(loadedimg) {			
 			img.data('lazydone',1);
 			img.data('ww',limg.width);
 			img.data('hh',limg.height);			
 			img.closest('.showmeonload').addClass("itemtoshow").removeClass("showmeonload").addClass("loadedmedia");
 			removeLLCover(img,limg.width,limg.height);
-			if (opt.lazyLoad=="on")
-				waittorungGrid(img,opt,true);
+			
+			/* 2.1.6 */
+			loadHoverImage(img);	
+			if (opt.lazyLoad=="on") waittorungGrid(img,opt,true,inited);
 
-		}
+		};
 
 		limg.onerror = function() {
 				img.data('lazydone',1);
 				img.closest('.showmeonload').addClass("itemtoshow").removeClass("showmeonload").addClass("loadedmedia");
-				if (opt.lazyLoad=="on")
-					waittorungGrid(img,opt,true);
+				if (opt.lazyLoad=="on") waittorungGrid(img,opt,true,inited);
 
-			}
+			};
 
-
-		if (img.attr('src')!=undefined && img.attr('src')!='undefined')
+		if (img.attr('src')!=undefined && img.attr('src')!='undefined') {
 			limg.src = img.attr('src');
-		 else
+		}
+		/* 2.1.6  */
+		else if(img.data('src')!=undefined && img.data('src')!='undefined') {
 			limg.src = img.data('src');
+		}
 		
 		if (limg.complete) {
 			img.data('lazydone',1);
@@ -3596,8 +4973,9 @@ function loadAllPrepared(img,opt) {
 			img.data('hh',limg.height);
 			img.closest('.showmeonload').addClass("itemtoshow").removeClass("showmeonload").addClass("loadedmedia");
 			removeLLCover(img,limg.width,limg.height);
-			if (opt.lazyLoad=="on")
-				waittorungGrid(img,opt,true);
+			
+			if (opt.lazyLoad=="on") waittorungGrid(img,opt,true,inited);
+
 		}
 
 
@@ -3608,74 +4986,91 @@ function loadAllPrepared(img,opt) {
 ********************************/
 
 var waitForLoads = function(elements,opt) {
-		
 	
-	jQuery.each(elements,function(index,element){
-		element = jQuery(element);
-		if (!element.hasClass("isvisiblenow") && opt.esgloaderprocess!=="add") 		{	
-			//console.log("Show Preloader 1. (  speed 0.5)");
-			opt.esgloaderprocess = "add";			
-			punchgs.TweenLite.to(opt.esgloader,0.5,{autoAlpha:1,ease:punchgs.Power3.easeInOut});
+	if(opt.esgloaderprocess!=="add") {
+	
+		elements.each(function() {
+			
+			if(!jQuery(this).hasClass("isvisiblenow")) {	
+				opt.esgloaderprocess = "add";			
+				punchgs.TweenLite.to(opt.esgloader,0.5,{autoAlpha:1,ease:punchgs.Power3.easeInOut});
+				return false;
+			}
+			
+		});
+		
+	}
+	
+	var inter,
+		found,
+		inited = {init: false};
+		
+	function onPoster(i) {
+		var img = jQuery(this),
+			imgsrc = img.attr('src'),
+			ip =img.parent();
+
+		//img.css({display:"none"});
+		if (img.data('lazydone')!=1 && opt.lazyLoad=="on" && ip.find('.lazyloadcover').length<1) {
+			lthumb = img.data('lazythumb');			 		
+			var	bgimg = "",
+				blurclass ="";
+				
+			/* 2.1.6 */
+			if (lthumb!=undefined && lthumb !== 'undefined') {
+				imgsrc = img.data('lazysrc');
+				bgimg = ";background-image:url("+lthumb+")";
+				blurclass="esg-lazyblur";
+			}			 		
+			
+			/* 2.1.6 colorpicker addition */
+			if(!bgimg) bgimg = opt.lazyLoadColor;
+			ip.append('<div class="lazyloadcover '+blurclass+'" style="background:'+bgimg+'"></div>');
+			
+			
+		} 
+		
+		if (img.data('lazydone')!=1 && found<3) {			 		
+			found++;
+			loadAllPrepared(jQuery(this),opt,inited);
 		}
 		
-	});
+		if (opt.lazyLoad!=="on") {
+			punchgs.TweenLite.set(img,{autoAlpha:1});
+		}
 
-	var inter = setInterval(function() {
+	 }
+		
+	function onEach() {
 
-			opt.bannertimeronpause = true;
-			opt.cd=0;			
-			 var found = 0;
-			 elements.find('.esg-media-poster').each(function(i) {
-				var img = jQuery(this),
-					imgsrc = img.attr('src'),
-					ip =img.parent();
+		opt.bannertimeronpause = true;
+		opt.cd=0;			
+		found = 0;
+		
+		elements.find('.esg-media-poster').each(onPoster);
 
-			 	//img.css({display:"none"});
-			 	if (img.data('lazydone')!=1 && opt.lazyLoad=="on" && ip.find('.lazyloadcover').length<1) {
-			 		lthumb = img.data('lazythumb');			 		
-			 		var	bgimg = "",
-			 			blurclass ="";
-			 		if (lthumb!=undefined) {
-			 			imgsrc = img.data('lazysrc');
-			 			bgimg = ";background-image:url("+lthumb+")"
-			 			blurclass="esg-lazyblur";
-			 		}			 		
+		 if (found==0) {
+			  if (opt.esgloader.length>0 && opt.esgloaderprocess!=="remove") {
+				opt.esgloaderprocess = "remove";					 
+				var infdelay = 0;
+				if (opt.esgloader.hasClass("infinityscollavailable"))
+					infdelay = 1;
 
-				 	ip.append('<div class="lazyloadcover '+blurclass+'" style="background-color:'+opt.lazyLoadColor+bgimg+'"></div>');
-				 	
-			 	} 
-			 	
-			 	if (img.data('lazydone')!=1 && found<3) {			 		
-			 		found++;
-			 		loadAllPrepared(jQuery(this),opt);
-			 	}
-				
-				/* 2.1.5.1 */
-			 	if (opt.lazyLoad!=="on") {
-			 		punchgs.TweenLite.set(img,{autoAlpha:1});
-			 	}
-
-			 });
-
-			 if (found==0) {
-				  if (opt.esgloader.length>0 && opt.esgloaderprocess!=="remove") {
-				  	opt.esgloaderprocess = "remove";					 
-					var infdelay = 0;
-					if (opt.esgloader.hasClass("infinityscollavailable"))
-					 	infdelay = 1;
-					//console.log("Hide Preloader 1. (delay:"+infdelay+", speed 0.5)");
-					punchgs.TweenLite.to(opt.esgloader,0.5,{autoAlpha:0, ease:punchgs.Power3.easeInOut, delay:infdelay});
-				 }
+				punchgs.TweenLite.to(opt.esgloader,0.5,{autoAlpha:0, ease:punchgs.Power3.easeInOut, delay:infdelay});
 			 }
-			 if (found==0 && !elements.closest('.mainul').hasClass("gridorganising")) {
-				 clearInterval(inter);				 
-			   	 runGrid(opt);
-			 }			 
-		},50)
+		 }
+		 if (found==0 && !elements.closest('.mainul').hasClass("gridorganising")) {
+			 clearInterval(inter);	
+			 if(!inited.init) runGrid(opt,false,inited);
+		 }			 
+	}
 	
-	runGrid(opt);
+	inter = setInterval(onEach ,50);
+	
+	// 2.2.5
+	// runGrid(opt);
 
-}
+};
 
 
 
@@ -3683,7 +5078,7 @@ var waitForLoads = function(elements,opt) {
  	-	ORGANISE GRID	-
  ********************************/
  function organiseGrid(opt,fromwhere) { 		 	
-	waitForLoads(opt.container.find('.itemtoshow'),opt)	
+	waitForLoads(opt.container.find('.itemtoshow').not('.skipblank'),opt);
  }
 
 
@@ -3708,10 +5103,15 @@ function removeLLCover(img,imgw,imgh) {
 /***********************************************
 	-	Run Grid To Prepare for Animation	-
 ************************************************/
-function runGrid(opt,newelementadded) {		
+function runGrid(opt,newelementadded,inited) {		
+		
+		inited.init = true;
 		
 		var  container = opt.container;			 
-		if (opt.loadMoreType=="scroll") checkBottomPos(opt);
+		if (opt.loadMoreType=="scroll") {
+			checkBottomPos(opt,true);			
+		}
+
 
 		if (opt.firstshowever==undefined) {
 			if (container.is(":hidden"))
@@ -3734,7 +5134,7 @@ function runGrid(opt,newelementadded) {
 ***********************************/
 
 function getCobblePat(ar,index) {
-	var cobblevalue = new Object;
+	var cobblevalue = {};
 	cobblevalue.w = 1;
 	cobblevalue.h = 1;
 	ar = ar.split(",");
@@ -3752,31 +5152,28 @@ function getCobblePat(ar,index) {
 	-	//! RUN THE GRID POSITION CALCULATION	-
 *************************************************/
 function runGridMain(opt,newelementadded) {
-
-	
 	
 	// BASIC VARIABLES
  	var  container = opt.container,
- 		 items = container.find('.itemtoshow, .isvisiblenow').not('.ui-sortable-helper'),
- 	 	 p = new Object,
+ 		 items = !opt.itemstoload ? container.find('.itemtoshow, .isvisiblenow').not('.ui-sortable-helper') : opt.itemstoload,
+ 	 	 p = {},
 	 	 ul = container.find('ul').first(),
-	 	 esgo = container.find('.esg-overflowtrick').first(),
+	 	 /* esgo = container.find('.esg-overflowtrick').first(), */
 	 	 ar = opt.aspectratio,
 	 	 aratio,
 	 	 coh = 0;
 
 	 	opt.aspectratioOrig = opt.aspectratio;
-
-
+	
+	items = items.not('.skipblank');
+		
+	delete opt.itemstoload;
 	container.find('.mainul').addClass("gridorganising");
 	// CALCULATE THE ASPECT RATIO
 
 
 	ar = ar.split(":");
  	aratio=parseInt(ar[0],0) / parseInt(ar[1],0);
-
-
-
 
 	p.item = 0;
 	p.pagetoanimate=0-opt.currentpage;			// Page Offsets
@@ -3799,7 +5196,7 @@ function runGridMain(opt,newelementadded) {
 
 
 
-	p.currentcolumnheight = new Array;
+	p.currentcolumnheight = [];
 	for (var i=0;i<opt.column;i++)
 		p.currentcolumnheight[i] = 0;
 
@@ -3825,16 +5222,16 @@ function runGridMain(opt,newelementadded) {
 
 	// MULTIPLIER SETTINGS
 	var mp = opt.rowItemMultiplier,
-		mpl = mp.length,
-		origcol = opt.column;
+		mpl = mp.length;
+		/* origcol = opt.column; */
 
 
 	p.y = 0;
 	p.fakey = 0;
-	container.find('.esg-overflowtrick').css({width:"100%"});
-	if (container.find('.esg-overflowtrick').width()==100)
-		container.find('.esg-overflowtrick').css({width:container.find('.esg-overflowtrick').parent().width()});
-	p.cwidth = container.find('.esg-overflowtrick').width()-(opt.overflowoffset*2)			// Current Width of Parrent Container
+	var overflowtrick = container.find('.esg-overflowtrick').css('width',"100%");
+	if (overflowtrick.width()==100)
+		overflowtrick.css({width:overflowtrick.parent().width()});
+	p.cwidth = overflowtrick.width()-(opt.overflowoffset*2);			// Current Width of Parrent Container
 
 	opt.inanimation = true;
 
@@ -3868,13 +5265,15 @@ function runGridMain(opt,newelementadded) {
 			p.itemh = Math.round(coh) == 0 ? Math.round((p.cwidth_n_spaces / opt.column) / aratio) : Math.round(coh/opt.row);
 			opt.aspectratio = coh == 0 ? opt.aspectratio : p.itemw+":"+p.itemh;
 			
-			if (mpl>0)
+			if (mpl>0) {
 				punchgs.TweenLite.set(items,{display:"block",visibility:"visible",overwrite:"auto"});
-			else
-			if (opt.evenCobbles=="on")
+			}
+			else if (opt.evenCobbles=="on") {
 				punchgs.TweenLite.set(items,{display:"block",visibility:"visible",overwrite:"auto"});
-			else
+			}
+			else {
 				punchgs.TweenLite.set(items,{display:"block",width:p.itemw,height:p.itemh,visibility:"visible",overwrite:"auto"});
+			}
 	} else {		
 		punchgs.TweenLite.set(items,{display:"block",width:p.itemw,height:"auto",visibility:"visible",overwrite:"auto"});
 	}
@@ -3886,11 +5285,11 @@ function runGridMain(opt,newelementadded) {
 	p.originalitemh = p.itemh;
 
 	// PREPARE A GRID FOR CALCULATE THE POSITIONS OF COBBLES
-	var thegrid = new Array(),
+	var thegrid = [],
 		maxcobblerow = opt.row*opt.column*2;
 
 	for (var rrr = 0 ; rrr<maxcobblerow; rrr++) {
-		var newrow = new Array();
+		var newrow = [];
 		for (var ccc = 0; ccc<opt.column;ccc++) {
 				newrow.push(0);
 		}
@@ -3899,11 +5298,14 @@ function runGridMain(opt,newelementadded) {
 
 	var cobblepatternindex = 0;
 
-
 	if (items.length==0) container.trigger('itemsinposition');
 	// REPARSE THE ITEMS TO MAKE
+	
  	jQuery.each(items,function(index,$item) {
-		var item = jQuery($item);
+		var item = jQuery($item),
+			multi,
+			eem;
+			
 		p.itemw = 	p.originalitemw;
 
 		//fixCenteredCoverElement(item);
@@ -3938,11 +5340,11 @@ function runGridMain(opt,newelementadded) {
 
 				p.itemh = p.itemh * cobblesh + ((cobblesh-1) * opt.space);
 
-				var cobblepattern = cobblesw+":"+cobblesh	,
+				var cobblepattern = cobblesw+":"+cobblesh,
 					spacefound = false,
 					r = 0,
 					c = 0;
-
+					
 				switch (cobblepattern) {
 								case "1:1":
 									do {
@@ -3998,6 +5400,26 @@ function runGridMain(opt,newelementadded) {
 										if (r>=maxcobblerow) spacefound= true;
 									} while (!spacefound);
 								break;
+								
+								case "1:4":
+									do {
+										if (thegrid[r][c]==0 && r<maxcobblerow-3 && thegrid[r+1][c]==0 && thegrid[r+2][c]==0 && thegrid[r+3][c]==0) {
+											thegrid[r][c] = "1:4";
+											thegrid[r+1][c] = "1:4";
+											thegrid[r+2][c] = "1:4";
+											thegrid[r+3][c] = "1:4";
+											p.cobblesx = c;
+											p.cobblesy = r;
+
+											spacefound = true;
+										}
+										c++;
+										if (c==opt.column) {
+											c=0;r++;
+										}
+										if (r>=maxcobblerow) spacefound= true;
+									} while (!spacefound);
+								break;
 
 
 								case "2:1":
@@ -4034,6 +5456,25 @@ function runGridMain(opt,newelementadded) {
 										if (r>=maxcobblerow) spacefound= true;
 									} while (!spacefound);
 								break;
+								
+								case "4:1":
+									do {
+										if (thegrid[r][c]==0 && c<opt.column-3 && thegrid[r][c+1]==0 && thegrid[r][c+2]==0 && thegrid[r][c+3]==0) {
+											thegrid[r][c] = "4:1";
+											thegrid[r][c+1] = "4:1";
+											thegrid[r][c+2] = "4:1";
+											thegrid[r][c+3] = "4:1";
+											p.cobblesx = c;
+											p.cobblesy = r;
+											spacefound = true;
+										}
+										c++;
+										if (c==opt.column) {
+											c=0;r++;
+										}
+										if (r>=maxcobblerow) spacefound= true;
+									} while (!spacefound);
+								break;
 
 								case "2:2":
 									do {
@@ -4058,27 +5499,45 @@ function runGridMain(opt,newelementadded) {
 
 								case "3:2":
 									do {
-										if (c<opt.column-2 && r<maxcobblerow-1 &&
-											thegrid[r][c]==0 &&
-											thegrid[r][c+1]==0 &&
-											thegrid[r][c+2]==0 &&
-											thegrid[r+1][c]==0  &&
-											thegrid[r+1][c+1]==0 &&
-											thegrid[r+1][c+2]==0
-											)
-										{
+										if (c<opt.column-2 && r<maxcobblerow-1 && thegrid[r][c]==0 && thegrid[r][c+1]==0 && thegrid[r][c+2]==0 && thegrid[r+1][c]==0 && thegrid[r+1][c+1]==0 && thegrid[r+1][c+2]==0) {
 
-												thegrid[r][c] = "3:2";
-												thegrid[r][c+1] = "3:2";
-												thegrid[r][c+2] = "3:2";
-												thegrid[r+1][c] = "3:2";
-												thegrid[r+1][c+1] = "3:2";
-												thegrid[r+1][c+2] = "3:2";
+											thegrid[r][c] = "3:2";
+											thegrid[r][c+1] = "3:2";
+											thegrid[r][c+2] = "3:2";
+											thegrid[r+1][c] = "3:2";
+											thegrid[r+1][c+1] = "3:2";
+											thegrid[r+1][c+2] = "3:2";
 
-												p.cobblesx = c;
-												p.cobblesy = r;
+											p.cobblesx = c;
+											p.cobblesy = r;
 
-												spacefound = true;
+											spacefound = true;
+										}
+										c++;
+										if (c==opt.column) {
+											c=0;r++;
+										}
+										if (r>=maxcobblerow) spacefound= true;
+									} while (!spacefound);
+								break;
+								
+								case "4:2":
+									do {
+										if (c<opt.column-3 && r<maxcobblerow-1 && thegrid[r][c]==0 && thegrid[r][c+1]==0 && thegrid[r][c+2]==0 && thegrid[r][c+3]==0 && thegrid[r+1][c]==0  && thegrid[r+1][c+1]==0 && thegrid[r+1][c+2]==0 && thegrid[r+1][c+3]==0) {
+
+											thegrid[r][c] = "4:2";
+											thegrid[r][c+1] = "4:2";
+											thegrid[r][c+2] = "4:2";
+											thegrid[r][c+3] = "4:2";
+											thegrid[r+1][c] = "4:2";
+											thegrid[r+1][c+1] = "4:2";
+											thegrid[r+1][c+2] = "4:2";
+											thegrid[r+1][c+3] = "4:2";
+
+											p.cobblesx = c;
+											p.cobblesy = r;
+
+											spacefound = true;
 										}
 										c++;
 										if (c==opt.column) {
@@ -4107,6 +5566,44 @@ function runGridMain(opt,newelementadded) {
 												thegrid[r+1][c+1] = "2:3";
 												thegrid[r+2][c] = "2:3";
 												thegrid[r+2][c+1] = "2:3";
+
+												p.cobblesx = c;
+												p.cobblesy = r;
+
+												spacefound = true;
+
+										}
+										c++;
+										if (c==opt.column) {
+											c=0;r++;
+										}
+										if (r>=maxcobblerow) spacefound= true;
+									} while (!spacefound);
+								break;
+								
+								case "2:4":
+									do {
+										if (c<opt.column-1 && r<maxcobblerow-3 &&
+											thegrid[r][c]==0 &&
+											thegrid[r][c+1]==0 &&
+											thegrid[r+1][c]==0 &&
+											thegrid[r+1][c+1]==0  &&
+											thegrid[r+2][c+1]==0 &&
+											thegrid[r+2][c+1]==0 && 
+											thegrid[r+3][c+1]==0 &&
+											thegrid[r+3][c+1]==0
+
+											)
+										{
+
+												thegrid[r][c] = "2:4";
+												thegrid[r][c+1] = "2:4";
+												thegrid[r+1][c] = "2:4";
+												thegrid[r+1][c+1] = "2:4";
+												thegrid[r+2][c] = "2:4";
+												thegrid[r+2][c+1] = "2:4";
+												thegrid[r+3][c] = "2:4";
+												thegrid[r+3][c+1] = "2:4";
 
 												p.cobblesx = c;
 												p.cobblesy = r;
@@ -4160,13 +5657,156 @@ function runGridMain(opt,newelementadded) {
 										if (r>=maxcobblerow) spacefound= true;
 									} while (!spacefound);
 								break;
+								
+								case "4:3":
+									do {
+										if (c<opt.column-3 && r<maxcobblerow-2 &&
+											thegrid[r][c]==0 &&
+											thegrid[r][c+1]==0 &&
+											thegrid[r][c+2]==0 &&
+											thegrid[r][c+3]==0 &&
+											thegrid[r+1][c]==0  &&
+											thegrid[r+1][c+1]==0 &&
+											thegrid[r+1][c+2]==0 &&
+											thegrid[r+1][c+3]==0 &&
+											thegrid[r+2][c]==0  &&
+											thegrid[r+2][c+1]==0 &&
+											thegrid[r+2][c+2]==0 && 
+											thegrid[r+2][c+3]==0
+
+											)
+										{
+
+												thegrid[r][c] = "4:3";
+												thegrid[r][c+1] = "4:3";
+												thegrid[r][c+2] = "4:3";
+												thegrid[r][c+3] = "4:3";
+												thegrid[r+1][c] = "4:3";
+												thegrid[r+1][c+1] = "4:3";
+												thegrid[r+1][c+2] = "4:3";
+												thegrid[r+1][c+3] = "4:3";
+												thegrid[r+2][c] = "4:3";
+												thegrid[r+2][c+1] = "4:3";
+												thegrid[r+2][c+2] = "4:3";
+												thegrid[r+2][c+3] = "4:3";
+
+												p.cobblesx = c;
+												p.cobblesy = r;
+
+												spacefound = true;
+										}
+										c++;
+										if (c==opt.column) {
+											c=0;r++;
+										}
+										if (r>=maxcobblerow) spacefound= true;
+									} while (!spacefound);
+								break;
+								
+								case "3:4":
+									do {
+										if (c<opt.column-2 && r<maxcobblerow-3 &&
+											thegrid[r][c]==0 &&
+											thegrid[r][c+1]==0 &&
+											thegrid[r][c+2]==0 &&
+											thegrid[r+1][c]==0  &&
+											thegrid[r+1][c+1]==0 &&
+											thegrid[r+1][c+2]==0 &&
+											thegrid[r+2][c]==0  &&
+											thegrid[r+2][c+1]==0 &&
+											thegrid[r+2][c+2]==0 &&
+											thegrid[r+3][c]==0  &&
+											thegrid[r+3][c+1]==0 &&
+											thegrid[r+3][c+2]==0
+
+											)
+										{
+
+												thegrid[r][c] = "3:4";
+												thegrid[r][c+1] = "3:4";
+												thegrid[r][c+2] = "3:4";
+												thegrid[r+1][c] = "3:4";
+												thegrid[r+1][c+1] = "3:4";
+												thegrid[r+1][c+2] = "3:4";
+												thegrid[r+2][c] = "3:4";
+												thegrid[r+2][c+1] = "3:4";
+												thegrid[r+2][c+2] = "3:4";
+												thegrid[r+3][c] = "3:4";
+												thegrid[r+3][c+1] = "3:4";
+												thegrid[r+3][c+2] = "3:4";
+
+												p.cobblesx = c;
+												p.cobblesy = r;
+
+												spacefound = true;
+										}
+										c++;
+										if (c==opt.column) {
+											c=0;r++;
+										}
+										if (r>=maxcobblerow) spacefound= true;
+									} while (!spacefound);
+								break;
+								
+								case "4:4":
+									do {
+										if (c<opt.column-3 && r<maxcobblerow-3 &&
+											thegrid[r][c]==0 &&
+											thegrid[r][c+1]==0 &&
+											thegrid[r][c+2]==0 &&
+											thegrid[r][c+3]==0 &&
+											thegrid[r+1][c]==0  &&
+											thegrid[r+1][c+1]==0 &&
+											thegrid[r+1][c+2]==0 &&
+											thegrid[r+1][c+3]==0 &&
+											thegrid[r+2][c]==0  &&
+											thegrid[r+2][c+1]==0 &&
+											thegrid[r+2][c+2]==0 &&
+											thegrid[r+2][c+3]==0 && 
+											thegrid[r+3][c]==0  &&
+											thegrid[r+3][c+1]==0 &&
+											thegrid[r+3][c+2]==0 &&
+											thegrid[r+3][c+3]==0
+
+											)
+										{
+
+												thegrid[r][c] = "4:4";
+												thegrid[r][c+1] = "4:4";
+												thegrid[r][c+2] = "4:4";
+												thegrid[r][c+3] = "4:4";
+												thegrid[r+1][c] = "4:4";
+												thegrid[r+1][c+1] = "4:4";
+												thegrid[r+1][c+2] = "4:4";
+												thegrid[r+1][c+3] = "4:4";
+												thegrid[r+2][c] = "4:4";
+												thegrid[r+2][c+1] = "4:4";
+												thegrid[r+2][c+2] = "4:4";
+												thegrid[r+2][c+3] = "4:4";
+												thegrid[r+3][c] = "4:4";
+												thegrid[r+3][c+1] = "4:4";
+												thegrid[r+3][c+2] = "4:4";
+												thegrid[r+3][c+3] = "4:4";
+
+												p.cobblesx = c;
+												p.cobblesy = r;
+
+												spacefound = true;
+										}
+										c++;
+										if (c==opt.column) {
+											c=0;r++;
+										}
+										if (r>=maxcobblerow) spacefound= true;
+									} while (!spacefound);
+								break;
 				}
 
 				opt.aspectratio = p.itemw+":"+p.itemh;
 
 				punchgs.TweenLite.set(item,{width:p.itemw,height:p.itemh,overwrite:"auto"});
-				var eem = item.find('.esg-entry-media'),
-					multi = (p.itemh/p.itemw)*100; 				
+				eem = item.find('.esg-entry-media');
+				multi = (p.itemh/p.itemw)*100; 				
 				punchgs.TweenLite.set(eem,{paddingBottom:multi+"%"});
 
 		} else {
@@ -4176,7 +5816,7 @@ function runGridMain(opt,newelementadded) {
 
 				if (opt.layout=="even" && mpl>0) {
 					/*if (origcol!=1)*/ opt.column = mp[cle][opt.columnindex];
-					p.cwidth = container.find('.esg-overflowtrick').width()-(opt.overflowoffset*2)			// Current Width of Parrent Container
+					p.cwidth = container.find('.esg-overflowtrick').width()-(opt.overflowoffset*2);			// Current Width of Parrent Container
 					p.cwidth_n_spaces = p.cwidth -  ((opt.column-1)*opt.space);
 					p.itemw = Math.round(p.cwidth_n_spaces/opt.column);	// Current Item Width in PX
 
@@ -4189,19 +5829,14 @@ function runGridMain(opt,newelementadded) {
 
 				// RESET ASPECT RATIO IF FULLSCREEN ASPECT RATIO HAS BEEN CHANGED
 				if (forceAR) {
-					var eem = item.find('.esg-entry-media'),
-						multi = (p.itemh/p.itemw)*100; 				
-					punchgs.TweenLite.set(eem,{paddingBottom:multi+"%"});
+					eem = item.find('.esg-entry-media');
+					multi = (p.itemh/p.itemw)*100; 				
+					//punchgs.TweenLite.set(eem,{paddingBottom:multi+"%"});
 				}
 		}
 
 
-		if (opt.layout=="even") {
-			
-		
-		} else {
-
-
+		if (opt.layout!=="even") {
 
 			if (item.hasClass("itemtoshow"))
 				if (item.width() != p.itemw || item.css("opacity")==0 || item.css("visibility")=="hidden")
@@ -4223,9 +5858,9 @@ function runGridMain(opt,newelementadded) {
 
 		//adjustMediaSize(item,true,p);
 
-		p = animateGrid($item,opt,p);
+		p = animateGrid(item, opt, p, index);
 		p.itemcounter++;
-
+		
 		if (ul.height()<p.maxheight) container.trigger('itemsinposition');
 
 
@@ -4234,10 +5869,10 @@ function runGridMain(opt,newelementadded) {
 
 	opt.aspectratio = opt.aspectratioOrig;
 
-
-
-	if (p.itemtowait==0) {
-		opt.container.trigger('itemsinposition');
+	// 2.2.5
+	if(opt.hideMarkups === 'off' || p.itemtowait==0) {
+		// this is already called below
+		// opt.container.trigger('itemsinposition');
 		container.find('.mainul').removeClass("gridorganising");
 	}
 
@@ -4267,6 +5902,8 @@ function runGridMain(opt,newelementadded) {
 		punchgs.TweenLite.to(opt.esgloader,1,{autoAlpha:0,ease:punchgs.Power3.easeInOut,delay:infdelay});
 	}
 
+	opt.fromResize = false;
+	if(!opt.inViewport) jQuery(window).trigger('resize.esgviewport');
 
 	
 	
@@ -4289,15 +5926,13 @@ function prepareItemToMessure(item,p,container) {
 /*****************************************
 	-	GRID ANIMATOR -
 *****************************************/
-function animateGrid($item,opt,p) {
-
+function animateGrid(item, opt, p, delayIndex) {
 	
-
 	// Basics
-	var item= jQuery($item),
-		samepageanims =   ["fade","scale","vertical-flip","horizontal-flip","vertical-flipbook","horizontal-flipbook","fall","rotatefall","rotatescale","stack"],
-		horizontalanims = ["horizontal-slide","horizontal-harmonica"],
-		verticalalanims = ["vertical-slide","vertical-harmonica"];
+	// var item= jQuery($item);
+		/* samepageanims =   ["fade","scale","vertical-flip","horizontal-flip","vertical-flipbook","horizontal-flipbook","fall","rotatefall","rotatescale","stack"], */
+		/* horizontalanims = ["horizontal-slide","horizontal-harmonica"], */
+		/* verticalalanims = ["vertical-slide","vertical-harmonica"]; */
 
 
 
@@ -4334,10 +5969,33 @@ function animateGrid($item,opt,p) {
 		p.y = p.cobblesy * p.cobblesorigh;
 	}
 
-
-
-	p.waits=p.col*(p.delaybasic)+p.row*(p.delaybasic*opt.column);
-
+	// 2.2.5
+	if(p.anim !== 'rotatefall') {
+		
+		var loadNum = item.data('eg-load-more-new');
+		if(isNaN(loadNum)) {
+		
+			p.waits = opt.animationType === 'item' ? p.col*(p.delaybasic)+p.row*(p.delaybasic*opt.column) : 
+					  opt.animationType === 'col' ? p.col*(p.delaybasic) : 
+					  p.row*(p.delaybasic*opt.column);
+					
+		}
+		else {
+			
+			if(parseInt(loadNum, 10) === 0) opt.loadStartRow = p.row;
+			
+			p.waits = opt.animationType === 'item' ? loadNum * p.delaybasic : 
+					  opt.animationType === 'col' ? p.col * p.delaybasic : 
+					  (p.row - opt.loadStartRow) * (p.delaybasic * opt.column);
+					  
+			item.removeData('eg-load-more-new');
+			
+		}
+				  
+	}
+	else {
+		p.waits = p.col*(p.delaybasic)+p.row*(p.delaybasic*opt.column);
+	}
 
 	p.speed=opt.animSpeed;
 	p.inxrot =0;
@@ -4356,9 +6014,32 @@ function animateGrid($item,opt,p) {
 	/**************************************
 		-	THE FADE OVER ANIMATIONS	-
 	***************************************/
-	if (item.hasClass("itemonotherpage"))
+	if (item.hasClass("itemonotherpage") || item.hasClass('skipblank')) {
 		p.skipanim = true;
-
+	}
+	/* 2.2.5 */
+	else if((!opt.firstLoadFinnished && opt.startAnimation) || !opt.inViewport) {
+		
+		var startSpeed = opt.startAnimationSpeed ? opt.startAnimationSpeed : 0,
+			startDelay = opt.startAnimationDelay ? opt.startAnimationDelay : 0;
+			
+		p.anim = opt.startAnimation;
+		if(p.anim !== 'none') {
+			
+			p.speed = startSpeed ? startSpeed * 0.001 : 0;
+			p.waits = startDelay ? p.anim !== 'reveal' ? startDelay / 100 : 0 : 0;
+			
+		}
+		else {
+			
+			p.speed = 0;
+			p.waits = 0;
+			
+		}
+		
+		if(p.waits) p.waits *= opt.startAnimationType === 'item' ? delayIndex : p[opt.startAnimationType];
+		
+	}
 
 	/**************************************
 		-	THE SLIDE ANIMATIONS	-
@@ -4391,8 +6072,9 @@ function animateGrid($item,opt,p) {
 			p.vsoffsetout = 0-p.maxcalcheight-parseInt(opt.space);
 		}
 	}
-
-
+	
+	// 2.2.5
+	if(opt.fromResize) p.waits = 0;
 
 	// MAKE IN AND OUTWAITS EQUAL FOR THIS MOMENT
 	p.outwaits = p.waits;
@@ -4439,13 +6121,10 @@ function animateGrid($item,opt,p) {
 	// EVEN SPEEDS
 	p.outspeed=p.speed;
 
-
-
 	if (opt.animDelay=="off") {
 		p.waits=0;
 		p.outwaits=0;
 	}
-
 
 	/******************************
 		-	SCALES	-
@@ -4464,8 +6143,8 @@ function animateGrid($item,opt,p) {
 	if (p.anim == "vertical-flipbook") {
 		p.inxrot = -90;
 		p.outxrot = 90;
-		p.inorigin = "center top"
-		p.outorigin = "center bottom"
+		p.inorigin = "center top";
+		p.outorigin = "center bottom";
 		p.waits = p.waits+p.speed/3;
 		p.outfade=1;
 		p.infade=1;
@@ -4484,8 +6163,8 @@ function animateGrid($item,opt,p) {
 	if (p.anim == "horizontal-flipbook") {
 		p.inyrot = -90;
 		p.outyrot = -90;
-		p.inorigin = "left center"
-		p.outorigin = "right center"
+		p.inorigin = "left center";
+		p.outorigin = "right center";
 		p.waits = p.waits+p.speed/2.4;
 		p.outfade=1;
 		p.infade=1;
@@ -4515,7 +6194,7 @@ function animateGrid($item,opt,p) {
 
 	if (p.anim=="rotatefall") {
 		p.rotatez = 20;
-		p.outorigin = "left top"
+		p.outorigin = "left top";
 		p.outfade=1;
 		p.outoffsety = 600;
 	}
@@ -4525,7 +6204,7 @@ function animateGrid($item,opt,p) {
 	/******************************
 		-	ROTATESCALE	-
 	********************************/
-
+	
 	if (p.anim== "rotatescale") {
 		p.scale=0;
 		p.inorigin = "left bottom";
@@ -4552,17 +6231,9 @@ function animateGrid($item,opt,p) {
 	}
 
 
-
-
-
-
-
 	/**********************************************
 		-	DEPENDENCIES ON CHANGES AND FILTERS	-
 	**********************************************/
-
-
-
 
 	// IF ANIMATION SHOULD BE DONE IN SILENT, WITHOUT ANIMATION AT ALL
 	if (opt.silent) {
@@ -4620,8 +6291,6 @@ function animateGrid($item,opt,p) {
 				p.ulcurheight = p.y + p.itemh;
 			}
 
-
-
 			if (p.maxheight<p.ulcurheight) {   //&& p.pagecounter<=opt.currentpage
 				p.maxheight=p.ulcurheight;
 			}
@@ -4632,12 +6301,12 @@ function animateGrid($item,opt,p) {
 
 
 
-			var localx = Math.round(p.hooffset+p.x)
-			var localy = Math.round(p.vooffset+p.y)
+			var localx = Math.round(p.hooffset+p.x);
+			var localy = Math.round(p.vooffset+p.y);
 
 			// RTL SUPPORT
 			if (opt.rtl=="on")
-				localx = (p.ulwidth-localx-p.itemw)
+				localx = (p.ulwidth-localx-p.itemw);
 
 			// FADE OVER SPECIALS
 			if (item.css("opacity")==0 && p.anim == "fade") {
@@ -4688,8 +6357,24 @@ function animateGrid($item,opt,p) {
 			if (p.anim=="vertical-slide" && item.css("opacity")==0)
 				punchgs.TweenLite.set(item,{autoAlpha:1,left:localx,top:Math.round(p.vooffset+p.y-p.vsoffset), width:p.itemw, height:p.itemh});
 
-
-
+			
+			// 2.2.5
+			// merge all layer hover transitions with start transitions
+			var special,
+				transition;
+			
+			if(p.anime !== 'none' && mergedTransitions.indexOf(p.anim) !== -1 && startAnimations.hasOwnProperty('esg-' + p.anim)) {
+				
+				transition = startAnimations['esg-' + p.anim];
+				special = true;
+				
+				var transOptions =  jQuery.extend(true, {}, transition[1]);
+				delete transOptions.autoAlpha;
+				
+				punchgs.TweenLite.set(item, {left: localx, top:localy, width: p.itemw, height: p.itemh});
+				punchgs.TweenLite.set(item, transOptions);
+				
+			}
 
 
 			//////////////////////////////////////////////////////////////
@@ -4707,24 +6392,60 @@ function animateGrid($item,opt,p) {
 		   }
 
 			opt.container.trigger('itemsinposition');
-		  	punchgs.TweenLite.to(item,p.speed,{force3D:"auto",autoAlpha:1,scale:1,transformOrigin:p.inorigin,rotationX:0,rotationY:0,y:0,x:0,xPercent:0,yPercent:0,z:0.1,rotationZ:0,left:localx,top:localy,ease:p.ease,delay:p.waits,
-						onComplete:function() {
-							if (item.hasClass("itemtoshow")) {
-								punchgs.TweenLite.set(item,{autoAlpha:1,overwrite:"all"});
+			
+			function complete() {
 
-							}
-							p.itemtowait--;
+				if (item.hasClass("itemtoshow")) {
+					punchgs.TweenLite.set(item,{autoAlpha:1,overwrite:"all"});
 
-							if (p.itemtowait==0) {								
-								opt.container.trigger('itemsinposition');
-								item.closest('.mainul').removeClass("gridorganising");
+				}
+				p.itemtowait--;
 
-							}
-						}
-					});
+				if (p.itemtowait==0) {	
+				
+					opt.container.trigger('itemsinposition');
+					item.closest('.mainul').removeClass("gridorganising");
 
-
-
+				}
+				
+			}
+			
+			var vanime;
+			if(!special) {
+				
+				item.data('viewportanime', [
+				
+					p.speed,
+					{force3D:"auto",autoAlpha:1,scale:1,transformOrigin:p.inorigin,rotationX:0,rotationY:0,y:0,x:0,xPercent:0,yPercent:0,z:0.1,rotationZ:0,left:localx,top:localy,ease:p.ease,delay:p.waits, onComplete: complete},
+				
+				]);
+				
+				if(opt.inViewport) {
+					
+					vanime = item.data('viewportanime');
+					punchgs.TweenLite.to(item,vanime[0], vanime[1]);
+					
+				}
+				
+			}
+			else {
+				
+				var trans = jQuery.extend(true, {}, transition[2]);
+				trans.top = localy;
+				trans.ease = p.ease;
+				trans.delay = p.waits;
+				trans.onComplete = complete;
+				trans.overwrite = 'all';
+				item.data('viewportanime', [p.speed, trans]);
+				
+				if(opt.inViewport) {
+					
+					vanime = item.data('viewportanime');
+					punchgs.TweenLite.to(item, vanime[0], vanime[1]);
+					
+				}
+				
+			}
 
 			//ANIMATE THE IFRAME SIZES, FOR VIDEOS AND REST FOR FUN
 			/*if (item.find('iframe').length>0) {
@@ -4781,7 +6502,7 @@ function animateGrid($item,opt,p) {
 
 			if (p.anim=="stack") {
 
-				punchgs.TweenLite.set(item,{zIndex:p.pageitemcounterfake+100})
+				punchgs.TweenLite.set(item,{zIndex:p.pageitemcounterfake+100});
 				punchgs.TweenLite.to(item,p.outspeed/2,{force3D:"auto",x:-20-p.itemw,rotationY:30,rotationX:10,ease:Sine.easeInOut,delay:p.outwaits});
 				punchgs.TweenLite.to(item,0.01,{force3D:"auto",zIndex:p.pageitemcounterfake,delay:p.outwaits+p.outspeed/3});
 
@@ -4793,7 +6514,7 @@ function animateGrid($item,opt,p) {
 							
 							opt.container.trigger('itemsinposition');
 						}
-					}});;
+					}});
 			}
 
 			else
@@ -4860,7 +6581,7 @@ function animateGrid($item,opt,p) {
 			}
 
 			else {
-
+				
 				punchgs.TweenLite.to(item,p.outspeed,{force3D:"auto",zIndex:2,scale:p.scale,autoAlpha:p.outfade,transformOrigin:p.outorigin,rotationX:p.outxrot,rotationY:p.outyrot,ease:p.easeout,delay:p.outwaits,onComplete:function() {
 
 					if (!item.hasClass("itemtoshow")) punchgs.TweenLite.set(item,{autoAlpha:0,overwrite:"all",display:"none"});
@@ -4919,13 +6640,20 @@ function fakePositions(item,p,opt) {
 					item.data('row',p.fakerow);
 				}
 			}
-
-			if (p.anim=="rotatefall") {
-				p.outwaits = (opt.column-cc)*p.delaybasic+(rr)*(p.delaybasic*opt.column);
+			
+			if (p.anim!=="rotatefall") {
+				
+				p.outwaits = opt.animationType === 'item' ? cc * p.delaybasic + rr * (p.delaybasic * opt.column) : 
+							 opt.animationType === 'col' ? cc * p.delaybasic : 
+							 rr * (p.delaybasic * opt.column);
+				
 
 			} else {
-				p.outwaits=cc*p.delaybasic+rr*(p.delaybasic*opt.column);
+				
+				p.outwaits = (opt.column-cc)*p.delaybasic+(rr)*(p.delaybasic*opt.column);
+
 			}
+			
 		}
 	return p;
 }
@@ -4980,7 +6708,7 @@ function shiftGridFake(p,opt) {
 
 		 if (p.fakerow==opt.row) {
 		 	p.fakerow=0;
-		 	p.pageitemcounterfake=0;;
+		 	p.pageitemcounterfake=0;
 		 }
 	}
 	return p;
@@ -5015,115 +6743,75 @@ function shiftGridFake(p,opt) {
 /******************************
 	-	LOAD VIDEO APIS	-
 ********************************/
-function loadVideoApis(container,opt) {
-	var addedyt=0;
-	var addedvim=0;
-	var addedws=0;
-	var addedvid=0;
-	var addedsc = 0;
-	var httpprefix = "http";
 
-	if (location.protocol === 'https:') {
-			httpprefix = "https";
-	}
-	container.find('iframe').each(function(i) {
+function checkVideoScript(tpe, search, url) {
+	
+	var loadit = true,
+		httpprefix,
+		before,
+		s;
+			
+	vhandlers[tpe] = true;
+	jQuery('script[src]').each(function() {
+		
+		if(jQuery(this).attr('src').search(search) !== -1) {
+		   loadit = false;
+		   return false;
+		}
+		
+	});
+	
+	if(loadit) {
+		
+		s = document.createElement("script");
+		s.src = url;
+		before = document.getElementsByTagName("script")[0];
+		
 		try {
-			if (jQuery(this).attr('src').indexOf('you')>0 && addedyt==0) {
-				addedyt=1;
-				var s = document.createElement("script");
-				var httpprefix2 = "https";
-				s.src = httpprefix2+"://www.youtube.com/iframe_api"; /* Load Player API*/
+			before.parentNode.insertBefore(s, before);
+		}
+		catch(e) {}
 
-				var before = document.getElementsByTagName("script")[0];
-				var loadit = true;
-				jQuery('head').find('*').each(function(){
-					if (jQuery(this).attr('src') == httpprefix2+"://www.youtube.com/iframe_api")
-					   loadit = false;
-				});
-				if (loadit) {
-					before.parentNode.insertBefore(s, before);
-
-
-				}
-			}
-		} catch(e) {}
-	});
-
-
-
-	 // LOAD THE wistia API
-	 container.find('iframe').each(function(i) {
-		try{
-			if (jQuery(this).attr('src').indexOf('ws')>0 && addedws==0) {
-					addedws=1;
-					var f = document.createElement("script");
-					f.src = httpprefix+"://fast.wistia.com/assets/external/E-v1.js"; /* Load Player API*/
-					var before = document.getElementsByTagName("script")[0];
-
-					var loadit = true;
-					jQuery('head').find('*').each(function(){
-						if (jQuery(this).attr('src') == httpprefix+"://fast.wistia.com/assets/external/E-v1.js")
-						   loadit = false;
-					});
-					if (loadit)
-						before.parentNode.insertBefore(f, before);
-				}
-			} catch(e) {}
-	});
-
-// LOAD THE VIMEO API
-	 container.find('iframe').each(function(i) {
-		try{
-				if (jQuery(this).attr('src').indexOf('vim')>0 && addedvim==0) {
-					addedvim=1;
-					var f = document.createElement("script");
-					f.src ="https://player.vimeo.com/api/player.js"; /* Load Player API*/
-					var before = document.getElementsByTagName("script")[0];
-
-					var loadit = true;
-					jQuery('head').find('*').each(function(){
-						if (jQuery(this).attr('src') == "https://player.vimeo.com/api/player.js")
-						   loadit = false;
-					});
-					if (loadit)
-						before.parentNode.insertBefore(f, before);
-				}
-			} catch(e) {}
-	});
-
-
-	  // LOAD THE SOUNDCLOUD API
-	 container.find('iframe').each(function(i) {
-		try{
-				if (jQuery(this).attr('src').indexOf('soundcloud')>0 && addedsc==0) {
-
-					addedsc=1;
-					var f = document.createElement("script");
-					f.src = httpprefix+"://w.soundcloud.com/player/api.js"; /* Load Player API*/
-					var before = document.getElementsByTagName("script")[0];
-
-					var loadit = true;
-					jQuery('head').find('*').each(function(){
-						if (jQuery(this).attr('src') == httpprefix+"://w.soundcloud.com/player/api.js")
-						   loadit = false;
-					});
-					if (loadit)
-						before.parentNode.insertBefore(f, before);
-				}
-			} catch(e) {}
-	});
-
-
-	var videohandlers= {youtube:addedyt,
-						vimeo:addedvim,
-						wistia:addedws,
-						soundcloud:addedsc,
-						htmlvid:addedvid};
-
-
-	return videohandlers;
+	}
+	
 }
 
+function loadVideoApis(container,opt) {
+	
+	container.find('iframe').each(function() {
+		
+		var src = jQuery(this).attr('src');
+			
+		if(src.indexOf('you') > 0 && !vhandlers.addedyt) {
+		
+			checkVideoScript('addedyt', 'www.youtube.com/iframe_api', 'https://www.youtube.com/iframe_api');
+		
+		}
+
+		else if(src.indexOf('ws') > 0 && !vhandlers.addedws) {
+			
+			httpprefix = location.protocol !== 'https:' ? "http" : "https";
+			checkVideoScript('addedws', 'fast.wistia.com/assets/external/E-v1.js', httpprefix + '://fast.wistia.com/assets/external/E-v1.js');
+
+		}
+
+		else if(src.indexOf('vim') > 0 && !vhandlers.addedvim) {
+			
+			checkVideoScript('addedvim', 'player.vimeo.com/api/player.js', 'https://player.vimeo.com/api/player.js');
+			
+		}
+		
+		else if(src.indexOf('soundcloud')>0 && !vhandlers.addedsc) {
+			
+			httpprefix = location.protocol !== 'https:' ? "http" : "https";
+			checkVideoScript('addedsc', 'w.soundcloud.com/player/api.js', httpprefix + '://w.soundcloud.com/player/api.js');
+			
+		}
+		
+	});
+}
+
+/*
 function toHHMMSS() {
 
 
@@ -5135,77 +6823,90 @@ function toHHMMSS() {
 	var hours = Math.floor(minutes/60);
 	var days = Math.floor(hours/24);
 
-	var hours = hours-(days*24);
-	var minutes = minutes-(days*24*60)-(hours*60);
-	var seconds = seconds-(days*24*60*60)-(hours*60*60)-(minutes*60);
+	hours = hours-(days*24);
+	minutes = minutes-(days*24*60)-(hours*60);
+	seconds = seconds-(days*24*60*60)-(hours*60*60)-(minutes*60);
 
 	return hours+":"+minutes+":"+seconds;
 }
+*/
 
 
 /************************************
 	-	STOP ALL  VIDEOS	-
 *************************************/
 
-function stopAllVideos(forceall,killiframe,callerid) {
+function stopAllVideos(forceall,killiframe,callerid,fromResize) {
 	
 	var isplaying=" isplaying";
 	if (forceall) isplaying = "";	
-
-	var visibleitems = document.getElementsByClassName("tp-esg-item isvisiblenow");
-
+	
+	/* 2.1.5 */
+	var visibleitems;
+	if(!fromResize) {
+		visibleitems = document.getElementsByClassName("tp-esg-item isvisiblenow");
+	}
+	else {
+		visibleitems = jQuery(".tp-esg-item").not(".isvisiblenow").toArray();
+	}
 
 	for (var a=0;a<visibleitems.length;a++) {
 		var _y = visibleitems[a].getElementsByClassName('esg-youtubevideo haslistener'+isplaying),
 		    _v = visibleitems[a].getElementsByClassName('esg-vimeovideo haslistener'+isplaying),
 		    _w = visibleitems[a].getElementsByClassName('esg-wistiavideo haslistener'+isplaying),
 		    _h = visibleitems[a].getElementsByClassName('esg-htmlvideo haslistener'+isplaying),
-		    _s = visibleitems[a].getElementsByClassName('esg-soundcloud'+isplaying);
+		    _s = visibleitems[a].getElementsByClassName('esg-soundcloud'+isplaying),
+			player,
+			ifr,
+			id,
+			i;
 			
-		for (var i=0;i<_y.length;i++) {
-			var ifr = jQuery(_y[i]),
-				player = ifr.data('player');
+		for (i=0;i<_y.length;i++) {
+			ifr = jQuery(_y[i]);
+			player = ifr.data('player');
 
 			if (callerid !=ifr.attr('id')) {
 				player.pauseVideo();
-				if (forceall)  forceVideoInPause(ifr,true,player,"youtube")
+				if (forceall)  forceVideoInPause(ifr,false,player,"youtube");
 			}
 		}
 		for (i=0;i<_v.length;i++) {
-			var ifr = jQuery(_v[i]),
-				id = ifr.attr('id'),
-				player = ifr.data('newvimeoplayer');
+			ifr = jQuery(_v[i]);
+			id = ifr.attr('id');
+			player = ifr.data('newvimeoplayer');
+			
 			if (callerid !=id) {
 				player.pause();
 				if (callerid===undefined)		
-					if (forceall)  forceVideoInPause(ifr,true,player,"vimeo")
+					if (forceall)  forceVideoInPause(ifr,false,player,"vimeo");
 			}
 		}
 		for (i=0;i<_w.length;i++) {
-			var ifr = jQuery(_w[i]),
-				player = ifr.data('player');
+			ifr = jQuery(_w[i]);
+			player = ifr.data('player');
 
 			if (callerid!=ifr.attr('id')) {
 				ifr.wistiaApi.pause();
-				if (forceall)  forceVideoInPause(ifr,true,player,"wistia")
+				if (forceall)  forceVideoInPause(ifr,false,player,"wistia");
 			}
 		}
 		for (i=0;i<_h.length;i++) {
-			var ifr = jQuery(_h[i]),
-				id = ifr.attr('id'),
-				player=document.getElementById(id);
+			ifr = jQuery(_h[i]);
+			id = ifr.attr('id');
+			player=document.getElementById(id);
 
 			if (callerid !=id) {
 				player.pause();
-				if (forceall)  forceVideoInPause(ifr,true,player,"html5vid")
+				if (forceall)  forceVideoInPause(ifr,false,player,"html5vid");
 			}
 		}
 		for (i=0;i<_s.length;i++) {
-			var ifr = jQuery(_s[i]),
-				player = ifr.data('player');
+			ifr = jQuery(_s[i]);
+			player = ifr.data('player');
+			
 			if (callerid !=ifr.attr('id')) {
 				player.pause();
-				if (forceall)  forceVideoInPause(ifr,true,player,"soundcloud")
+				if (forceall)  forceVideoInPause(ifr,false,player,"soundcloud");
 			}
 		}
 
@@ -5221,8 +6922,7 @@ function forceVideoInPause(vid,killiframe,player,vidtype) {
 				vid.removeClass("isplaying");
 
 
-				var item=vid.closest('.tp-esg-item');
-
+				var item=vid.closest('.tp-esg-item').removeClass('esg-video-active');
 
 				if (item.find('.esg-media-video').length>0 && !jQuery("body").data('fullScreenMode')) {
 					 var cover = item.find('.esg-entry-cover');
@@ -5268,21 +6968,29 @@ function forceVideoInPause(vid,killiframe,player,vidtype) {
 // CHANG THE YOUTUBE PLAYER STATE HERE //
 ////////////////////////////////////////
 function onPlayerStateChange(event) {
-
 		
-		
-				
 		var ytcont = event.target.getIframe(),
 			jc = jQuery(ytcont);
+		
+		/* 2.1.5 */
+		clearTimeout(jc.data('esgplayertimer'));
 
 		if (event.data == YT.PlayerState.PLAYING) {
 			event.target.setPlaybackQuality("hd1080");
+
 			stopAllVideos(true,false,ytcont.id);
 			jc.addClass("isplaying").removeClass("isinpause");			
 		}
 
 		if (event.data==2 ) {
-			forceVideoInPause(jc);
+			/* 2.1.5 */
+			var targt = event.target;
+			jc.data('esgplayertimer', setTimeout(function () {
+				if(targt.getPlayerState() == 2) {
+					forceVideoInPause(jc);
+					targt.pauseVideo();
+				}
+			}, 100));
 		}
 
 		if (event.data==0 ) {
@@ -5303,6 +7011,7 @@ function onPlayerStateChange(event) {
 function vimeoready_auto(vimcont) {
 		
 		var player = vimcont.data('newvimeoplayer');
+		
 		if(!player) {
 			
 			player = new Vimeo.Player(vimcont[0]);
@@ -5319,13 +7028,11 @@ function vimeoready_auto(vimcont) {
 		});
 
 		player.on('finish', function(data) {
-			
 			forceVideoInPause(vimcont);
 			vimcont.removeClass("isplaying");
 		});
 
 		player.on('pause', function(data) {
-			
 			forceVideoInPause(vimcont);
 			vimcont.removeClass("isplaying");
 		});
@@ -5338,12 +7045,14 @@ function vimeoready_auto(vimcont) {
 
 }
 
+/*
 function addEvent(element, eventName, callback) {
 
 		if (element.addEventListener)  element.addEventListener(eventName, callback, false);
 			else
 		element.attachEvent(eventName, callback, false);
 }
+*/
 
 
 ///////////////////////////////////////
@@ -5351,28 +7060,48 @@ function addEvent(element, eventName, callback) {
 ////////////////////////////////////////
 function html5vidready(myVideo,vidcont,player_id) {
 
-
+		var isSeeking,
+			timer;
+			
 		vidcont.addClass("readytoplay");
+		
+		/* 2.1.5 */
+		function testSeeking() {
+			if(isSeeking) {
+				isSeeking = false;
+				return;	
+			}
+			forceVideoInPause(vidcont);
+			vidcont.removeClass("isplaying");
+		}
 
 		vidcont.on('play',function() {
+			
+			/* 2.1.5 */
+			if(isSeeking) return;	
+			isSeeking = false;
+			
 			stopAllVideos(true,false,player_id);
+
 			vidcont.addClass("isplaying");
 			vidcont.removeClass("isinpause");
 		});
 
-
-
-
 		vidcont.on('pause',function() {
-			forceVideoInPause(vidcont);
-			vidcont.removeClass("isplaying");
+			/* 2.1.5 */
+			clearTimeout(timer);
+			timer = setTimeout(testSeeking, 100);	
 		});
 
 		vidcont.on('ended',function() {
+
 			forceVideoInPause(vidcont);
 			vidcont.removeClass("isplaying");
 		});
 
+		vidcont.on('seeking', function() {
+			isSeeking = true;
+		});
 
 
 }
@@ -5386,14 +7115,15 @@ function html5vidready(myVideo,vidcont,player_id) {
 function prepareYT(ifr) {
 
 
-	 var frameID = "ytiframe"+Math.round(Math.random()*100000+1);
+	 var frameID = "ytiframe"+Math.round(Math.random()*100000+1),
+		player;
 
 	 if (!ifr.hasClass("haslistener") && typeof YT != "undefined") {
 
 		 try{
 			ifr.attr('id',frameID);
 
-				var player = new YT.Player(frameID, {
+				player = new YT.Player(frameID, {
 					events: {
 						"onStateChange": onPlayerStateChange
 					}
@@ -5401,9 +7131,9 @@ function prepareYT(ifr) {
 				ifr.data('player',player);
 				ifr.addClass("haslistener").addClass("esg-youtubevideo");
 
-			} catch(e) { return false}
+			} catch(e) { return false;}
 	} else {
-		var player = ifr.data('player');
+		player = ifr.data('player');
 		if (player!=undefined)
 			if (typeof player.playVideo=="function")
 				return true;
@@ -5438,7 +7168,8 @@ function prepareVimeo(ifr) {
 					ifr.attr('id',frameID);
 					var isrc = ifr.attr('src');
 					var queryParameters = {}, queryString = isrc,
-					re = /([^&=]+)=([^&]*)/g, m;
+					re = /([^&=]+)=([^&]*)/g, 
+					m;
 					// Creates a map with the query string parameters
 
 					
@@ -5490,8 +7221,10 @@ function prepareVimeo(ifr) {
 }
 
 function playVimeo(ifr) {
+	
 	var player = ifr.data('newvimeoplayer');
 	if(player) player.play();
+	
 }
 
 
@@ -5502,14 +7235,15 @@ function playVimeo(ifr) {
 function prepareWs(ifr) {
 
 
-	 var frameID = "wsiframe"+Math.round(Math.random()*100000+1);
+	 var frameID = "wsiframe"+Math.round(Math.random()*100000+1),
+		player;
 
 	 if (!ifr.hasClass("haslistener") && typeof Ws != "undefined") {
 
 		 try{
 			ifr.attr('id',frameID);
 
-				var player = new Ws.Player(frameID, {
+				player = new Ws.Player(frameID, {
 					events: {
 						"onStateChange": onPlayerStateChange
 					}
@@ -5517,9 +7251,9 @@ function prepareWs(ifr) {
 				ifr.data('player',player);
 				ifr.addClass("haslistener").addClass("esg-wistiavideo");
 
-			} catch(e) { return false}
+			} catch(e) { return false;}
 	} else {
-		var player = ifr.data('player');
+		player = ifr.data('player');
 		if (player!=undefined)
 			if (typeof player.playVideo=="function")
 				return true;
@@ -5544,37 +7278,36 @@ function playWs(ifr) {
 ********************************************************/
 
 function prepareSoundCloud(ifr) {
-
+	
+	var player;
 	 if (ifr.data('player')==undefined && typeof SC != "undefined") {
 		  var frameID = "sciframe"+Math.round(Math.random()*100000+1);
 		 try{
 
 			ifr.attr('id',frameID);
-			var player = SC.Widget(frameID);
+			player = SC.Widget(frameID);
 
 			player.bind(SC.Widget.Events.PLAY,function() {
-
 					stopAllVideos(true,false,ifr.attr('id'));
 					ifr.addClass("isplaying");
 					ifr.removeClass("isinpause");
-
 				});
 			player.bind(SC.Widget.Events.PAUSE,function() {
-					forceVideoInPause(ifr);
-					ifr.removeClass("isplaying");
-
+					if(ifr.hasClass('isplaying')) {
+						forceVideoInPause(ifr);
+						ifr.removeClass("isplaying");
+					}
 			});
 			player.bind(SC.Widget.Events.FINISH,function() {
 					forceVideoInPause(ifr);
 					ifr.removeClass("isplaying");
-
 			});
 			ifr.data('player',player);
 			ifr.addClass("haslistener").addClass("esg-soundcloud");
 
-		 } catch(e) { return false}
+		 } catch(e) { return false;}
 	} else {
-		var player = ifr.data('player');
+		player = ifr.data('player');
 		if (player!=undefined) {
 
 			if (typeof player.getVolume=="function") {
@@ -5590,7 +7323,6 @@ function prepareSoundCloud(ifr) {
 
 function playSC(ifr) {
 
-
 	var player = ifr.data('player');
 	if (player !=undefined) {
 
@@ -5605,16 +7337,17 @@ function playSC(ifr) {
 }
 
 /********************************************************
-	-	VIMEO IFRAME ID AND PLAYER CONFIGURATION	-
+	    -	HTML5 VIDEO PLAYER CONFIGURATION	-
 ********************************************************/
 
 function prepareVideo(html5vid) {
-
+	
+	var myVideo;
 	 if (!html5vid.hasClass("haslistener")) {
 	// 	try {
 				 var videoID = "videoid_"+Math.round(Math.random()*100000+1);
 				 html5vid.attr('id',videoID);
-				 var myVideo=document.getElementById(videoID);
+				 myVideo=document.getElementById(videoID);
 				 myVideo.oncanplay=html5vidready(myVideo,html5vid,videoID);
 
 				 html5vid.addClass("haslistener").addClass("esg-htmlvideo");
@@ -5623,17 +7356,18 @@ function prepareVideo(html5vid) {
 	} else {
 		try {
 			 var id = html5vid.attr('id');
-			 var myVideo=document.getElementById(id);
+			 myVideo=document.getElementById(id);
 
 			 if (typeof myVideo.play=="function" && html5vid.hasClass("readytoplay"))
 			   return true;
 			else
 			   return false;
-			 } catch(e) { return false}
+			 } catch(e) { return false;}
 	}
 }
 
 function playVideo(ifr) {
+	
 	var id = ifr.attr('id');
 	var myVideo=document.getElementById(id);
 	myVideo.play();
@@ -5937,4 +7671,34 @@ function playVideo(ifr) {
 	}
 	// set functions
 	$.fn.TinySort = $.fn.Tinysort = $.fn.tsort = $.fn.tinysort;
+
+	// Post Likes
+	jQuery(document).ready(function() {
+ 
+	    jQuery("span.eg-post-like").click(function(){
+	     	var heart,post_id,count;
+	     	count = 0;
+	        heart = jQuery(this).closest("a");
+	     
+	        // Retrieve post ID from data attribute
+	        post_id = heart.data("post_id");
+	         
+	        // Ajax call
+	        jQuery.ajax({
+	            type: "post",
+	            url: eg_ajax_var.url,
+	            data: "action=ess_grid_post_like&nonce="+eg_ajax_var.nonce+"&post_like=&post_id="+post_id,
+	            success: function(count){
+	                // If vote successful
+	                if(count != "already")
+	                {
+	                    heart.addClass("eg-post-like-voted");
+	                    heart.closest("li").find(".eg-post-count").text(count);
+	                }
+	            }
+	        });
+	         
+	        return false;
+	    })
+	})
 })(jQuery);
