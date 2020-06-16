@@ -3064,3 +3064,5 @@ body.hide-custom-options .eg-addnewitem-wrapper {display: none !important}
 .esg-open-premium-benefits-dialog-container .esg-premium-benefits-block .big_diamond {transform: scale(0.5); margin-left: 18px; margin-right: 10px}
 .esg-open-premium-benefits-dialog-container .esg-premium-benefits-block .big_diamond {margin-right: 5px}
 #esg-premium-benefits-dialog {background-image: url(../images/oops/getpurchasecode_deko-EG.jpg); background-position: bottom center; background-size: contain}
+
+#eg-elements-container-grid .mainul {filter: brightness(90%);}

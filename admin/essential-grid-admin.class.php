@@ -90,7 +90,7 @@ class Essential_Grid_Admin extends Essential_Grid_Base {
 		add_action('save_post', array($this, 'add_plugin_meta_box_save'));
 		add_action('wp_ajax_Essential_Grid_request_ajax', array($this, 'on_ajax_action'));
 		
-		if(!$EssentialAsTheme){
+		//if(!$EssentialAsTheme){
 			$validated = get_option('tp_eg_valid', 'false');
 			$notice = get_option('tp_eg_valid-notice', 'true');
 			
@@ -109,7 +109,7 @@ class Essential_Grid_Admin extends Essential_Grid_Base {
 			if($validated === 'true') {
 				$upgrade->add_update_checks();
 			}
-		}
+		//}
 
 		if(isset($_REQUEST['update_shop'])){
 			$library->_get_template_list(true);
@@ -133,6 +133,7 @@ class Essential_Grid_Admin extends Essential_Grid_Base {
 		add_action( 'enqueue_block_editor_assets', array($this,'enqueue_block_editor_assets') );
 		add_action( 'enqueue_block_assets', array($this,'enqueue_assets') );
 		add_filter( 'block_categories', array($this,'create_block_category'),10,2);
+		
 
 		// Privacy
 		add_action( 'admin_init', array( $this, 'add_suggested_privacy_content'), 15 );
@@ -2332,8 +2333,13 @@ class Essential_Grid_Admin extends Essential_Grid_Base {
 					case "get_facebook_photosets":
 						if(!empty($data['url'])){
 							$facebook = new Essential_Grid_Facebook();
-							$return = $facebook->get_photo_set_photos_options($data['url'],$data['album'],$data['api_key'],$data['api_secret']);
-							Essential_Grid::ajaxResponseSuccess(__('Successfully fetched Facebook albums', EG_TEXTDOMAIN), array("data"=>array('html'=>implode(' ', $return))));
+							$return = $facebook->get_photo_set_photos_options($data['url'],$data['album'],$data['access_token']);
+							if( empty($return)) {
+								$error = __('Could not fetch Facebook albums', EG_TEXTDOMAIN);
+							}
+							else {
+								Essential_Grid::ajaxResponseSuccess(__('Successfully fetched Facebook albums', EG_TEXTDOMAIN), array("data"=>array('html'=>implode(' ', $return))));
+							}
 						}
 						else {
 							$error = __('Could not fetch Facebook albums', EG_TEXTDOMAIN);
@@ -2665,18 +2671,90 @@ class Essential_Grid_Admin extends Essential_Grid_Base {
 
 		}
 
-		/**
+	/**
 	 * Enqueue Gutenberg editor blocks styles and scripts
 	 */
 	public function enqueue_block_editor_assets() {
-		$block_path = '/admin/includes/gutenberg-blocks/assets/js/editor.blocks.js';
-		$style_path = '/admin/includes/gutenberg-blocks/assets/css/blocks.style.css';
+		//$block_path = '/admin/includes/gutenberg-blocks/assets/js/editor.blocks.js';
+		//$style_path = '/admin/includes/gutenberg-blocks/assets/css/blocks.style.css';
+		$block_path = '/admin/includes/gutenberg-blocks/dist/blocks.build.js';
+		$style_path = '/admin/includes/gutenberg-blocks/dist/blocks.editor.build.css';
+
+		// Grids List
+		$grids = new Essential_Grid();
+		$grids = $grids->get_essential_grids();
+		if(!empty($grids)){
+			$arrGrids[] = array(
+				'value' => '' ,
+				'label' => 'No Grid'
+			);
+			foreach($grids as $grid){
+				$arrGrids[] = array(
+					'value' => $grid->handle ,
+					'label' => $grid->name
+				);
+			}
+		}
+		else {
+			$arrGrids[] = array(
+				'value' => '' ,
+				'label' => 'No Grids'
+			);
+		}
+
+		// Skins List
+		$skins = Essential_Grid_Item_Skin::get_essential_item_skins('all', false);					
+		if(!empty($skins)){
+			foreach($skins as $skin){
+				$arrSkins[] = array(
+					'value' => $skin['id'] ,
+					'label' => $skin['name']
+				);
+			}
+		}
+		else {
+			$arrSkins[] = array(
+				'value' => '' ,
+				'label' => 'No Skins'
+			);
+		}
+
+		// Animations
+		$anims = Essential_Grid_Base::get_grid_animations();		
+		if(!empty($anims)){
+			foreach($anims as $value => $name){
+				$arrAnims[] = array(
+					'value' => $value,
+					'label' => $name
+				);
+			}
+		}else {
+			$arrSkins[] = array(
+				'value' => '' ,
+				'label' => 'No Animations'
+			);
+		}
+
+		// Default Grid from Global Options
+		$defGrid = get_option('tp_eg_overwrite_gallery','');
+		
 		// Enqueue the bundled block JS file
 		wp_enqueue_script(
 			'essgrid-blocks-js',
 			EG_PLUGIN_URL . $block_path,
-			array( 'wp-i18n', 'wp-element', 'wp-blocks', 'wp-components' ),
+			array( 'wp-i18n', 'wp-element', 'wp-blocks', 'wp-components', 'wp-editor' ),
 			filemtime( EG_PLUGIN_PATH . $block_path )
+		);
+
+		wp_localize_script(
+			'essgrid-blocks-js',
+			'EssGridOptions',
+			[
+				'arrGrids'		=> $arrGrids,
+				'defGrid'		=> $defGrid,
+				'arrSkins'		=> $arrSkins,
+				'arrAnims'		=> $arrAnims
+			]
 		);
 	
 		// Enqueue optional editor only styles
@@ -2693,13 +2771,13 @@ class Essential_Grid_Admin extends Essential_Grid_Base {
 	 * Enqueue Gutenberg editor blocks assets
 	 */
 	public function enqueue_assets() {
-		$style_path = '/admin/includes/gutenberg-blocks/assets/css/blocks.style.css';
-		wp_enqueue_style(
+		$style_path = '/admin/includes/gutenberg-blocks/dist/blocks.style.build.css';
+		/*wp_enqueue_style(
 			'essgrid-blocks',
 			EG_PLUGIN_URL . $style_path,
 			[ 'wp-blocks' ],
 			filemtime( EG_PLUGIN_PATH . $style_path )
-		);
+		);*/
 	}
 
 	/**
@@ -2717,6 +2795,7 @@ class Essential_Grid_Admin extends Essential_Grid_Base {
 			)
 		);
 	}
+	
 
 	/**
 	 * Check Array for Value

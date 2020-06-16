@@ -142,6 +142,7 @@ class Essential_Grid_Library {
 						'product'		=> urlencode('essential-grid')
 					)
 				));
+				
 				$response_code = wp_remote_retrieve_response_code( $request );
 
 				if($response_code == 200){
@@ -156,6 +157,7 @@ class Essential_Grid_Library {
 			if(!is_wp_error($request)) {
 				if($response = maybe_unserialize($request['body'])) {
 					$templates = json_decode($response, true);
+					
 					if(is_array($templates)) {
 						update_option('tp_eg-templates-new', $templates, false);
 					}

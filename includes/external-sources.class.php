@@ -83,11 +83,11 @@ class Essential_Grid_Facebook {
 	 * @param    string    $user_id 	Facebook User id (not name)
 	 * @param    int       $item_count 	number of photos to pull
 	 */
-	public function get_photo_sets($user_id,$item_count=10,$app_id,$app_secret){
+	public function get_photo_sets($user_id,$item_count=10,$access_token){
 		//photoset params
-		$oauth = wp_remote_fopen("https://graph.facebook.com/oauth/access_token?type=client_cred&client_id=".$app_id."&client_secret=".$app_secret);
-		$oauth = json_decode($oauth);
-		$url = "https://graph.facebook.com/$user_id/albums?access_token=".$oauth->access_token;
+		//$oauth = wp_remote_fopen("https://graph.facebook.com/oauth/access_token?type=client_cred&client_id=".$app_id."&client_secret=".$app_secret);
+		//$oauth = json_decode($oauth);
+		$url = "https://graph.facebook.com/$user_id/albums?access_token=" . $access_token;
 		$photo_sets_list = json_decode(wp_remote_fopen($url));
 		return $photo_sets_list->data;
 	}
@@ -99,10 +99,10 @@ class Essential_Grid_Facebook {
 	 * @param    string    $photo_set_id 	Photoset ID
 	 * @param    int       $item_count 	number of photos to pull
 	 */
-	public function get_photo_set_photos($photo_set_id,$item_count=10,$app_id,$app_secret){
-		$oauth = wp_remote_fopen("https://graph.facebook.com/oauth/access_token?type=client_cred&client_id=".$app_id."&client_secret=".$app_secret);
-		$oauth = json_decode($oauth);
-		$url = "https://graph.facebook.com/".$photo_set_id."/photos?fields=photos&access_token=".$oauth->access_token."&fields=id,from,message,picture,images,link,name,icon,privacy,type,status_type,object_id,application,created_time,updated_time,is_hidden,is_expired,comments.limit(1).summary(true),likes.limit(1).summary(true)";
+	public function get_photo_set_photos($photo_set_id,$item_count=10,$access_token){
+		//$oauth = wp_remote_fopen("https://graph.facebook.com/oauth/access_token?type=client_cred&client_id=".$app_id."&client_secret=".$app_secret);
+		//$oauth = json_decode($oauth);
+		$url = "https://graph.facebook.com/".$photo_set_id."/photos?fields=photos&access_token=" . $access_token ."&fields=id,from,message,picture,images,link,name,icon,privacy,type,status_type,application,created_time,updated_time,is_hidden,is_expired,comments.limit(1).summary(true),likes.limit(1).summary(true)";
 
 		$transient_name = 'essgrid_' . md5($url."&limit=".$item_count);
 
@@ -162,9 +162,9 @@ class Essential_Grid_Facebook {
 	 * @param    string    $user_url 	Facebook User id (not name)
 	 * @param    int       $item_count 	number of photos to pull
 	 */
-	public function get_photo_set_photos_options($user_url,$current_album,$app_id,$app_secret,$item_count=99){
+	public function get_photo_set_photos_options($user_url,$current_album,$access_token,$item_count=99){
 		$user_id = $this->get_user_from_url($user_url);
-		$photo_sets = $this->get_photo_sets($user_id,999,$app_id,$app_secret);
+		$photo_sets = $this->get_photo_sets($user_id,999,$access_token);
 		if(empty($current_album)) $current_album = "";
 		$return = array();
 		foreach($photo_sets as $photo_set){
@@ -181,28 +181,23 @@ class Essential_Grid_Facebook {
 	 * @param    string    $user 	User ID
 	 * @param    int       $item_count 	number of itmes to pull
 	 */
-	public function get_photo_feed($user,$app_id,$app_secret,$item_count=10){
-		$oauth = wp_remote_fopen("https://graph.facebook.com/oauth/access_token?type=client_cred&client_id=".$app_id."&client_secret=".$app_secret);
-		$oauth = json_decode($oauth);
-
-		if(!isset($oauth->access_token)) {
-			$error_message = __("Please adjust the grid's Facebook credentials", EG_TEXTDOMAIN);
-			echo $error_message;
-			return false;
-		}
-
-		$url = "https://graph.facebook.com/$user/feed?access_token=".$oauth->access_token."&fields=id,from,message,picture,full_picture,link,name,icon,privacy,type,status_type,object_id,application,created_time,updated_time,is_hidden,is_expired,comments.limit(1).summary(true),likes.limit(1).summary(true)";
+	public function get_photo_feed($user,$access_token,$item_count=10){
+		$url = "https://graph.facebook.com/$user/feed?access_token=" . $access_token ."&fields=full_picture,picture,attachments{media,media_type,url},icon,message,likes.limit(1).summary(true),comments.limit(1).summary(true)";
 
 		$transient_name = 'essgrid' . md5($url."&limit=".$item_count);
 
-		if ($this->transient_sec > 0 && false !== ($data = get_transient( $transient_name)))
+		if ($this->transient_sec > 0 && false !== ($data = get_transient( $transient_name))){
 			return ($data);
+		}
+			
 
 
 
 			if($item_count<=25){
+				
 				//call the API and decode the response
 				$feed = json_decode(wp_remote_fopen($url."&limit=".$item_count));
+				
 				if(!isset($feed->error->message)){
 					$this->facebook_feed_output_array($feed->data,$user,$item_count);
 				}
@@ -225,7 +220,6 @@ class Essential_Grid_Facebook {
 					$maxResults =  25;
 					$page_rsp = json_decode( wp_remote_fopen( $nextpage ) );
 					$nextpage = empty($page_rsp->paging->next) ? '' : $page_rsp->paging->next;
-
 
 					if(!isset($page_rsp->error->message)){
 						$item_count = $this->facebook_feed_output_array($page_rsp->data,$user,$item_count);
@@ -254,6 +248,8 @@ class Essential_Grid_Facebook {
 	 */
 	private function facebook_output_array($photos,$item_count){
 		foreach ($photos as $photo) {
+
+			
 			$stream = array();
 			if($item_count-- === 0) return;
 
@@ -273,6 +269,7 @@ class Essential_Grid_Facebook {
 						),
 				);
 			}
+			
 			$stream['custom-image-url'] = $image_url;
 
 			$stream['custom-type'] = 'image'; //image, vimeo, youtube, soundcloud, html
@@ -305,11 +302,11 @@ class Essential_Grid_Facebook {
 	 * @param    string    $feed 	facebook Output Data
 	 */
 	private function facebook_feed_output_array($feed,$user,$item_count){
+		
 		foreach ($feed as $photo) {
+
 			if(!in_array($photo->status_type,array("wall_post")) && $photo->type != "status" ){
 				$stream = array();
-
-				//var_dump($photo->type);
 
 				if($item_count-- === 0) return;
 				if($photo->type !="video"){
@@ -404,6 +401,11 @@ class Essential_Grid_Facebook {
 					}
 				}
 
+				$image_url = array(
+					'normal' 	=> 	array(
+							$photo->full_picture
+					),
+				);
 
 				$stream['custom-image-url'] = $image_url;
 				$stream['id'] = $photo->id;
@@ -422,9 +424,13 @@ class Essential_Grid_Facebook {
 				$stream['date'] = date_i18n( get_option( 'date_format' ), strtotime( $photo->updated_time ) );
 				$stream['date_modified'] = date_i18n( get_option( 'date_format' ), strtotime( $photo->updated_time ) );
 				$stream['author_name'] = $photo->from->name;
+
+				/*echo "<pre>";
+				var_dump($photo);
+				echo "</pre>";
+*/
 				if(!empty($photo->comments->data))
 					$stream['num_comments'] = sizeof($photo->comments->data);
-
 					$stream['likes'] = $photo->likes->summary->total_count;
 					$stream['likes_short'] = Essential_Grid_Base::thousandsViewFormat($photo->likes->summary->total_count);
 						
@@ -840,13 +846,16 @@ class EssGridTwitterApi {
 
 }
 
-function instagram_autoloader($class)
-{
-	if(strpos($class, "InstagramScraper") !== false || strpos($class, "Unirest") !== false) {
-		$filename = realpath(dirname(__FILE__)) .'/'. str_replace('\\', '/', $class) . '.php';
-		include_once ($filename);
+if(! function_exists( 'instagram_autoloader' ) ){
+	function instagram_autoloader($class)
+	{
+		if(strpos($class, "InstagramScraper") !== false || strpos($class, "Unirest") !== false) {
+			$filename = realpath(dirname(__FILE__)) .'/'. str_replace('\\', '/', $class) . '.php';
+			include_once ($filename);
+		}
 	}
 }
+
 /**
  * Instagram
  *
@@ -896,7 +905,6 @@ class Essential_Grid_Instagram {
 	public function __construct($transient_sec=86400) {
 		spl_autoload_register('instagram_autoloader');
 		$this->transient_sec = $transient_sec;
-		$this->transient_sec = 0;
 	}
 
 
@@ -918,6 +926,37 @@ class Essential_Grid_Instagram {
 		}
 		
 		return $this->stream;
+	}
+
+	/**
+	 * Get Instagram Pictures Public by Access Token
+	 *
+	 * @since    1.0.0
+	 * @param    string    $user_id 	Instagram User id (not name)
+	 */
+	public function get_public_photos_self($access_token, $count, $orig_image=""){
+		//call the API and decode the response
+		$url = "https://api.instagram.com/v1/users/self/media/recent?access_token=" . $access_token;
+
+		$rsp = json_decode(wp_remote_fopen($url));
+		
+		$count = $this->instagram_self_output_array($rsp->data,$count,"self",$orig_image);
+
+		/*echo "<pre>";
+		var_dump($rsp);
+		echo "</pre>";*/
+
+		return $this->stream;
+		/*$transient_name = 'revslider_' . md5($url);
+		if ($this->transient_sec > 0 && false !== ($data = get_transient( $transient_name)))
+			return ($data);
+
+		$rsp = json_decode(wp_remote_fopen($url));
+		if(isset($rsp->data)){
+			set_transient( $transient_name, $rsp->data, $this->transient_sec );
+			return $rsp->data;
+		}
+		else return '';*/
 	}
 
 	/**
@@ -972,9 +1011,11 @@ class Essential_Grid_Instagram {
 		}
 
 	}
+
 	function input($name, $default = null) {
 		return isset($_REQUEST[$name]) ? $_REQUEST[$name] : $default;
 	}
+	
 	public function http_request($url, $post = "", $cookies = "", $headers = "", $show_header = true) {
 		$ch = @curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
@@ -1102,7 +1143,11 @@ class Essential_Grid_Instagram {
 	public function get_place_photos($search_user_id,$count,$orig_image){
 		if(!empty($search_user_id)){
 
-			$url = 'https://www.instagram.com/explore/locations/'.$search_user_id.'/?__a=1';
+			$url = 'https://www.instagram.com/explore/locations/'.$search_user_id.'/?hl=en&__a=1';
+
+			$rsp = (wp_remote_fopen($url));
+
+			//var_dump($rsp);
 
 			$transient_name = 'essgrid_'. md5($url."count=".$count);
 			if ($this->transient_sec > 0 && false !== ($data = get_transient( $transient_name))){
@@ -1210,6 +1255,88 @@ class Essential_Grid_Instagram {
 				$stream['likes'] = $photo->edge_media_preview_like->count;
 				$stream['likes_short'] = Essential_Grid_Base::thousandsViewFormat($photo->edge_media_preview_like->count);
 				$stream['num_comments'] = $photo->edge_media_to_comment->count;
+
+
+				$this->stream[] = $stream;
+			}
+		}
+		return $count;
+	}
+
+	/**
+	 * Prepare output array $stream
+	 *
+	 * @since    3.0
+	 * @param    string    $photos 	Instagram Output Data
+	 */
+	private function instagram_self_output_array($photos,$count,$search_user_id,$orig_image){
+		foreach ($photos as $photo) {
+			
+			
+			if($count > 0){
+				$count--;
+				$stream = array();
+
+				$photo = isset($photo->node) ? $photo->node : $photo;
+
+				$thumbnail_resources = $photo->images;
+
+/*
+				echo "<pre>";
+				var_dump($photo); 
+				echo "</pre>";
+*/
+				$image_url = array(
+						'Low Resolution' 		=> 	array($thumbnail_resources->low_resolution->url,
+								320,
+								320
+						),
+						'Thumbnail' 			=> 	array($thumbnail_resources->thumbnail->url,
+								150,
+								150
+						),
+						'Standard Resolution' 	=>	array($thumbnail_resources->standard_resolution->url,
+								640,
+								640,
+						),
+						/*'Original Resolution'	=>  array($photo->display_url,
+								$photo->dimensions->width,
+								$photo->dimensions->height,
+						)*/
+				);
+
+
+				$text = empty($photo->caption->text) ? '' : $photo->caption->text;
+
+				$stream['id'] = $photo->id;
+				$stream['custom-image-url'] = $image_url; //image for entry
+
+				if($photo->is_video != "true"){
+					$stream['custom-type'] = 'image'; //image, vimeo, youtube, soundcloud, html
+				}
+				else{
+					$url = 'https://www.instagram.com/p/'.$photo->shortcode.'/?__a=1';
+					$rsp = json_decode(wp_remote_fopen($url));
+					$stream['custom-type'] = 'html5'; //image, vimeo, youtube, soundcloud, html
+					$stream['custom-html5-mp4'] = $rsp->graphql->shortcode_media->video_url;
+				}
+
+				//$stream['post-link'] = 'https://www.instagram.com/p/' . $photo->shortcode;
+				$stream['post-link'] = $photo->link;
+				$url = '~(?:(https?)://([^\s<]+)|(www\.[^\s<]+?\.[^\s<]+))(?<![\.,:])~i';
+				
+				$text = preg_replace($url, '<a href="$0" target="_blank" title="$0">$0</a>', $text);
+				$stream['title'] = $text;
+				$stream['content'] = $text;
+				$stream['date'] = date_i18n( get_option( 'date_format' ), ( $photo->created_time ) ) ;
+				$stream['date_modified'] = date_i18n( get_option( 'date_format' ), ( $photo->created_time ) ) ;
+				$stream['author_name'] = $photo->user->username;
+
+				if(isset($photo->tags))	$stream['tags'] = implode(',', $photo->tags);
+
+				$stream['likes'] = $photo->likes->count;
+				$stream['likes_short'] = Essential_Grid_Base::thousandsViewFormat($photo->likes->count);
+				$stream['num_comments'] = $photo->comments->count;
 
 
 				$this->stream[] = $stream;
@@ -2078,7 +2205,22 @@ class Essential_Grid_Youtube {
 	 */
 	private $transient_sec;
 
+	/**
+	 * Next page ID
+	 *
+	 * @since    3.2.6
+	 * @access   private
+	 * @var      string		$nextpage give ID where the next page starts
+	 */
+	private $nextpage;
 
+	/**
+	 * No Cookie URL
+	 *
+	 * @since    3.0
+	 * @access   private
+	 * @var      boolean    $enable_youtube_nocookie Enable no cookie URL
+	 */
 	private $enable_youtube_nocookie;
 
 	/**
@@ -2092,6 +2234,7 @@ class Essential_Grid_Youtube {
 		$this->channel_id = $channel_id;
 		$this->transient_sec = $transient_sec;
 		$this->enable_youtube_nocookie = get_option('tp_eg_enable_youtube_nocookie', 'false');
+		$this->nextpage = "";
 	}
 
 
@@ -2136,7 +2279,9 @@ class Essential_Grid_Youtube {
 				$original_count = $count;
 				$supervisor_count = 0;
 				for ($i=0; $i < $runs && sizeof($this->stream) < $original_count && $supervisor_count < 20; $i++) {
+					
 					$nextpage = empty($page_rsp->nextPageToken) ? '' : "&pageToken=".$page_rsp->nextPageToken;
+					
 					$supervisor_count++;
 
 					$maxResults =  50;
@@ -2146,7 +2291,7 @@ class Essential_Grid_Youtube {
 
 					if(!empty($page_rsp) && !isset($page_rsp->error->message) ){
 						$count = $this->youtube_playlist_output_array($page_rsp->items,$count);
-						if( empty($nextpage) ) $i = $runs;
+						//if( empty($nextpage) ) $i = $runs;
 					}
 					else {
 						echo __("YouTube reports: ",EG_TEXTDOMAIN).$page_rsp->error->message;
@@ -2192,7 +2337,7 @@ class Essential_Grid_Youtube {
 
 					if(!empty($page_rsp) && !isset($page_rsp->error->message) ){
 						$count = $this->youtube_playlist_overview_output_array($page_rsp->items,$count);
-						if( empty($nextpage) ) $i = $runs;
+						//if( empty($nextpage) ) $i = $runs;
 					}
 					else {
 						echo __("YouTube reports: ",EG_TEXTDOMAIN).$page_rsp->error->message;
@@ -2217,42 +2362,50 @@ class Essential_Grid_Youtube {
 		$url = "https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=".$this->channel_id."&key=".$this->api_key."&order=date";
 		$transient_name = 'essgrid_' . md5($url).'&count='.$count;
 
+		//var_dump($url);
+
+		//var_dump($this->transient_sec > 0 && false !== ($data = get_transient( $transient_name)));
+
 		if ($this->transient_sec > 0 && false !== ($data = get_transient( $transient_name)))
 			return ($data);
 
-			if($count<=$maxResults){
-				//call the API and decode the response
-				$url .= "&maxResults=".$count;
+		if($count<=$maxResults){
+			//call the API and decode the response
+			$url .= "&maxResults=".$count;
+			
+			$rsp = json_decode(wp_remote_fopen($url));
+			if(!isset($rsp->items)) return false;
+			$this->youtube_channel_output_array($rsp->items,$count);
+		}
+		else {
+			$runs = ceil($count / 50);
+			$original_count = $count;
+			$supervisor_count = 0;
 
-				$rsp = json_decode(wp_remote_fopen($url));
-				if(!isset($rsp->items)) return false;
-				$this->youtube_channel_output_array($rsp->items,$count);
-			}
-			else {
-				$runs = ceil($count / 50);
-				$original_count = $count;
-				$supervisor_count = 0;
-				for ($i=0; $i < $runs && sizeof($this->stream) < $original_count && $supervisor_count < 20; $i++) {
-					$nextpage = empty($page_rsp->nextPageToken) ? '' : "&pageToken=".$page_rsp->nextPageToken;
-					$supervisor_count++;
+			for ($i=0; $i < $runs && sizeof($this->stream) < $original_count && $supervisor_count < 20; $i++) {
+				
+				$nextpage = empty($page_rsp->nextPageToken) ? '' : "&pageToken=".$page_rsp->nextPageToken;
+					
+				$supervisor_count++;
 
-					$maxResults =  50;
-					$page_rsp = json_decode( wp_remote_fopen( $url."&maxResults=".$maxResults.$nextpage ) );
+				$maxResults =  50;
 
-					if(!empty($page_rsp) && !isset($page_rsp->error->message) ){
-							
-						$count = $this->youtube_channel_output_array($page_rsp->items,$count);
-						if( empty($nextpage) ) $i = $runs;
-					}
-					else {
-						echo __("YouTube reports: ",EG_TEXTDOMAIN).$page_rsp->error->message;
-						return false;
-					}
+				$page_rsp = json_decode( wp_remote_fopen( $url."&maxResults=".$maxResults.$nextpage ) );
+
+				if(!empty($page_rsp) && !isset($page_rsp->error->message) ){
+						
+					$count = $this->youtube_channel_output_array($page_rsp->items,$count);
+					//if( empty($nextpage) ) $i = $runs;
+				}
+				else {
+					echo __("YouTube reports: ",EG_TEXTDOMAIN).$page_rsp->error->message;
+					return false;
 				}
 			}
+		}
 
-			set_transient( $transient_name, $this->stream, $this->transient_sec );
-			return $this->stream;
+		set_transient( $transient_name, $this->stream, $this->transient_sec );
+		return $this->stream;
 	}
 
 	/**

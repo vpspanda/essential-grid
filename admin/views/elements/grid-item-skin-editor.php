@@ -1611,11 +1611,11 @@ if(!isset($skin['layers'])) $skin['layers'] = array(); //fallback if skin does n
 										</p>
 									</div>
 									<p>
-										<label style="width:250px" class="eg-tooltip-wrap" title="<?php _e('Dont Show Element if Item Width is smaller than:', EG_TEXTDOMAIN); ?>"><?php _e('Hide Under Width', EG_TEXTDOMAIN); ?></label>
+										<label style="width:250px" class="eg-tooltip-wrap" title="<?php _e('Dont Show Element if Item Width is smaller than:', EG_TEXTDOMAIN); ?>"><?php _e('Hide Under Item Width', EG_TEXTDOMAIN); ?></label>
 										<input class="input-settings-small element-setting firstinput" type="text" name="element-hideunder" value="0" /> px
 									</p>
 									<p>
-										<label style="width:250px" class="eg-tooltip-wrap" title="<?php _e('Dont Show Element on mobile if Item height is smaller than:', EG_TEXTDOMAIN); ?>"><?php _e('Hide Under Height', EG_TEXTDOMAIN); ?></label>
+										<label style="width:250px" class="eg-tooltip-wrap" title="<?php _e('Dont Show Element on mobile if Item height is smaller than:', EG_TEXTDOMAIN); ?>"><?php _e('Hide Under Item Height', EG_TEXTDOMAIN); ?></label>
 										<input class="input-settings-small element-setting firstinput" type="text" name="element-hideunderheight" value="0" /> px
 									</p>
 									<div style="margin-top:10px">

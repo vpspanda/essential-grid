@@ -273,6 +273,7 @@ class Instagram
      */
     public function getAccount($username)
     {
+    	
         $response = Request::get(Endpoints::getAccountPageLink($username), $this->generateHeaders($this->userSession));
         if (static::HTTP_NOT_FOUND === $response->code) {
             throw new InstagramNotFoundException('Account with given username does not exist.');
@@ -284,9 +285,41 @@ class Instagram
         $userArray = self::extractSharedDataFromBody($response->raw_body);
 		
         if (!isset($userArray['entry_data']['ProfilePage'][0]['graphql']['user'])) {
-            throw new InstagramNotFoundException('Account with this username does not exist', 404);
+        	$userStructure = $this->getTopUser($username);
+        } else {
+        	$userStructure = $userArray['entry_data']['ProfilePage'][0]['graphql']['user'];
         }
-        return Account::create($userArray['entry_data']['ProfilePage'][0]['graphql']['user']);
+        return Account::create($userStructure);
+    }
+    
+    public function getTopUser($username) {
+    	try {
+    		$file = "https://www.instagram.com/web/search/topsearch/?context=user&count=0&query=$username";
+            
+            if (function_exists('curl_version'))
+            {
+                $curl = curl_init();
+                curl_setopt($curl, CURLOPT_URL, $file);
+                curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+                $get = curl_exec($curl);
+                curl_close($curl);
+            }
+            else if (file_get_contents(__FILE__) && ini_get('allow_url_fopen'))
+            {
+                $get = file_get_contents($file);
+            }
+            else
+            {
+                throw new InstagramNotFoundException('Your server have neither cUrl installed nor allow_url_fopen activated. Please contact hosting company!', 404);
+            }
+            
+            $jsonResult = json_decode($get, true);
+    		$userModel = $jsonResult["users"][0]["user"];
+    		return $userModel;
+    	} catch (\Exception $exception) {
+    		throw new InstagramNotFoundException('Account with this username does not exist', 404);
+    	}
+    
     }
 
     /**
@@ -297,8 +330,8 @@ class Instagram
     {
         if ($this->rhxGis === null) {
             try {
-            	$sharedData = $this->getSharedDataFromPage();
-            	$this->rhxGis = $sharedData['rhx_gis'];
+                $sharedData = $this->getSharedDataFromPage();
+                if( isset($sharedData['rhx_gis'] ) ) $this->rhxGis = $sharedData['rhx_gis'];
             } catch (\Exception $exception) {
                 throw new InstagramException('Could not extract gis from page');
         	}

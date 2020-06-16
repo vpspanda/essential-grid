@@ -436,12 +436,15 @@
 			jQuery('body').on('change', 'select[name="ess-grid-existing-grid"]', function(){
 				$selected = jQuery('select[name="ess-grid-existing-grid"] option:selected');
 				selected_val = $selected.val();
+				grid_alias = $selected.val();
 				selected_val = '[ess_grid alias="'+selected_val+'"][/ess_grid]';
 				selected_title = $selected.text();
 				grid_slug = jQuery('.grid_slug');
 				grid_slug.val(selected_val);
 				window.essgrid_react.state.text = selected_val; 
 				window.essgrid_react.props.attributes.text = selected_val;
+				window.essgrid_react.state.alias = grid_alias; 
+				window.essgrid_react.props.attributes.alias = grid_alias;
 				window.essgrid_react.state.gridTitle = selected_title;
 				window.essgrid_react.props.attributes.gridTitle = selected_title;
 				window.essgrid_react.forceUpdate();

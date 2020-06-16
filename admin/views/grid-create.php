@@ -35,6 +35,17 @@ if(intval($isCreate) > 0){ //currently editing
 		$layers = $grid['layers'];
 	}
 }
+else{
+	$editAlias = $base->getGetVar('alias', false);
+	if($editAlias){
+		$grid = Essential_Grid::get_essential_grid_by_handle($editAlias);
+		if(!empty($grid)){
+			$title = __('Settings', EG_TEXTDOMAIN);
+
+			$layers = $grid['layers'];
+		}
+	}
+}
 
 $postTypesWithCats = $base->getPostTypesWithCatsForClient();
 $jsonTaxWithCats = $base->jsonEncodeForClientSide($postTypesWithCats);
@@ -586,12 +597,37 @@ LEFT SETTINGS
 							</div>
 							<div class="divider1"></div>
 						</div><!-- End Vimeo Stream -->
+						
 
 						<div id="instagram-external-stream-wrap">
+
+							<!--div class="eg-creative-settings instagram_auth">
+								<div class="eg-cs-tbc-left">
+									<h3><span><?php _e('Authentication', EG_TEXTDOMAIN); ?></span></h3>
+								</div>
+
+
+								<div class="eg-cs-tbc">
+										<p class="esg-form-table-cell">
+												<label for="shortcode" class="eg-tooltip-wrap" title="<?php _e('Access Token', EG_TEXTDOMAIN); ?>"><?php _e('Authentication', EG_TEXTDOMAIN); ?></label>
+										</p>
+										<p id="esg-source-choose-wrapper" class="esg-form-table-cell"> 
+											<span class="esg-form-choose-field">
+												<input type="radio" name="instagram-auth" class="instagram-auth" value="none" class="firstinput" <?php checked($base->getVar($grid['postparams'], 'instagram-auth', 'none'), 'none'); ?>> <span class="eg-tooltip-wrap" title="<?php _e('Inofficial, experimental way but with more options)', EG_TEXTDOMAIN); ?>"><?php _e('None (experimental)', EG_TEXTDOMAIN); ?></span>
+											</span>
+											<span class="esg-form-choose-field">
+												<input type="radio" name="instagram-auth" class="instagram-auth" value="token" <?php echo checked($base->getVar($grid['postparams'], 'instagram-auth', 'none'), 'token'); ?> > <span class="eg-tooltip-wrap" title="<?php _e('Instagram Client for your own posts', EG_TEXTDOMAIN); ?>"><?php _e('Instagram Client (official)', EG_TEXTDOMAIN); ?></span>
+											</span>
+										</p>
+								</div>
+							</div>
+							<div class="divider1"></div-->
+							
 							<div class="eg-creative-settings instagram_user">
 								<div class="eg-cs-tbc-left">
 									<h3><span><?php _e('Stream', EG_TEXTDOMAIN); ?></span></h3>
 								</div>
+
 								<div class="eg-cs-tbc">
 									<p>
 										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Source of Instagram images', EG_TEXTDOMAIN); ?>"><?php _e('Images/Videos from', EG_TEXTDOMAIN); ?></label>
@@ -614,15 +650,37 @@ LEFT SETTINGS
 										</p>
 									</div>
 									<div class="instagram_places">
+										<p><span class="description"><?php _e('Instagram Places are no longer supported by the Instagram API', EG_TEXTDOMAIN); ?></span></p>
+									</div>
+									<!--div class="instagram_places">
 										<p>
 											<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the Instagram Places', EG_TEXTDOMAIN); ?>"><?php _e('Instagram Place ID(s)', EG_TEXTDOMAIN); ?></label>
 											<input type="text" value="<?php echo $base->getVar($grid['postparams'], 'instagram-places', ''); ?>" name="instagram-places">
 											<span class="description"><?php _e('Separate multiple searched places by commas', EG_TEXTDOMAIN); ?></span>
 										</p>
 										<span class="description"><?php _e('Get the ID from the URL (Example https://www.instagram.com/explore/locations/<strong><i style="font-size:14px">213121716</i></strong>/cologne-germany/)', EG_TEXTDOMAIN); ?></span>
-									</div>
+									</div-->
 								</div>
 							</div>
+
+							<!--div class="eg-creative-settings instagram_client">
+								<div class="eg-cs-tbc-left">
+									<h3><span><?php _e('Client Info', EG_TEXTDOMAIN); ?></span></h3>
+								</div>
+
+								<div class="eg-cs-tbc">
+									<p>
+										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Access Token', EG_TEXTDOMAIN); ?>"><?php _e('Access Token', EG_TEXTDOMAIN); ?></label>
+									</p>
+									<p>
+										<input type="text" value="<?php echo $base->getVar($grid['postparams'], 'instagram-access-token', ''); ?>" name="instagram-access-token">
+									</p>
+									<span class="description">
+										<?php _e('Please check the documentation of how to receive the Access Token <a href="">here</a>.', EG_TEXTDOMAIN); ?>
+										<br><br>
+									</span>
+								</div>
+							</div-->
 
 							<div class="divider1"></div>
 							<div class="eg-creative-settings">
@@ -811,7 +869,7 @@ LEFT SETTINGS
 									<h3><span><?php _e('API', EG_TEXTDOMAIN); ?></span></h3>
 								</div>
 								<div class="eg-cs-tbc">
-									<p>
+									<!--p>
 										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the Facebook app id', EG_TEXTDOMAIN); ?>"><?php _e('App ID', EG_TEXTDOMAIN); ?></label>
 										<input type="text" value="<?php echo $base->getVar($grid['postparams'], 'facebook-app-id', '') ?>" name="facebook-app-id">
 									</p>
@@ -819,6 +877,11 @@ LEFT SETTINGS
 										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the Facebook app secret', EG_TEXTDOMAIN); ?>"><?php _e('App Secret', EG_TEXTDOMAIN); ?></label>
 										<input type="text" style="margin-right:10px" value="<?php echo $base->getVar($grid['postparams'], 'facebook-app-secret', '') ?>" name="facebook-app-secret">						
 										<span class="description"><?php _e('Please <a target="_blank" href="https://developers.facebook.com/docs/apps/register">register</a> your Website app with Facebook to get these values.', EG_TEXTDOMAIN); ?></span>
+									</p-->
+									<p>
+										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the Access Token', EG_TEXTDOMAIN); ?>"><?php _e('Access Token', EG_TEXTDOMAIN); ?></label>
+										<input type="text" style="margin-right:10px" value="<?php echo $base->getVar($grid['postparams'], 'facebook-access-token', '') ?>" name="facebook-access-token">						
+										<span class="description"><?php _e('Please <a target="_blank" href="https://www.themepunch.com/faq/essential-grid-facebook-stream/">generate</a> your Access Token via Facebook.', EG_TEXTDOMAIN); ?></span>
 									</p>
 								</div>
 							</div>
@@ -832,7 +895,7 @@ LEFT SETTINGS
 										<?php $facebook_page_url = $base->getVar($grid['postparams'], 'facebook-page-url', ''); ?>
 										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Put in the URL/ID of the Facebook page', EG_TEXTDOMAIN); ?>"><?php _e('Facebook Page', EG_TEXTDOMAIN); ?></label>
 										<input style="margin-right:10px"  type="text" value="<?php echo $facebook_page_url; ?>" name="facebook-page-url" id="eg-facebook-page-url">
-										<span class="description"><?php _e('Please enter the Page Name of a public Facebook Page (no personal profile).', EG_TEXTDOMAIN); ?></span>
+										<span class="description"><?php _e('Please enter the Page Name of a public Facebook Page (no personal profile) you have the required permissions to.', EG_TEXTDOMAIN); ?></span>
 									</p>
 									<p>
 										<label class="eg-new-label eg-tooltip-wrap" title="<?php _e('Display a pages photo album or timeline', EG_TEXTDOMAIN); ?>"><?php _e('Source', EG_TEXTDOMAIN); ?></label>

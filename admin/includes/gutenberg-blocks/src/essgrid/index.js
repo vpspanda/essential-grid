@@ -1,7 +1,7 @@
 /**
  * Block dependencies
  */
-import './style.scss';
+import './editor.scss';
 
 /**
  * Internal block libraries
@@ -41,6 +41,22 @@ export  class EssGrid extends Component {
           });
         }
 
+        const openEdit = () => {
+          window.essgrid_react = this;
+         
+          var shortcode = this.state.text;    
+          var attributes = {};
+          
+          shortcode.match(/[\w-]+=".+?"/g).forEach(function(attribute) {
+              attribute = attribute.match(/([\w-]+)="(.+?)"/);
+              attributes[attribute[1]] = attribute[2];
+          });
+          
+          if ( typeof attributes.alias === "undefined" ) return false;
+          
+          self.location.href =  "admin.php?page=essential-grid&view=grid-create&alias=" + attributes.alias;
+        }
+
         return (
           <div className="essgrid_block" >
                   <span>{this.state.gridTitle}&nbsp;</span>
@@ -51,11 +67,18 @@ export  class EssGrid extends Component {
                     />
                   <Button 
                         isDefault
+                        onClick = { openEdit } 
+                        className="grid_edit_button editor_icon dashicons dashicons-edit"
+                    >
+                  </Button>
+                  <Button 
+                        isDefault
                         onClick = { openDialog } 
                         className="grid_edit_button"
                     >
-                    {__( 'Edita', 'essgrid' )}
+                    {__( 'Select Grid', 'essgrid' )}
                   </Button>
+                 
           </div>
         );
     }
@@ -73,7 +96,7 @@ export default registerBlockType(
         category: 'themepunch',
         icon: {
           src:  'screenoptions',
-          background: 'rgb(210,0,0)',
+          background: '#c90000',
           color: 'white'
         },        
         keywords: [
@@ -92,6 +115,9 @@ export default registerBlockType(
               type: 'string',
               source: 'attribute',
              	attribute: 'data-gridtitle',
+          },
+          alias: {
+            type: 'string'
           }
         },
         edit: props => {

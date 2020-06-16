@@ -1354,9 +1354,9 @@ class Essential_Grid_Item_Skin {
 										}
 									}
 									
-									$echo_media = '<img src="'.EG_PLUGIN_URL.'public/assets/images/300x200transparent.png"'.$small_thumb.' data-lazysrc="'.esc_attr($this->media_sources[$order]).'" alt="'.esc_attr($this->media_sources[$order.'-alt']).'"'.$img_dim.'>';
+									$echo_media = '<img src="'.EG_PLUGIN_URL.'public/assets/images/300x200transparent.png"'.$small_thumb.' data-no-lazy="1" data-lazysrc="'.esc_attr($this->media_sources[$order]).'" alt="'.esc_attr($this->media_sources[$order.'-alt']).'"'.$img_dim.'>';
 								}else{
-									$echo_media = '<img src="'.esc_attr($this->media_sources[$order]).'" alt="'.esc_attr($this->media_sources[$order.'-alt']).'"'.$img_dim.'>';
+									$echo_media = '<img src="'.esc_attr($this->media_sources[$order]).'" data-no-lazy="1" alt="'.esc_attr($this->media_sources[$order.'-alt']).'"'.$img_dim.'>';
 									$lightbox_thumb = esc_attr($this->media_sources[$order]);
 								}
 							break;
@@ -1473,7 +1473,7 @@ class Essential_Grid_Item_Skin {
 				if($this->default_image !== ''){
 					$def_img_attr = $this->get_media_attributes(false);
 					
-					$echo_media = '<img src="'.esc_attr($this->default_image).'"'.$def_img_attr.' />';
+					$echo_media = '<img src="'.esc_attr($this->default_image).'"'.$def_img_attr.' data-no-lazy="1" />';
 					$lightbox_thumb = esc_attr($this->default_image);
 					$this->item_media_type = 'default-image';
 				}
@@ -1929,7 +1929,7 @@ class Essential_Grid_Item_Skin {
         echo '    <div class="esg-media-cover-wrapper' . $cover_wrapper_overflow . '">'."\n";
         //echo '            <!-- THE MEDIA OF THE ENTRY -->'."\n";
 		if($demo == 'overview' || $demo == 'skinchoose'){
-			echo '            <div class="esg-entry-media'.$media_animation.'"'.$media_animation_delay.$media_animation_duration.$media_blur.$data_transition_media.'><img src="'.EG_PLUGIN_URL.'admin/assets/images/'.$this->cover_image.'"></div>'."\n\n";
+			echo '            <div class="esg-entry-media'.$media_animation.'"'.$media_animation_delay.$media_animation_duration.$media_blur.$data_transition_media.'><img src="'.EG_PLUGIN_URL.'admin/assets/images/'.$this->cover_image.'" data-no-lazy="1"></div>'."\n\n";
 		}else{
 			$echo_media = '<div class="esg-entry-media'.$media_animation.'"'.$media_animation_delay.$media_animation_duration.$media_blur.$data_transition_media.'>'.$echo_media.'</div>'."\n\n";
 			//echo media from top here
@@ -2100,7 +2100,7 @@ class Essential_Grid_Item_Skin {
 	public function output_add_more(){
 			echo apply_filters('essgrid_output_add_more', '<li class="filterall eg-addnewitem-wrapper ui-state-disabled">
 			<div class="esg-media-cover-wrapper">
-				<div class="esg-entry-media"><img src="'. EG_PLUGIN_URL .'public/assets/images/300x200transparent.png"></div>
+				<div class="esg-entry-media"><img src="'. EG_PLUGIN_URL .'public/assets/images/300x200transparent.png" data-no-lazy="1"></div>
 				<div class="esg-entry-cover">
 					<div class="esg-overlay esg-transition eg-addnewitem-container" data-transition="esg-fade" data-delay="0.18"></div>
 					<div id="esg-add-new-custom-youtube" class="esg-open-edit-dialog esg-center eg-addnewitem-element-1 esg-transition" data-transition="esg-slideup" data-delay="0"><i class="eg-icon-youtube-squared"></i></div>
@@ -5100,6 +5100,7 @@ class Essential_Grid_Item_Skin {
 			case 'alias':
 				$text = $base->getVar($this->post, 'post_name');
 				break;
+			case 'description':
 			case 'content':
 				$text = apply_filters('the_content', $base->getVar($this->post, 'post_content'));
 				break;

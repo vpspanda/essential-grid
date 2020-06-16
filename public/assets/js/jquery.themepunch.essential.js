@@ -1,6 +1,6 @@
 /************************************************************************************
  * jquery.themepunch.essential.js - jQuery Plugin for esg Portfolio Slider
- * @version: 2.4 (12.02.2019)
+ * @version: 2.3.4 (27.08.2019)
  * @requires jQuery v1.7 or later
  * @author ThemePunch
 ************************************************************************************/
@@ -4360,7 +4360,7 @@ function adjustMediaSize(item,resize,p,opt) {
 					 	var item= jQuery($item),
 					 	items = item.find('.esgbox');
 						
-						if(items.length > 1) {	
+						/*if(items.length > 1) {	
 							var len = items.length,
 								itm;
 
@@ -4369,7 +4369,7 @@ function adjustMediaSize(item,resize,p,opt) {
 								if(!itm.parent().hasClass('esgbox-additional')) continue;
 								itm.removeClass('esgbox').addClass('esgbox-clone').off('click.essbox-start').removeAttr('data-esgbox').removeData('esgbox');
 							}
-						}
+						}*/
 						
 						item.find('.esgbox').each(function() {
 							
@@ -4385,6 +4385,7 @@ function adjustMediaSize(item,resize,p,opt) {
 						 		$this.attr('data-esgbox',"");
 							}
 							
+
 							var settings = {
 							
 								featured: $this.data('featured'),
@@ -4410,7 +4411,6 @@ function adjustMediaSize(item,resize,p,opt) {
 							settings = JSON.stringify(settings);
 							
 							if($this.hasClass('esgbox-post') && $this.attr('href') === 'javascript:void(0);') {
-								
 								$this.attr('data-type', 'ajax')
 									 .attr('href', opt.loadMoreAjaxUrl + 
 									       '?action=' + opt.loadMoreAjaxAction + 
@@ -4422,10 +4422,9 @@ function adjustMediaSize(item,resize,p,opt) {
 								
 							}
 							
-							var additional = $this.closest('.tp-esg-item').find('.esgbox-additional').find('.esgbox');
-							if(additional.length) {
-								
-								additional.each(function() {	
+							var additional = $this.closest('.tp-esg-item').find('.esgbox-additional').find('.esgbox');							
+							if(additional.length) {								
+								additional.each(function() {										
 									jQuery(this).attr('data-caption', oTitle).find('img').remove();
 								});
 								
@@ -4433,8 +4432,8 @@ function adjustMediaSize(item,resize,p,opt) {
 							
 							if(isStream) $this.data('ratio', '16:9');
 							
-					 	});
-						
+					 	});				
+
 						if(jQuery.fn.esgbox) opt.container.find('.esgbox').esgbox(opt.container.data('lightboxsettings'));
 
 					 	// CHECK IF THE FILTER SELECTED, AND IT FITS TO THE CURRENT ITEM
@@ -4458,6 +4457,7 @@ function adjustMediaSize(item,resize,p,opt) {
 					 	if (indexcounter>=minindex && indexcounter<maxindex && !nofilter) {
 
 						 	item.addClass("itemtoshow").removeClass("itemishidden").removeClass("itemonotherpage");
+
 
 						 	if (opt.lightBoxMode=="filterpage" || opt.lightBoxMode=="filterall") {
 						 		item.find('.esgbox').attr('data-esgbox',opt.filterGroupClass.replace('.', ''));
@@ -4492,7 +4492,7 @@ function adjustMediaSize(item,resize,p,opt) {
 					 	var item= jQuery($item),
 					 	items = item.find('.esgbox');
 						
-						if(items.length > 1) {	
+						/*if(items.length > 1) {	
 							var len = items.length,
 								itm;
 								
@@ -4501,7 +4501,7 @@ function adjustMediaSize(item,resize,p,opt) {
 								if(!itm.parent().hasClass('esgbox-additional')) continue;
 								itm.removeClass('esgbox').addClass('esgbox-clone').off('click.essbox-start').removeAttr('data-esgbox').removeData('esgbox');
 							}
-						}
+						}*/
 						
 						item.find('.esgbox').each(function() {
 							
@@ -4553,10 +4553,10 @@ function adjustMediaSize(item,resize,p,opt) {
 								
 							}
 							
-							var additional = $this.closest('.tp-esg-item').find('.esgbox-additional').find('.esgbox');
-							if(additional.length) {
-								
-								additional.each(function() {	
+							var additional = $this.closest('.tp-esg-item').find('.esgbox-additional').find('.esgbox');							
+							if(additional.length) {								
+								additional.each(function() {
+									console.log(oTitle);							
 									jQuery(this).attr('data-caption', oTitle).find('img').remove();
 								});
 								
@@ -6796,9 +6796,8 @@ function loadVideoApis(container,opt) {
 		}
 
 		else if(src.indexOf('vim') > 0 && !vhandlers.addedvim) {
-			
+			jQuery(".esg-vimeo-frame").attr('allow', 'autoplay');
 			checkVideoScript('addedvim', 'player.vimeo.com/api/player.js', 'https://player.vimeo.com/api/player.js');
-			
 		}
 		
 		else if(src.indexOf('soundcloud')>0 && !vhandlers.addedsc) {
@@ -7011,12 +7010,10 @@ function onPlayerStateChange(event) {
 function vimeoready_auto(vimcont) {
 		
 		var player = vimcont.data('newvimeoplayer');
-		
+
 		if(!player) {
-			
 			player = new Vimeo.Player(vimcont[0]);
 			vimcont.data('newvimeoplayer', player);
-			
 		}
 
 		vimcont.addClass("readytoplay");
@@ -7205,8 +7202,7 @@ function prepareVimeo(ifr) {
 	 			
 	 			 var player = ifr.data('newvimeoplayer');
 		 		if (player && ifr.hasClass("readytoplay")) {
-		 			
-			 		return true;
+					return true;
 		 		}
 		 		else {
 		 			

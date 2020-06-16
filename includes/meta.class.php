@@ -300,6 +300,7 @@ class Essential_Grid_Meta {
 								case 'alias':
 									$meta_value = $base->getVar($my_post, 'post_name');
 									break;
+								case 'description':
 								case 'content':
 									$meta_value = $base->getVar($my_post, 'post_content');
 									break;

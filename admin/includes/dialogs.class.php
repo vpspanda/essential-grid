@@ -729,12 +729,12 @@ class Essential_Grid_Dialogs {
 								
 								case 'revslider';
 
-									if(class_exists('RevSlider')) {
+									if(class_exists('RevSliderSlider')) {
 										
-										$rev_slider = new RevSlider();
-										if(method_exists($rev_slider, 'getAllSliderForAdminMenu')) {
+										$rev_slider = new RevSliderSlider();
+										if(method_exists($rev_slider, 'get_slider_for_admin_menu')) {
 										
-											$sliders = $rev_slider->getAllSliderForAdminMenu();
+											$sliders = $rev_slider->get_slider_for_admin_menu();
 											if(!empty($sliders)) {
 												
 												echo '<div class="eg-elset-row"><div class="eg-elset-label"  for="'.$handle.'">'.$itm['name'].':</div>';

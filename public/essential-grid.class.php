@@ -20,7 +20,7 @@ class Essential_Grid {
 	/**
 	 * Plugin version, used for cache-busting of style and script file references.
 	 */
-	const VERSION = '2.3.3';
+	const VERSION = '2.3.6';
 	const TABLE_GRID = 'eg_grids';
 	const TABLE_ITEM_SKIN = 'eg_item_skins';
 	const TABLE_ITEM_ELEMENTS = 'eg_item_elements';
@@ -98,6 +98,8 @@ class Essential_Grid {
 				add_action('init', array($this,'add_ess_grid_gallery'));
 			}
 			add_filter('post_gallery', array($this,'use_ess_grid_gallery'), 10, 2);
+
+			add_filter( 'render_block', array($this,'gallery_addon_gutenberg_block_filter'), 10, 2);
 			
 			//Woo Add to Cart Updater
 			add_filter('woocommerce_add_to_cart_fragments', array('Essential_Grid_Woocommerce','woocommerce_header_add_to_cart_fragment'));
@@ -199,7 +201,9 @@ class Essential_Grid {
 		if($enable_log) wp_enqueue_script( 'enable-logs', EG_PLUGIN_URL . 'public/assets/js/jquery.themepunch.enablelog.js', $waitfor, self::VERSION, $js_to_footer );
 		
 		wp_register_script( 'tp-tools', EG_PLUGIN_URL . 'public/assets/js/jquery.themepunch.tools.min.js', $waitfor, self::VERSION, $js_to_footer );
-		wp_register_script( $this->plugin_slug . '-essential-grid-script', EG_PLUGIN_URL . 'public/assets/js/jquery.themepunch.essential.min.js', array( 'jquery', 'tp-tools' ), self::VERSION, $js_to_footer );
+		//wp_register_script( $this->plugin_slug . '-essential-grid-script', EG_PLUGIN_URL . 'public/assets/js/jquery.themepunch.essential.min.js', array( 'jquery', 'tp-tools' ), self::VERSION, $js_to_footer );
+
+		wp_register_script( $this->plugin_slug . '-essential-grid-script', EG_PLUGIN_URL . 'public/assets/js/jquery.themepunch.essential.js', array( 'jquery', 'tp-tools' ), self::VERSION, $js_to_footer );
 		
 		do_action('essgrid_enqueue_scripts', $use_cache, self::VERSION, $js_to_footer);
 	}
@@ -1050,6 +1054,30 @@ class Essential_Grid {
 		
 		return apply_filters('essgrid_get_essential_grid_by_id', $grid, $id);
 	}
+
+	/**
+	 * Get Grid by Handle from Database
+	 */
+	public static function get_essential_grid_by_handle($handle = ''){
+		global $wpdb;
+		
+		$handle = sanitize_title($handle);
+		if(empty($handle)) return false;
+		
+		$table_name = $wpdb->prefix . self::TABLE_GRID;
+		
+		$grid = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE handle = %s", $handle), ARRAY_A);
+		
+		if(!empty($grid)){
+			$grid['postparams'] = @json_decode($grid['postparams'], true);
+			$grid['params'] = @json_decode($grid['params'], true);
+			$grid['layers'] = @json_decode($grid['layers'], true);
+			$grid['settings'] = @json_decode($grid['settings'], true);
+			$grid['last_modified'] = @$grid['last_modified'];
+		}
+		
+		return apply_filters('essgrid_get_essential_grid_by_handle', $grid, $handle);
+	}
 	
 	
 	/**
@@ -1127,7 +1155,7 @@ class Essential_Grid {
 		
 		$base = new Essential_Grid_Base();
 		
-		return apply_filters('essgrid_get_choosen_item_skin', $base->getVar($this->grid_params, 'entry-skin', 0, 'i'));
+		//return apply_filters('essgrid_get_choosen_item_skin', $base->getVar($this->grid_params, 'entry-skin', 0, 'i'));
 		
 	}
 	
@@ -1465,6 +1493,7 @@ class Essential_Grid {
 				
 			if($this->custom_settings !== null) //custom settings got added. Overwrite Grid Settings and element settings
 				$this->apply_custom_settings();
+
 				
 			if($this->custom_layers !== null){ //custom layers got added. Overwrite Grid Layers
 				$this->apply_custom_layers(true);
@@ -1565,6 +1594,7 @@ class Essential_Grid {
 			
 			if($this->custom_settings !== null) //custom settings got added. Overwrite Grid Settings and element settings
 				$this->apply_custom_settings(true);
+				
 			
 			if($this->custom_layers !== null) //custom settings got added. Overwrite Grid Settings and element settings
 				$this->apply_custom_layers(true);
@@ -1658,7 +1688,7 @@ class Essential_Grid {
 					
 			}
 		}
-		
+
 		if(isset($this->grid_params['columns'])){ //change columns
 			$columns = $base->set_basic_colums_custom($this->grid_params['columns']);
 			$this->grid_params['columns'] = $columns;
@@ -1817,24 +1847,27 @@ class Essential_Grid {
 					else
 						$orig_image = false;
 
-					if( $base->getVar($this->grid_postparams, 'instagram-type-source-tags') == "true" ) {
-						$tag_photos = $instagram->get_tags_photos($base->getVar($this->grid_postparams, 'instagram-tags'),$base->getVar($this->grid_postparams, 'instagram-count'),$orig_image );
-						if(is_array($tag_photos))
-							$public_photos = array_merge($public_photos , $tag_photos);
-					}
-					if($base->getVar($this->grid_postparams, 'instagram-type-source-places') == "true") {
-						$place_photos = $instagram->get_places_photos($base->getVar($this->grid_postparams, 'instagram-places'),$base->getVar($this->grid_postparams, 'instagram-count'),$orig_image );
-						if(is_array($place_photos))
-							$public_photos = array_merge($public_photos , $place_photos);
-					}
-					$instagram_user_id = $base->getVar($this->grid_postparams, 'instagram-user-id');
-					if($base->getVar($this->grid_postparams, 'instagram-type-source-users') == "true" || ( $base->getVar($this->grid_postparams, 'instagram-type-source-tags') != "true" && $base->getVar($this->grid_postparams, 'instagram-type-source-places') != "true" && $base->getVar($this->grid_postparams, 'instagram-type-source-users') != "true" &&  !empty($instagram_user_id)  ) ) {
-						$user_photos = $instagram->get_users_photos($base->getVar($this->grid_postparams, 'instagram-user-id'),$base->getVar($this->grid_postparams, 'instagram-count'),$orig_image );
-						if(is_array($user_photos))
-							$public_photos = array_merge($public_photos , $user_photos );
-					}
-
-			
+					//if( $base->getVar($this->grid_postparams, 'instagram-auth') != "token" ){
+						if( $base->getVar($this->grid_postparams, 'instagram-type-source-tags') == "true" ) {
+							$tag_photos = $instagram->get_tags_photos($base->getVar($this->grid_postparams, 'instagram-tags'),$base->getVar($this->grid_postparams, 'instagram-count'),$orig_image );
+							if(is_array($tag_photos))
+								$public_photos = array_merge($public_photos , $tag_photos);
+						}
+						if($base->getVar($this->grid_postparams, 'instagram-type-source-places') == "true") {
+							$place_photos = $instagram->get_users_photos($base->getVar($this->grid_postparams, 'instagram-places'),$base->getVar($this->grid_postparams, 'instagram-count'),$orig_image );
+							if(is_array($place_photos))
+								$public_photos = array_merge($public_photos , $place_photos);
+						}
+						$instagram_user_id = $base->getVar($this->grid_postparams, 'instagram-user-id');
+						if($base->getVar($this->grid_postparams, 'instagram-type-source-users') == "true" || ( $base->getVar($this->grid_postparams, 'instagram-type-source-tags') != "true" && $base->getVar($this->grid_postparams, 'instagram-type-source-places') != "true" && $base->getVar($this->grid_postparams, 'instagram-type-source-users') != "true" &&  !empty($instagram_user_id)  ) ) {
+							$user_photos = $instagram->get_users_photos($base->getVar($this->grid_postparams, 'instagram-user-id'),$base->getVar($this->grid_postparams, 'instagram-count'),$orig_image );
+							if(is_array($user_photos))
+								$public_photos = array_merge($public_photos , $user_photos );
+						}
+					/*}
+					else {
+						$public_photos = $instagram->get_public_photos_self($base->getVar($this->grid_postparams, 'instagram-access-token'),$base->getVar($this->grid_postparams, 'instagram-count'),$orig_image );
+					}*/
 							
 					//Filter out duplicates
 					$_public_photos = array();
@@ -1953,11 +1986,11 @@ class Essential_Grid {
 				case 'facebook':
 					$facebook = new Essential_Grid_Facebook($base->getVar($this->grid_postparams, 'facebook-transient-sec',86400));
 					if($base->getVar($this->grid_postparams, 'facebook-type-source') == "album"){
-						$photo_set_photos = $facebook->get_photo_set_photos($base->getVar($this->grid_postparams, 'facebook-album'),$base->getVar($this->grid_postparams, 'facebook-count',10),$base->getVar($this->grid_postparams, 'facebook-app-id'),$base->getVar($this->grid_postparams, 'facebook-app-secret'));
+						$photo_set_photos = $facebook->get_photo_set_photos($base->getVar($this->grid_postparams, 'facebook-album'),$base->getVar($this->grid_postparams, 'facebook-count',10),$base->getVar($this->grid_postparams, 'facebook-access-token'));
 					}
 					else{
 						$user_id = $facebook->get_user_from_url($base->getVar($this->grid_postparams, 'facebook-page-url'));
-						$photo_set_photos = $facebook->get_photo_feed($user_id,$base->getVar($this->grid_postparams, 'facebook-app-id'),$base->getVar($this->grid_postparams, 'facebook-app-secret'),$base->getVar($this->grid_postparams, 'facebook-count',10));
+						$photo_set_photos = $facebook->get_photo_feed($user_id,$base->getVar($this->grid_postparams, 'facebook-access-token'),$base->getVar($this->grid_postparams, 'facebook-count',10));
 					}
 					
 					$facebook_images_avail_sizes = array("thumbnail","normal");
@@ -2182,15 +2215,25 @@ class Essential_Grid {
 		
 		if(!empty($this->custom_images)){
 			foreach($this->custom_images as $image_id){
-				$alt = get_post_meta($image_id, '_wp_attachment_image_alt', true);
-				$title = get_the_title($image_id);
-				$excerpt = get_post_field('post_excerpt', $image_id);
+				
+				$attachment = get_post( $image_id );	
+				$meta = array(
+					//'alt' => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
+					'caption' => $attachment->post_excerpt,
+					'description' => $attachment->post_content,
+					'href' => get_permalink( $attachment->ID ),
+					//'src' => $attachment->guid,
+					'title' => $attachment->post_title
+				);
+
 				$this->grid_layers[$image_id] = array(
-											'custom-image' => $image_id,
-											'excerpt' => $excerpt,
-											'caption' => $excerpt,
-											'title' => $title
-											);
+					'custom-image' => $image_id,
+					'excerpt' => $attachment->post_excerpt,
+					'caption' => $attachment->post_excerpt,
+					'title' => $attachment->post_title,
+					'content' => $attachment->post_content,
+					'description' => $attachment->post_content
+				);
 											
 			}
 		}
@@ -2241,7 +2284,7 @@ class Essential_Grid {
 		if($rows_unlimited == 'on' && $load_more !== 'none' && $grid_preview == false){ //grid_preview means disable load more in preview
 			$post_limit = $load_more_start;
 		}
-		
+
 		$nav_filters = array();
 		
 		$nav_layout = $base->getVar($this->grid_params, 'navigation-layout', array());
@@ -5237,27 +5280,28 @@ class Essential_Grid {
 		if(!empty($settings)) {
 			
 			$settings = json_decode(stripslashes($settings), true);
+			
 			if(empty($settings)) return '';
 
-			$featured = $settings['featured'];
-			$titl = $settings['titl'];
-			$lbTitle = $settings['lbTitle'];
-			$lbTag = $settings['lbTag'];
-			$lbImg = $settings['lbImg'];
+			$featured = (isset($settings['featured'])) ? $settings['featured'] : '';
+			$titl = (isset($settings['titl'])) ? $settings['titl'] : '';
+			$lbTitle = (isset($settings['lbTitle'])) ? $settings['lbTitle'] : '';
+			$lbTag = (isset($settings['lbTag'])) ? $settings['lbTag'] : '';
+			$lbImg = (isset($settings['lbImg'])) ? $settings['lbImg'] : '';
 			
-			$wid = $settings['lbWidth'];
-			$lbPos = $settings['lbPos'];
+			$wid = (isset($settings['lbWidth'])) ? $settings['lbWidth'] : '';
+			$lbPos = (isset($settings['lbPos'])) ? $settings['lbPos'] : '';
 			
-			$minW = $settings['lbMin'];
-			$maxW = $settings['lbMax'];
+			$minW = (isset($settings['lbMin'])) ? $settings['lbMin'] : '';
+			$maxW = (isset($settings['lbMax'])) ? $settings['lbMax'] : '';
 			
-			$margin = $settings['margin'];
+			$margin = (isset($settings['margin'])) ? $settings['margin'] : '';
 			$margin = explode('|', $margin);
 			
-			$padding = $settings['padding'];
+			$padding = (isset($settings['padding'])) ? $settings['padding'] : '';
 			$padding = explode('|', $padding);
 			
-			$overflow = $settings['overflow'];
+			$overflow = (isset($settings['overflow'])) ? $settings['overflow'] : '';
 				
 			if(!empty($margin) && count($margin) === 4) {
 				$margin = $margin[0] . 'px ' . $margin[1] . 'px ' . $margin[2] . 'px ' . $margin[3] . 'px';
@@ -5276,15 +5320,15 @@ class Essential_Grid {
 			$html = '<div class="eg-lightbox-post-content" style="width: ' . $maxW . ';min-width: ' . $minW . '; max-width: ' . $maxW . '; margin: ' . $margin . '">' .
 					'<div class="eg-lightbox-post-content-inner" style="padding: ' . $padding . '; overflow: ' . $overflow . '">';
 
-			if(isset($settings['revslider']) && !empty($settings['revslider']) && class_exists('RevSlider')) {
+			if(isset($settings['revslider']) && !empty($settings['revslider']) && class_exists('RevSliderSlider')) {
 				
 				$slider_id = $settings['revslider'];
 				if(is_numeric($slider_id)) {
 					
-					$rev_slider = new RevSlider();
-					if(method_exists($rev_slider, 'getAllSliderForAdminMenu')) {
+					$rev_slider = new RevSliderSlider();
+					if(method_exists($rev_slider, 'get_slider_for_admin_menu')) {
 					
-						$sliders = $rev_slider->getAllSliderForAdminMenu();
+						$sliders = $rev_slider->get_slider_for_admin_menu();
 						if(!empty($sliders) && array_key_exists($slider_id, $sliders)) {
 							
 							$slider = $sliders[$slider_id];
@@ -5905,5 +5949,47 @@ class Essential_Grid {
 		return $html;
 	}
 
+	/**
+	 * Gallery Overwriting Block
+	 */
+	public function gallery_addon_gutenberg_block_filter( $block_content, $block ) {
+		$blockName = $block["blockName"];
+		if($blockName === 'core/gallery') {			
+
+			$ids = $block['attrs']['ids'];
+			$class = isset($block['attrs']['className']) ? $block['attrs']['className'] : '' ;
+			
+			
+			preg_match_all('/columns-([0-9])/m', $block_content, $matches, PREG_SET_ORDER, 0);
+			$columns = $matches[0][1];
+
+			if(is_array($ids) && !empty($ids) && is_string($class) && strpos($class, 'essgrid-gallery-') !== false) {
+			
+				$alias = str_replace('essgrid-gallery-', '', $class);
+				$ids = implode($ids, ',');
+
+				if( !empty($alias) ){
+					if(isset($block['attrs']['customsettings'])){
+						// Defaults for Param
+						$entryskin = !empty($block['attrs']['entryskin']) ? $block['attrs']['entryskin'] : 1;
+						$layoutsizing = !empty($block['attrs']['layoutsizing']) ? $block['attrs']['layoutsizing'] : 'boxed';
+						$gridlayout = !empty($block['attrs']['gridlayout']) ? $block['attrs']['gridlayout'] : 'even';
+						$spacings = !empty($block['attrs']['tinyspacings']) ? $block['attrs']['tinyspacings'] : 0;
+						$rowsunlimited = !empty($block['attrs']['rowsunlimited']) ? $block['attrs']['rowsunlimited'] : 'on';
+						$rows = !empty($block['attrs']['tinyrows']) ? $block['attrs']['tinyrows'] : 3;
+						$gridanimation = !empty($block['attrs']['gridanimation']) ? $block['attrs']['gridanimation'] : 'fade';
+						$usespinner = !empty($block['attrs']['usespinner']) ? $block['attrs']['usespinner'] : 0;
+
+						$block_content = '[ess_grid  settings=\'{"entry-skin":"'.$entryskin.'","layout-sizing":"'.$layoutsizing.'","grid-layout":"'.$gridlayout.'","spacings":"'.$spacings.'","rows-unlimited":"'.$rowsunlimited.'","columns":"'.$columns.'","rows":"'.$rows.'","grid-animation":"'.$gridanimation.'","use-spinner":"'.$usespinner.'"}\' alias="'.$alias.'"][gallery ids="' . $ids . '"][/ess_grid]';
+					}
+					else {
+						$block_content = '[ess_grid  settings=\'{"columns":"'.$columns.'"}\' alias="'.$alias.'"][gallery ids="' . $ids . '"][/ess_grid]';
+					}
+				}
+			}
+		}
+		return $block_content;
+
+	}
 	
 }

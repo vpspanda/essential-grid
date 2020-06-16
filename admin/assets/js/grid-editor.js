@@ -2022,6 +2022,7 @@ var GridEditorEssentials = new function(){
 	 */
 	t.change_bg_color = function(){
 
+
 		var bgColor = jQuery('#container-background-color');
 		var full_color = bgColor.attr('data-color') || bgColor.val();
 		var bg_size = jQuery('select[name="cover-background-size"] option:selected').val();

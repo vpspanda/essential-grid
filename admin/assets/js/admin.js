@@ -1305,7 +1305,7 @@ var AdminEssentials = new function(){
 				jQuery('#start-animation-speed-wrap')[speedMethod]();
 				jQuery('#start-animation-delay-wrap')[delayMethod]();
 				jQuery('#start-animation-viewport-wrap')[revealMethod]();
-				$('#hide-markup-before-load').val(val);
+				jQuery('#hide-markup-before-load').val(val);
 				
 			}).change();
 			
@@ -2864,7 +2864,7 @@ var AdminEssentials = new function(){
 			var set = jQuery(this).val();
 
 			if(set=="album"){
-				var data = { url: jQuery("input[name=facebook-page-url]").val(), album: jQuery("input[name=facebook-album]").val(), api_key: jQuery("input[name=facebook-app-id]").val(), api_secret: jQuery("input[name=facebook-app-secret]").val()};
+				var data = { url: jQuery("input[name=facebook-page-url]").val(), album: jQuery("input[name=facebook-album]").val(), access_token: jQuery("input[name=facebook-access-token]").val()};
 				AdminEssentials.ajaxRequest("get_facebook_photosets", data, 'select[name=facebook-album-select]',function(response){
 					jQuery('select[name=facebook-album-select]').html(response.data.html).show();
 					jQuery('input[name=facebook-album').val(jQuery('select[name=facebook-album-select]').val());
@@ -2895,11 +2895,12 @@ var AdminEssentials = new function(){
 		});		
 
 		// Instagram Source User
-		jQuery('input.instagram-type-source').click(function(){
+		jQuery('input.instagram-type-source, input.instagram-auth, input[name="stream-source-type"]').click(function(){
 			t.checkInstagramSourceType();
 		});
 		t.checkInstagramSourceType();
 		
+
 		// Behance Source
 		jQuery('input[name="behance-type"]').click(function(){
 			if(jQuery('input[name="source-type"]:checked').val()!='stream') return false;		
@@ -3673,17 +3674,28 @@ var AdminEssentials = new function(){
 			if(jQuery('input[name="source-type"]:checked').val()!='stream') return false;		
 			if(jQuery('input[name="stream-source-type"]:checked').val()!='instagram') return false;
 
-			jQuery('input.instagram-type-source').each(function(){
-				$this = jQuery(this);
-				if($this.is(':checked')){
-					jQuery(".instagram_"+$this.data("source")).show();
-				}
-				else{
-					jQuery(".instagram_"+$this.data("source")).hide();
-				}
-			});
+
+			
+			if(0==1 && jQuery('input[name="instagram-auth"]:checked').val()!='none'){
+				jQuery('.instagram_user').hide();
+				jQuery('.instagram_client').show();
+			}
+			else {		
+				jQuery('.instagram_client').hide();
+				jQuery('.instagram_user').show();
+				jQuery('input.instagram-type-source').each(function(){
+					$this = jQuery(this);
+					if($this.is(':checked')){
+						jQuery(".instagram_"+$this.data("source")).show();
+					}
+					else{
+						jQuery(".instagram_"+$this.data("source")).hide();
+					}
+				});
+			}
 
 			try{
+
 				if(do_change == true) //do not preview on load
 					t.changePreviewGrid(true);
 				else

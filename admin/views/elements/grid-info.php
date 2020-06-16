@@ -33,9 +33,6 @@ THE INFO ABOUT EMBEDING OF THE SLIDER
 	<p><?php _e('From the <b>widgets panel</b> drag the "Essential Grid" widget to the desired sidebar', EG_TEXTDOMAIN); ?></p>
 </div>
 
-<?php
-if(!$EssentialAsTheme){
-	?>
 	<div style="width:100%;height:50px"></div>
 	
 	<!-- 
@@ -98,7 +95,7 @@ if(!$EssentialAsTheme){
 			<div class="validation-label"><?php _e('Purchase code:', EG_TEXTDOMAIN); ?></div> 
 			<div class="validation-input">
 				<input type="text" name="eg-validation-token" value="<?php echo $code; ?>" <?php echo ($validated === 'true') ? ' readonly="readonly"' : ''; ?> style="width: 350px;" />
-				<p class="validation-description"><?php _e('Please enter your ', EG_TEXTDOMAIN); ?><strong style="color:#000"><?php _e('CodeCanyon Essential Grid purchase code / license key', EG_TEXTDOMAIN); ?></strong><?php _e('. You can find your key by following the instructions on', EG_TEXTDOMAIN); ?><a target="_blank" href="http://www.themepunch.com/home/plugins/wordpress-plugins/revolution-slider-wordpress/where-to-find-the-purchase-code/"><?php _e(' this page.', EG_TEXTDOMAIN); ?></a><br><?php _e('Have no regular license for this installation? Grab a fresh one at <a target="_blank" href="https://codecanyon.net/item/essential-grid-wordpress-plugin/7563340?ref=themepunch">CodeCanyon</a>!', EG_TEXTDOMAIN); ?></p>
+				<p class="validation-description"><?php _e('Please enter your ', EG_TEXTDOMAIN); ?><strong style="color:#000"><?php _e('Essential Grid purchase code / license key', EG_TEXTDOMAIN); ?></strong><?php _e('. You can find your key by following the instructions on', EG_TEXTDOMAIN); ?><a target="_blank" href="http://www.themepunch.com/home/plugins/wordpress-plugins/revolution-slider-wordpress/where-to-find-the-purchase-code/"><?php _e(' this page.', EG_TEXTDOMAIN); ?></a><br><?php _e('Have no regular license for this installation? <a target="_blank" href="https://www.themepunch.com/links/essential_grid_wordpress_regular_license">Grab a fresh one</a>!', EG_TEXTDOMAIN); ?></p>
 			</div>
 			<div class="clear"></div>
 			
@@ -139,22 +136,6 @@ if(!$EssentialAsTheme){
 		}
 		?>
 	</div>
-	<?php
-}else{
-	?>
-	<div style="width:100%;height:50px"></div>
-	<!-- INFORMATIONS -->
-	<div class="title_line nobgnopd"><div class="view_title"><?php _e("Information", EG_TEXTDOMAIN); ?></div></div>		
-
-	<div style="border:1px solid #e5e5e5; padding:15px 15px 15px 80px; border-radius:0px;-moz-border-radius:0px;-webkit-border-radius:0px;position:relative;overflow:hidden;background:#FFFFFF">		
-		<div class="revgray" style="left:0px;top:0px;position:absolute;height:100%;padding:27px 10px;"><i style="color:#fff;font-size:25px" class="eg-icon-info-circled"></i></div>
-		<p style="margin-top:5px; margin-bottom:5px;">
-			<?php _e("Please note that this plugin came bundled with a theme. The use of the Essential Grid is limited to this theme only.<br>If you need support from the plugin author ThemePunch or you want to use Essential Grid with an other theme you will need an extra single license available at CodeCanyon.", EG_TEXTDOMAIN); ?>
-		</p>
-	</div>
-	<?php
-}
-?>
 
 <!-- NEWSLETTER PART -->
 <div class="title_line nobgnopd" style="margin-top:45px">
