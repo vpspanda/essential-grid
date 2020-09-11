@@ -2,7 +2,7 @@
 /**
  * @author    ThemePunch <info@themepunch.com>
  * @link      http://www.themepunch.com/
- * @copyright 2016 ThemePunch
+ * @copyright 2020 ThemePunch
  * @version   1.0.1
  */
  
@@ -12,6 +12,22 @@ if(!class_exists('ThemePunch_Fonts')) {
 	 
 	class ThemePunch_Fonts {
 		const TP_TEXTDOMAIN = 'themepunch-fonts';
+		
+		/**
+		 * save all fonts
+		 **/
+		public function save_fonts($fonts){
+			if(!empty($fonts)){
+				foreach($fonts as $font){
+					if(!isset($font['url']) || strlen($font['url']) < 3) return __('Wrong parameter received', TP_TEXTDOMAIN);
+					if(!isset($font['handle']) || strlen($font['handle']) < 3) return __('Wrong handle received', TP_TEXTDOMAIN);
+				}
+			}
+			
+			$do = update_option('tp-google-fonts', $fonts);
+			
+			return true;
+		}
 		
 		/**
 		 * Add a new Font 
@@ -148,16 +164,16 @@ if(!class_exists('ThemePunch_Fonts')) {
 			$enable_pe7 = get_option('tp_eg_global_enable_pe7', 'false');
 			
 			if($focus=="admin"){
-				if($enable_fontello!="false") wp_enqueue_style('tp-fontello', EG_PLUGIN_URL . 'public/assets/font/fontello/css/fontello.css', array(), Essential_Grid::VERSION );
+				//if($enable_fontello!="false") wp_enqueue_style('tp-fontello', EG_PLUGIN_URL . 'public/assets/font/fontello/css/fontello.css', array(), Essential_Grid::VERSION );
 				if($enable_pe7!="false") wp_enqueue_style('tp-stroke-7', EG_PLUGIN_URL . 'public/assets/font/pe-icon-7-stroke/css/pe-icon-7-stroke.css', array(), Essential_Grid::VERSION );	
 				if($enable_font_awesome!="false") wp_enqueue_style('tp-font-awesome', EG_PLUGIN_URL . 'public/assets/font/font-awesome/css/font-awesome.css', array(), Essential_Grid::VERSION );
 			}
-			else{				
-				
+			else{								
 				if($enable_fontello=="backfront") wp_enqueue_style('tp-fontello', EG_PLUGIN_URL . 'public/assets/font/fontello/css/fontello.css', array(), Essential_Grid::VERSION );
 				if($enable_font_awesome=="backfront") wp_enqueue_style('tp-font-awesome', EG_PLUGIN_URL . 'public/assets/font/font-awesome/css/font-awesome.css', array(), Essential_Grid::VERSION );
 				if($enable_pe7=="backfront") wp_enqueue_style('tp-stroke-7', EG_PLUGIN_URL . 'public/assets/font/pe-icon-7-stroke/css/pe-icon-7-stroke.css', array(), Essential_Grid::VERSION );
 			}			
+			
 		}
 		
 		

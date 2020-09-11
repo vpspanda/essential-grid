@@ -1,20 +1,19 @@
 <?php
-/**
- * @package   Essential_Grid
- * @author    ThemePunch <info@themepunch.com>
- * @link      http://codecanyon.net/item/essential-grid-wordpress-plugin/7563340
- * @copyright 2018 ThemePunch
- *
- * @wordpress-plugin
- * Plugin Name:       Essential Grid
- * Plugin URI:        https://essential.themepunch.com
- * Description:       Essential Grid - The Original Premium Grid Plugin
- * Version:           2.3.6
- * Author:            ThemePunch
- * Author URI:        https://themepunch.com
- * Text Domain:       essential-grid
- * Domain Path:       /languages
- */
+/*
+@package   Essential_Grid
+@author    ThemePunch <info@themepunch.com>
+@link      http://codecanyon.net/item/essential-grid-wordpress-plugin/7563340
+@copyright 2018 ThemePunch
+@wordpress-plugin
+Plugin Name:       Essential Grid
+Plugin URI:        https://essential.themepunch.com
+Description:       Essential Grid - The Original Premium Grid Plugin
+Version:           3.0.7
+Author:            ThemePunch
+Author URI:        https://themepunch.com
+Text Domain:       essential-grid
+Domain Path:       /languages
+*/
  
  
 // If this file is called directly, abort.
@@ -26,11 +25,13 @@ if(class_exists('Essential_Grid')) {
 	die('ERROR: It looks like you have more than one instance of Essential Grid installed. Please remove additional instances for this plugin to work again.');
 }
 
-define( 'EG_PLUGIN_PATH', plugin_dir_path(__FILE__) );
-define( 'EG_PLUGIN_URL', str_replace('index.php','',plugins_url( 'index.php', __FILE__ )));
+define('EG_PLUGIN_PATH', plugin_dir_path(__FILE__) );
+define('EG_PLUGIN_URL', str_replace('index.php','',plugins_url( 'index.php', __FILE__ )));
+define('EG_TEXTDOMAIN', 'essential-grid');
 
-define( 'EG_TEXTDOMAIN', 'essential-grid');
+define('ESG_TP_TOOLS', '6.1.18');
 
+$esg_dev_mode	 = (file_exists(EG_PLUGIN_PATH . 'public/assets/js/dev/essential-grid.js')) ? true : false;
 $wc_is_localized = false; //used to determinate if already done for cart button on this skin
 
 
@@ -39,10 +40,10 @@ $wc_is_localized = false; //used to determinate if already done for cart button 
  *----------------------------------------------------------------------------*/
 
  /* 2.1.6 */
-require_once(EG_PLUGIN_PATH . '/includes/colorpicker.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/base.class.php');
 require_once(EG_PLUGIN_PATH . '/public/essential-grid.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/global-css.class.php');
+require_once(EG_PLUGIN_PATH . '/includes/colorpicker.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/navigation.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/grids-widget.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/item-skin.class.php');
@@ -53,8 +54,6 @@ require_once(EG_PLUGIN_PATH . '/includes/meta.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/fonts.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/search.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/aq_resizer.class.php');
-require_once(EG_PLUGIN_PATH . '/includes/jackbox.class.php');
-require_once(EG_PLUGIN_PATH . '/includes/social-gallery.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/external-sources.class.php');
 require_once(EG_PLUGIN_PATH . '/includes/wordpress-update-fix.class.php');
 

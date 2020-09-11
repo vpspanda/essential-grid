@@ -14,6 +14,8 @@ const { Component } = wp.element;
 /**
  * essgrid Editor Element
  */
+
+
 export  class EssGrid extends Component {
 
     constructor() {
@@ -23,62 +25,60 @@ export  class EssGrid extends Component {
           text ,
           gridTitle
         }
+        window.essgrid_react = {};
     }
 
     render() {
         const {
         attributes: { text,gridTitle },
         setAttributes  } = this.props;
-      
+
         window.essgrid_react = this;
+
         const openDialog = () => {
-          jQuery('select[name="ess-grid-existing-grid"]').val("-1");
-          jQuery('#ess-grid-tiny-mce-dialog').dialog({
-            id       : 'ess-grid-tiny-mce-dialog',
-            title	 : eg_lang.shortcode_generator,
-            width    : 720,
-            height   : 'auto'
-          });
+          var data = false;
+          essgrid_react = this;
+          ESG.SC.openBlockSettings({editor:'gutenberg'});
         }
 
         const openEdit = () => {
           window.essgrid_react = this;
-         
-          var shortcode = this.state.text;    
+
+          var shortcode = this.state.text;
           var attributes = {};
-          
+
           shortcode.match(/[\w-]+=".+?"/g).forEach(function(attribute) {
               attribute = attribute.match(/([\w-]+)="(.+?)"/);
               attributes[attribute[1]] = attribute[2];
           });
-          
+
           if ( typeof attributes.alias === "undefined" ) return false;
-          
-          self.location.href =  "admin.php?page=essential-grid&view=grid-create&alias=" + attributes.alias;
+
+        //  self.location.href =  "admin.php?page=essential-grid&view=grid-create&alias=" + attributes.alias;
+          window.open("admin.php?page=essential-grid&view=grid-create&alias=" + encodeURI(attributes.alias), '_blank');
         }
 
         return (
           <div className="essgrid_block" >
-                  <span>{this.state.gridTitle}&nbsp;</span>
+                  <span>{this.props.attributes.gridTitle}&nbsp;</span>
                   <TextControl
                         className="grid_slug"
-                        value={ this.state.text }
+                        value={ this.props.attributes.text }
                         onChange={ ( text ) => setAttributes( { text } ) }
                     />
-                  <Button 
+                  <Button
                         isDefault
-                        onClick = { openEdit } 
+                        onClick = { openEdit }
                         className="grid_edit_button editor_icon dashicons dashicons-edit"
                     >
                   </Button>
-                  <Button 
+                  <Button
                         isDefault
-                        onClick = { openDialog } 
+                        onClick = { openDialog }
                         className="grid_edit_button"
                     >
                     {__( 'Select Grid', 'essgrid' )}
                   </Button>
-                 
           </div>
         );
     }
@@ -91,14 +91,14 @@ export  class EssGrid extends Component {
 export default registerBlockType(
     'themepunch/essgrid',
     {
-        title: __( 'Add prefined EssGrid', 'essgrid' ),
-        description: __( 'Add your predefined Essential Grid.', 'essgrid' ),
-        category: 'themepunch',
+        title: __( 'Essential Grid', 'essgrid' ),
+        description: __( 'Add your Essential Grid.', 'essgrid' ),
+        category: 'common',
         icon: {
           src:  'screenoptions',
           background: '#c90000',
           color: 'white'
-        },        
+        },
         keywords: [
             __( 'image', 'essgrid' ),
             __( 'gallery', 'essgrid' ),
@@ -132,7 +132,7 @@ export default registerBlockType(
           const { attributes: { text,gridTitle } } = props;
           return (
             <div className="essgrid" data-gridtitle={gridTitle}>
-               {text} 
+               {text}
             </div>
           );
         },

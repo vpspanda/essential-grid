@@ -10,6 +10,7 @@ if( !defined( 'ABSPATH') ) exit();
 class Essential_Grid_LoadBalancer {
 	
 	public $servers = array();
+	 
 	
 	/**
 	 * set the server list on construct
@@ -17,13 +18,15 @@ class Essential_Grid_LoadBalancer {
 	public function __construct(){
 		$this->servers = get_option('essgrid_servers', array());
 		$this->servers = (empty($this->servers)) ? array('themepunch.tools') : $this->servers; //, 'themepunch-ext-a.tools'
+		
+		
 	}
 	
 	/**
 	 * get the url depending on the purpose, here with key, you can switch do a different server
 	 **/
 	public function get_url($purpose, $key = 0){
-		$url = 'https://';
+		$url	 = 'https://';
 		
 		$use_url = (!isset($this->servers[$key])) ? reset($this->servers) : $this->servers[$key];
 		

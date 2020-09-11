@@ -3,7 +3,7 @@
  * @package   Essential_Grid
  * @author    ThemePunch <info@themepunch.com>
  * @link      http://www.themepunch.com/essential/
- * @copyright 2016 ThemePunch
+ * @copyright 2020 ThemePunch
  * @since	  2.0
  */
  
@@ -33,7 +33,7 @@ class Essential_Grid_Search {
 		$this->settings = $settings;
 		
 		if(!is_admin()){ //only for frondend
-			if($base->getVar($settings['settings'], 'search-enable', 'off') == 'on'){
+			if($base->getVar($settings, array('settings', 'search-enable'), 'off') == 'on'){
 				add_action( 'wp_footer', array( $this, 'enqueue_styles' ) ); //wp_enqueue_scripts
 				add_action( 'wp_footer', array( $this, 'enqueue_scripts' ) ); //wp_enqueue_scripts
 			}

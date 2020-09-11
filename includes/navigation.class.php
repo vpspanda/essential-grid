@@ -3,7 +3,7 @@
  * @package   Essential_Grid
  * @author    ThemePunch <info@themepunch.com>
  * @link      http://www.themepunch.com/essential/
- * @copyright 2016 ThemePunch
+ * @copyright 2020 ThemePunch
  */
 
 if( !defined( 'ABSPATH') ) exit();
@@ -316,6 +316,16 @@ class Essential_Grid_Navigation {
 		$classes = apply_filters('essgrid_set_special_class', $classes);
 		
 		$this->special_class .= ' '.$classes;
+		
+	}
+
+	/**
+	 * Get special class to wrapper
+	 * @since: 2.3.7
+	 */
+	public function get_special_class(){
+		
+		return $this->special_class;
 		
 	}
 	
@@ -634,7 +644,7 @@ class Essential_Grid_Navigation {
 		$listing = (isset($this->filter_settings['filter'.$type]['filter-listing'])) ? $this->filter_settings['filter'.$type]['filter-listing'] : 'list';
 		$amount = (isset($this->filter_show_count['filter'.$type]) && $this->filter_show_count['filter'.$type] == 'on') ? ' eg-show-amount' : '';
 		$do_show = @$this->filter_settings['filter'.$type]['filter-selected'];
-		
+		$is_post = (isset($this->filter_settings['filter'.$type]['custom'])) ? false : true;
 		
 		$dropdown = '';
 		switch($listing){
@@ -680,7 +690,7 @@ class Essential_Grid_Navigation {
             $f .= '<div class="esg-filterbutton" data-filter="filter-favorite"><span>'.__('Favorites', EG_TEXTDOMAIN).'</span><span class="esg-filter-checked"><i class="eg-icon-ok-1"></i></span></div>';
         }
 		
-		if(!empty($do_show) && is_array($do_show)){ //we are a post based grid
+		if($is_post && !empty($do_show) && is_array($do_show)){ //we are a post based grid
 			foreach($do_show as $string_id){
 				$fraw = explode('_', $string_id);
 				
@@ -715,28 +725,54 @@ class Essential_Grid_Navigation {
 				}
 			}
 		}else{
-			if(!empty($this->filter)){
-				foreach($this->filter as $filter_id => $filter){
-					
-					$filter_text = ($demo) ? self::translate_demo_filter($filter['slug']) : Essential_Grid_Wpml::strip_category_additions($filter['name']);
-					
-					// 2.2.5
-					// sanitize multi-select custom meta
-					if(strpos($filter_text, "['") !== false && strpos($filter_text, "']") !== false) {
+			if(!empty($do_show) && is_array($do_show)){
+				foreach($do_show as $name){
+					if(!empty($this->filter)){
+						foreach($this->filter as $filter_id => $filter){
+							if($filter['name'] !== $name) continue;
+							
+							$filter_text = ($demo) ? self::translate_demo_filter($filter['slug']) : Essential_Grid_Wpml::strip_category_additions($filter['name']);
+							
+							// 2.2.5
+							// sanitize multi-select custom meta
+							if(strpos($filter_text, "['") !== false && strpos($filter_text, "']") !== false) {
 
-						$filter_text = preg_replace("/\[\'|\'\]/", '', $filter_text);
-						$filter_text = preg_replace("/\'\,\'/", ' & ', $filter_text);
-	
+								$filter_text = preg_replace("/\[\'|\'\]/", '', $filter_text);
+								$filter_text = preg_replace("/\'\,\'/", ' & ', $filter_text);
+			
+							}
+							
+							$sel = (in_array(sanitize_key($filter['slug']), $this->filter_start_select)) ? ' selected' : '';
+							$parent_id = (isset($filter['parent']) && intval($filter['parent']) > 0) ? $filter['parent'] : 0;
+							
+							$parent = ($parent_id > 0) ? ' data-pid="'.$parent_id.'"' : '';
+							$f .= '<div class="esg-filterbutton'.$sel.'" data-fid="'.$filter_id.'"'.$parent.' data-filter="filter-'.sanitize_key($filter['slug']).'"><span>'.$filter_text.'</span><span class="esg-filter-checked"><i class="eg-icon-ok-1"></i></span></div>';
+						}
 					}
-					
-					$sel = (in_array(sanitize_key($filter['slug']), $this->filter_start_select)) ? ' selected' : '';
-					$parent_id = (isset($filter['parent']) && intval($filter['parent']) > 0) ? $filter['parent'] : 0;
-					
-					$parent = ($parent_id > 0) ? ' data-pid="'.$parent_id.'"' : '';
-					$f .= '<div class="esg-filterbutton'.$sel.'" data-fid="'.$filter_id.'"'.$parent.' data-filter="filter-'.sanitize_key($filter['slug']).'"><span>'.$filter_text.'</span><span class="esg-filter-checked"><i class="eg-icon-ok-1"></i></span></div>';
+				}
+			}else{ //fallback to old version
+				if(!empty($this->filter)){
+					foreach($this->filter as $filter_id => $filter){
+						$filter_text = ($demo) ? self::translate_demo_filter($filter['slug']) : Essential_Grid_Wpml::strip_category_additions($filter['name']);
+						
+						// 2.2.5
+						// sanitize multi-select custom meta
+						if(strpos($filter_text, "['") !== false && strpos($filter_text, "']") !== false) {
+
+							$filter_text = preg_replace("/\[\'|\'\]/", '', $filter_text);
+							$filter_text = preg_replace("/\'\,\'/", ' & ', $filter_text);
+		
+						}
+						
+						$sel = (in_array(sanitize_key($filter['slug']), $this->filter_start_select)) ? ' selected' : '';
+						$parent_id = (isset($filter['parent']) && intval($filter['parent']) > 0) ? $filter['parent'] : 0;
+						
+						$parent = ($parent_id > 0) ? ' data-pid="'.$parent_id.'"' : '';
+						$f .= '<div class="esg-filterbutton'.$sel.'" data-fid="'.$filter_id.'"'.$parent.' data-filter="filter-'.sanitize_key($filter['slug']).'"><span>'.$filter_text.'</span><span class="esg-filter-checked"><i class="eg-icon-ok-1"></i></span></div>';
+					}
 				}
 			}
-        }
+		}
 		
 		if($listing == 'dropdown'){
 			$f .= '</div>';

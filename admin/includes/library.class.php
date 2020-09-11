@@ -366,7 +366,7 @@ class Essential_Grid_Library {
 	 */
 	public function get_library_grids_html($tp_grids){
 		//$base = new Essential_Grid_Base();
-		//$base->getVar($skin['params'], 'full-border-radius'); //i.e.
+		//$base->getVar($skin, array('params', 'full-border-radius')); //i.e.
 		?>
 		<div id="library_bigoverlay"></div>
 		<?php
@@ -436,7 +436,7 @@ class Essential_Grid_Library {
 				$deny = ' deny_download';
 			}
 		}
-		?>
+		?>		
 		<div data-src="<?php echo $grid['img'] . "?time=".time(); ?>" class="library_item_import library_item"
 			data-zipname="<?php echo $grid['zip']; ?>"
 			data-uid="<?php echo $grid['uid']; ?>"
@@ -553,8 +553,9 @@ class Essential_Grid_Library {
 	 * import Grid from TP servers
 	 * @since: 2.3
 	 */
-	public function import_grid($uid, $zip){
+	public function import_grid($uid, $zip, $ignore_exists = false){
 		$added	= array();
+		$return = array();
 		
 		if($uid == ''){
 			return __("ID missing, something went wrong. Please try again!", EG_TEXTDOMAIN);
@@ -630,7 +631,7 @@ class Essential_Grid_Library {
 								foreach($skins as $skin){
 									$skins_ids[] = $skin['id'];
 								}
-								$skins_imported = $im->import_skins($skins, $skins_ids);
+								$return['skins_imported'] = $im->import_skins($skins, $skins_ids, true, $ignore_exists);
 							}
 							
 							$navigation_skins		= (isset($content['navigation-skins'])) ? $content['navigation-skins'] : array();
@@ -639,11 +640,11 @@ class Essential_Grid_Library {
 								foreach($navigation_skins as $skin){
 									$navigation_skins_ids[] = $skin['id'];
 								}
-								$navigation_skins_imported = $im->import_navigation_skins(@$navigation_skins, $navigation_skins_ids);
+								$return['navigation_skins_imported'] = $im->import_navigation_skins(@$navigation_skins, $navigation_skins_ids, true, $ignore_exists);
 							}
 
 							if(!empty($content['punch-fonts'])){
-								$custom_fonts_imported = $im->import_punch_fonts($content['punch-fonts']);
+								$return['custom_fonts_imported'] = $im->import_punch_fonts($content['punch-fonts']);
 							}
 							
 							$grids		= (isset($content['grids'])) ? $content['grids'] : array();
@@ -652,7 +653,7 @@ class Essential_Grid_Library {
 								foreach($grids as $grid){
 									$grids_ids[] = $grid['id'];
 								}
-								$grids_imported = $im->import_grids($grids, $grids_ids);
+								$return['grids_imported'] = $im->import_grids($grids, $grids_ids);
 							}
 							
 							$elements		= (isset($content['elements'])) ? $content['elements'] : array();
@@ -661,11 +662,21 @@ class Essential_Grid_Library {
 								foreach($elements as $element){
 									$elements_ids[] = $element['id'];
 								}
-								$elements_imported = $im->import_elements(@$elements, $elements_ids);
+								$return['elements_imported'] = $im->import_elements(@$elements, $elements_ids);
 							}
 							
-							$global_css				= (isset($content['global-css'])) ? $content['global-css'] : '';
-							$global_styles_imported	= $im->import_global_styles($global_css);
+							$custom_metas	 = (isset($content['custom-meta'])) ? $content['custom-meta'] : array();
+							if(!empty($custom_metas) && is_array($custom_metas)){
+								foreach($custom_metas as $key => $custom_meta){
+									$custom_metas[$key] = $custom_meta;
+								}
+								if(!empty($custom_metas)){
+									$custom_metas_imported = $im->import_custom_meta($custom_metas);
+								}
+							}
+							
+							$global_css							= (isset($content['global-css'])) ? $content['global-css'] : '';
+							$return['global_styles_imported']	= $im->import_global_styles($global_css);
 						}else{
 							return __("Could not download Grid. Please try again later!", EG_TEXTDOMAIN);
 						}
@@ -678,7 +689,7 @@ class Essential_Grid_Library {
 			}
 		}
 		
-		return true;
+		return $return;
 	}
 	
 	
@@ -701,28 +712,31 @@ class Essential_Grid_Library {
 		//search for the layers part
 		$grids = $json["grids"];
 		$new_grids = array();
-		foreach($grids as $grid){
-			$layers = json_decode($grid["layers"]);
-			//find the image ids
-			$new_layers = array();
-			foreach ($layers as $layer){
-				$layer = json_decode($layer);
-					if( isset($layer->{'custom-type'}) &&  $layer->{'custom-type'}=="image"){
-						$custom_image = $path.$layer->{'custom-image'}.".jpg";
-						//import the image and replace the id
-						$layer->{'custom-image'} = "".$this->create_image($custom_image);
-						if(!empty($layer->{'eg-alternate-image'})){
-							$alternate_image = $path.$layer->{'eg-alternate-image'}.".jpg";
+		if(is_array($grids)){
+			foreach($grids as $grid){
+				$layers = json_decode($grid["layers"]);
+				//find the image ids
+				$new_layers = array();
+				if(is_array($layers)){
+					foreach ($layers as $layer){
+						$layer = json_decode($layer);
+						if( isset($layer->{'custom-type'}) &&  $layer->{'custom-type'}=="image"){
+							$custom_image = $path.$layer->{'custom-image'}.".jpg";
 							//import the image and replace the id
-							$layer->{'eg-alternate-image'} = "".$this->create_image($alternate_image);
+							$layer->{'custom-image'} = "".$this->create_image($custom_image);
+							if(!empty($layer->{'eg-alternate-image'})){
+								$alternate_image = $path.$layer->{'eg-alternate-image'}.".jpg";
+								//import the image and replace the id
+								$layer->{'eg-alternate-image'} = "".$this->create_image($alternate_image);
+							}
 						}
+						$new_layers[] = json_encode($layer);
 					}
-				$new_layers[] = json_encode($layer);
+				}	
+				$grid["layers"] = json_encode($new_layers) ;
+				$new_grids[] = $grid; 
 			}
-			$grid["layers"] = json_encode($new_layers) ;
-			$new_grids[] = $grid; 
 		}
-		
 		$json["grids"] = $new_grids;
 		
         return $json;
@@ -730,6 +744,8 @@ class Essential_Grid_Library {
 
     public function create_image($file){
         if(empty($file)) return false;
+		set_time_limit(60); //reset the time limit
+		
         $upload_dir = wp_upload_dir();
         $image_url = $file;
         $image_data = file_get_contents($image_url);

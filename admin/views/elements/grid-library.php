@@ -5,7 +5,7 @@
  * @link      https://www.themepunch.com/essential/
  * @copyright 2018 ThemePunch
  */
- 
+
 if( !defined( 'ABSPATH') ) exit();
 
 ?>
@@ -13,31 +13,31 @@ if( !defined( 'ABSPATH') ) exit();
 <div id="esg-libary-wrapper">
 	<div id="eg_library_header_part">
 		<h2 class="topheader"><?php _e('Template Library', EG_TEXTDOMAIN); ?></h2>
-		
+
 		<div id="esg-close-template"></div>
-		
-		<div class="esg-library-switcher">		
-			<span id="esg-library-filter-buttons-wrapper" style="display:table-cell;vertical-align:top">	
-				<span class="esg_library_filter_button selected" data-type="temp_all"><?php _e('All Grids', EG_TEXTDOMAIN); ?></span>		
-				<span class="esg_library_filter_button" data-type="temp_even"><?php _e('Even', EG_TEXTDOMAIN); ?></span>	
-				<span class="esg_library_filter_button" data-type="temp_masonry"><?php _e('Masonry', EG_TEXTDOMAIN); ?></span>
-				<span class="esg_library_filter_button" data-type="temp_fullscreen"><?php _e('Full Screen', EG_TEXTDOMAIN); ?></span>		
-				<span class="esg_library_filter_button" data-type="temp_fullwidth"><?php _e('Full Width', EG_TEXTDOMAIN); ?></span>
-				<span class="esg_library_filter_button" data-type="temp_loadmore"><?php _e('Load More', EG_TEXTDOMAIN); ?></span>		
-				<span class="esg_library_filter_button" data-type="temp_clients"><?php _e('Clients', EG_TEXTDOMAIN); ?></span>	
-				<span class="esg_library_filter_button" data-type="temp_pricetables"><?php _e('Price Tables', EG_TEXTDOMAIN); ?></span>
-				<span class="esg_library_filter_button" data-type="temp_variablecolumns"><?php _e('Variable Columns', EG_TEXTDOMAIN); ?></span>
-				<span class="esg_library_filter_button" data-type="temp_woocommerce"><?php _e('Woo Commerce', EG_TEXTDOMAIN); ?></span>
-				<span class="esg_library_filter_button" data-type="temp_filterdropdown"><?php _e('Filter Dropdown', EG_TEXTDOMAIN); ?></span>
-				<span class="esg_library_filter_button" data-type="temp_streams"><?php _e('Streams', EG_TEXTDOMAIN); ?></span>
-				<span class="esg_library_filter_button esg_libr_new_udpated" data-type="temp_newupdate"><?php _e('New / Updated', EG_TEXTDOMAIN); ?></span>			
-			</span>
-			<span style="display:table-cell;vertical-align:top;text-align:right">
-				<span class="esg-reload-shop"><i class="eg-icon-arrows-ccw"></i><?php _e('Update Library', EG_TEXTDOMAIN); ?></span>
-			</span>
+
+		<div class="esg-library-switcher">
+			<div id="esg-library-filter-buttons-wrapper" style="display:inline-block">
+				<span class="esg-btn esg_library_filter_button selected" data-type="temp_all"><?php _e('All Grids', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_even"><?php _e('Even', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_masonry"><?php _e('Masonry', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_fullscreen"><?php _e('Full Screen', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_fullwidth"><?php _e('Full Width', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_loadmore"><?php _e('Load More', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_clients"><?php _e('Clients', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_pricetables"><?php _e('Price Tables', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_variablecolumns"><?php _e('Variable Columns', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_woocommerce"><?php _e('Woo Commerce', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_filterdropdown"><?php _e('Filter Dropdown', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg_library_filter_button" data-type="temp_streams"><?php _e('Streams', EG_TEXTDOMAIN); ?></span>
+				<span class="esg-btn esg-purple esg_library_filter_button esg_libr_new_udpated" data-type="temp_newupdate"><?php _e('New / Updated', EG_TEXTDOMAIN); ?></span>
+			</div>
+
+			<div style="display:inline-block; float:right" class="esg-btn esg-red esg-reload-shop"><i class="eg-icon-arrows-ccw"></i><?php _e('Update Library', EG_TEXTDOMAIN); ?></div>
+
 		</div>
 	</div>
-	
+
 	<!-- THE GRID BASE TEMPLATES -->
 	<div id="esg-library-grids" class="esg-library-groups">
 		<!-- TEMPLATES WILL BE ADDED OVER AJAX -->
@@ -87,14 +87,14 @@ if( !defined( 'ABSPATH') ) exit();
 		<span class="oppps-icon-red"></span>
 		<span class="benefits-title-right">
 			<span class="esg-premium-benefits-dialogtitle"><?php _e('Plugin Activation Required'); ?></span>
-			<span class="esg-premium-benefits-dialogsubtitle"><?php _e('In order to download the <a target="_blank" href="https://codecanyon.net/item/essential-grid-wordpress-plugin/7563340#item-description__">latest update</a> instantly', EG_TEXTDOMAIN); ?></span>
+			<span class="esg-premium-benefits-dialogsubtitle"><?php _e('In order to download the <a target="_blank" href="https://account.essential-grid.com/licenses/pricing/">latest update</a> instantly', EG_TEXTDOMAIN); ?></span>
 		</span>
 	</div>
 	<div style="display:none" class="esg-premium-benefits-dialogtitles" id="esg-plugin-download-template-feedback-title">
 		<span class="oppps-icon"></span>
 		<span class="benefits-title-right">
 			<span class="esg-premium-benefits-dialogtitle"><?php _e('Plugin Activation Required'); ?></span>
-			<span class="esg-premium-benefits-dialogsubtitle"><?php _e('In order to gain instant access to the entire <a target="_blank" href="https://essential.themepunch.com">Grid Library</a>', EG_TEXTDOMAIN); ?></span>
+			<span class="esg-premium-benefits-dialogsubtitle"><?php _e('In order to gain instant access to the entire <a target="_blank" href="https://www.essential-grid.com">Grid Library</a>', EG_TEXTDOMAIN); ?></span>
 		</span>
 	</div>
 
@@ -112,18 +112,28 @@ if( !defined( 'ABSPATH') ) exit();
 			<ul>
 				<li><?php _e('<a target="_blank" href="https://www.themepunch.com/faq/how-to-update-essential-grid/">Update</a> to the latest version directly from your dashboard', EG_TEXTDOMAIN); ?></li>
 				<li><?php _e('<a target="_blank" href="https://themepunch.support/">Support</a> ThemePunch ticket desk', EG_TEXTDOMAIN); ?></li>
-				<li><?php _e('<a target="_blank" href="https://essential.themepunch.com">Library</a> with tons of free premium grids', EG_TEXTDOMAIN); ?></li>
+				<li><?php _e('<a target="_blank" href="https://www.essential-grid.com">Library</a> with tons of free premium grids', EG_TEXTDOMAIN); ?></li>
 			</ul>
 		</div>
-		<a target="_blank" class="get_purchase_code" href="http://codecanyon.net/item/essential-grid-wordpress-plugin/7563340?ref=themepunch&license=regular&open_purchase_for_item_id=7563340&purchasable=source"><?php _e('GET A PURCHASE CODE', EG_TEXTDOMAIN); ?></a>
+		<a target="_blank" class="get_purchase_code" href="https://account.essential-grid.com/licenses/pricing/"><?php _e('GET A PURCHASE CODE', EG_TEXTDOMAIN); ?></a>
 	</div>
 </div>
 
 
 
 <script type="text/javascript">
-jQuery(document).ready(function(){
-	AdminEssentials.initGridLibraryRoutine();
+	var initGridLibraryRoutine_once = false
+	if (document.readyState === "loading") 
+		document.addEventListener('readystatechange',function(){
+			if ((document.readyState === "interactive" || document.readyState === "complete") && !initGridLibraryRoutine_once) {
+				initGridLibraryRoutine_once = true;
+				AdminEssentials.initGridLibraryRoutine();
+			}
+		});
+	else {
+		initGridLibraryRoutine_once = true;
+		AdminEssentials.initGridLibraryRoutine();
+	}
 	
-});
+
 </script>

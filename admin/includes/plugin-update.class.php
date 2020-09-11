@@ -6,7 +6,7 @@
  * @package Essential_Grid_Plugin_Update
  * @author  ThemePunch <info@themepunch.com>
  * @link      http://www.themepunch.com/essential/
- * @copyright 2016 ThemePunch
+ * @copyright 2020 ThemePunch
  * @since 1.1.0
  */
  
@@ -86,6 +86,11 @@ class Essential_Grid_Plugin_Update {
 			$this->update_to_23();
 		}
 		
+		/* 3.0.0 */
+		if(version_compare($this->version, '3.0', '<')){
+			$this->update_to_3();
+		}
+
 		do_action('essgrid_do_update_process', $this->version);
 	}
 	
@@ -883,7 +888,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr=\'#00000000\',
 
 						if(static::checkFalsey($color) && is_numeric($opacity) && $opacity != '100') {
 							
-							$converted = TPColorpicker::convert($color, $opacity);
+							$converted = ESGColorpicker::convert($color, $opacity);
 							if(!empty($converted)) {
 								$params[$colorProp] = $converted;
 								$params[$opacityProp] = '100';
@@ -930,7 +935,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr=\'#00000000\',
 									$opacity = $layerSets[$opacityProp];
 									if(static::checkFalsey($color) && is_numeric($opacity) && $opacity != '100') {
 									
-										$converted = TPColorpicker::convert($color, $opacity);
+										$converted = ESGColorpicker::convert($color, $opacity);
 										if(!empty($converted)) {
 											
 											$layer['settings'][$colorProp] = $converted;
@@ -981,7 +986,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr=\'#00000000\',
 		if(!empty($skins)) {
 			
 			// vars defined here so they are only created once
-			$canConvert = class_exists('TPColorpicker');
+			$canConvert = class_exists('ESGColorpicker');
 			$toConvert = array(
 			
 				'settings' => array(
@@ -1163,5 +1168,18 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr=\'#00000000\',
 		$this->set_version('2.3');
 	
 	}
+	
+	/**
+	 * update to 3.0.0
+	 * @since: 3.0.0
+	 * @does: adds new default navigation skins
+	 */
+	public function update_to_3(){
+		Essential_Grid_Navigation::propagate_default_navigation_skins();
+		
+		$this->update_version('3.0');
+		$this->set_version('3.0');
+	}
+	
 	
 }

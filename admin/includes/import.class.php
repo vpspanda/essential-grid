@@ -3,7 +3,7 @@
  * @package   Essential_Grid
  * @author    ThemePunch <info@themepunch.com>
  * @link      http://www.themepunch.com/essential/
- * @copyright 2016 ThemePunch
+ * @copyright 2020 ThemePunch
  */
  
 if( !defined( 'ABSPATH') ) exit();
@@ -22,6 +22,7 @@ class Essential_Grid_Import {
 		$import_grids = $d['import_grids'];
 		$import_ids = $d['import_ids'];
 		$check_append = $d['check_append'];
+		$ids = array();
 		
 		if($import_grids !== false && !empty($import_grids)){
 			global $wpdb;
@@ -170,12 +171,15 @@ class Essential_Grid_Import {
 					}
 				}
 			}
+			
+			if($response !== false)	$ids[] = $wpdb->insert_id;
 		}
 		
+		return $ids;
 	}
 	
 	
-	public function import_skins($import_skins, $import_ids, $check_append = true){
+	public function import_skins($import_skins, $import_ids, $check_append = true, $ignore_exists = false){
 		$d = apply_filters('essgrid_import_skins', array('import_skins' => $import_skins, 'import_ids' => $import_ids, 'check_append' => $check_append));
 		$import_skins = $d['import_skins'];
 		$import_ids = $d['import_ids'];
@@ -212,6 +216,9 @@ class Essential_Grid_Import {
 							break;
 						}
 					}
+				}
+				if($ignore_exists && $exist){
+					continue;
 				}
 				
 				$append = true;
@@ -305,7 +312,7 @@ class Essential_Grid_Import {
 	}
 	
 	
-	public function import_navigation_skins($import_navigation_skins, $import_ids, $check_append = true){
+	public function import_navigation_skins($import_navigation_skins, $import_ids, $check_append = true, $ignore_exists = false){
 		$d = apply_filters('essgrid_import_navigation_skins', array('import_navigation_skins' => $import_navigation_skins, 'import_ids' => $import_ids, 'check_append' => $check_append));
 		$import_navigation_skins = $d['import_navigation_skins'];
 		$import_ids = $d['import_ids'];
@@ -342,6 +349,10 @@ class Essential_Grid_Import {
 							break;
 						}
 					}
+				}
+				
+				if($ignore_exists && $exist){
+					continue;
 				}
 				
 				$append = true;
